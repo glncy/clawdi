@@ -175,9 +175,24 @@ jobs:
           echo "${{ steps.trigger_xcode_cloud.outputs.reason }}" >&2
           exit 1
 
+  approve-github-fallback:
+    name: ${{ format('✅ [{0}] Approve GitHub Backup Build', inputs.app_label || inputs.app_path) }}
+    needs: trigger-xcode-cloud
+    if: needs.trigger-xcode-cloud.outputs.backup_build_eligible == 'true'
+    environment: ${{ format('{0}@github-build', inputs.environment_prefix) }}
+    runs-on: ubuntu-latest
+    outputs:
+      approval_environment: ${{ steps.context.outputs.environment }}
+    steps:
+      - name: Record approval context
+        id: context
+        shell: bash
+        run: |
+          echo "environment=${{ inputs.environment_prefix }}@github-build" >> "$GITHUB_OUTPUT"
+
   fallback-placeholder:
     name: ${{ format('🛟 [{0}] Approved GitHub Fallback', inputs.app_label || inputs.app_path) }}
-    needs: [approve-ios-build, trigger-xcode-cloud]
+    needs: [approve-github-fallback, trigger-xcode-cloud]
     if: needs.trigger-xcode-cloud.outputs.backup_build_eligible == 'true'
     runs-on: ubuntu-latest
     outputs:
@@ -196,7 +211,7 @@ jobs:
   finalize:
     name: ${{ format('📝 [{0}] Finalize iOS Build Result', inputs.app_label || inputs.app_path) }}
     if: always()
-    needs: [approve-ios-build, trigger-xcode-cloud, fallback-placeholder]
+    needs: [approve-ios-build, trigger-xcode-cloud, approve-github-fallback, fallback-placeholder]
     runs-on: ubuntu-latest
     outputs:
       build_path: ${{ steps.outputs.outputs.build_path }}
@@ -235,6 +250,8 @@ jobs:
             echo "- Xcode Cloud status: ${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}"
             echo "- Backup build eligible: ${{ needs.trigger-xcode-cloud.outputs.backup_build_eligible }}"
             echo "- Fallback reason: ${{ needs.trigger-xcode-cloud.outputs.fallback_reason }}"
+            echo "- Backup approval environment: ${{ needs.approve-github-fallback.outputs.approval_environment }}"
+            echo "- Backup approval result: ${{ needs.approve-github-fallback.result }}"
             echo "- Fallback approval result: ${{ needs.fallback-placeholder.result }}"
             echo "- Final build path: ${{ steps.outputs.outputs.build_path }}"
             echo "- Workflow ID: ${{ needs.trigger-xcode-cloud.outputs.workflow_id }}"

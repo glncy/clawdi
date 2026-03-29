@@ -71,9 +71,13 @@ If the Xcode Cloud trigger fails with a quota/start-build style condition, the w
 
 - `backup_build_eligible`
 
-The workflow does not use a separate fallback-only environment anymore. The same protected iOS build approval is granted before the workflow can trigger Xcode Cloud or continue into the fallback path.
+If the trigger is backup-build eligible, the workflow pauses again on a second protected environment before the GitHub backup path can continue.
 
-After approval, the workflow runs a placeholder fallback job. That job does not yet perform a real iOS archive; it exists to:
+That backup approval environment is:
+
+- `app-mobile@github-build`
+
+After backup approval, the workflow runs a placeholder fallback job. That job does not yet perform a real iOS archive; it exists to:
 
 - confirm approval happened
 - mark the backup path as selected
@@ -104,9 +108,10 @@ Store these as GitHub Environment variables on the stage environments that execu
 
 ### Protected Environments
 
-Create this GitHub Environment with required reviewers:
+Create these GitHub Environments with required reviewers:
 
 - `app-mobile@ios-build`
+- `app-mobile@github-build`
 
 ## Setup Guide
 
@@ -180,7 +185,19 @@ In GitHub repository settings:
    - `app-mobile@ios-build`
 4. add required reviewers
 
-This environment is used before the workflow can trigger Xcode Cloud, and the same approval also covers the fallback placeholder path if Xcode Cloud cannot start.
+This environment is used before the workflow can trigger Xcode Cloud.
+
+### 4a. Configure The GitHub Backup Approval Environment
+
+In GitHub repository settings:
+
+1. open **Settings**
+2. open **Environments**
+3. create:
+   - `app-mobile@github-build`
+4. add required reviewers
+
+This environment is used only when Xcode Cloud reports a backup-build-eligible condition and the workflow needs explicit approval before entering the GitHub fallback path.
 
 ### 5. Configure Xcode Cloud To Use The Repo Script
 
