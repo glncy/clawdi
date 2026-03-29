@@ -76,7 +76,7 @@ If the trigger is backup-build eligible, the workflow pauses again on a second p
 
 That backup approval environment is:
 
-- `app-mobile@github-build`
+- `app-mobile@ios-build-gha`
 
 After backup approval, the workflow runs a placeholder fallback job. That job does not yet perform a real iOS archive; it exists to:
 
@@ -112,7 +112,7 @@ Store these as GitHub Environment variables on the stage environments that execu
 Create these GitHub Environments with required reviewers:
 
 - `app-mobile@ios-build`
-- `app-mobile@github-build`
+- `app-mobile@ios-build-gha`
 
 ## Setup Guide
 
@@ -195,7 +195,7 @@ In GitHub repository settings:
 1. open **Settings**
 2. open **Environments**
 3. create:
-   - `app-mobile@github-build`
+   - `app-mobile@ios-build-gha`
 4. add required reviewers
 
 This environment is used only when Xcode Cloud reports a backup-build-eligible condition and the workflow needs explicit approval before entering the GitHub fallback path.
