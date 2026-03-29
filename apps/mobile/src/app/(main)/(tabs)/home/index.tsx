@@ -22,11 +22,11 @@ export default function HomeScreen() {
         />
         <View className="z-10 max-w-sm gap-4 rounded-3xl bg-surface/85 p-6">
           <AppText size="3xl" weight="bold">
-            Fullstack Boilerplate
+            clawdy
           </AppText>
           <AppText color="muted">
-            Start building from a clean Expo Router shell with shared monorepo
-            tooling, reusable CI, and room for your own product structure.
+            Start building Clawdy from a clean Expo Router shell while we wire
+            up the rest of the product experience.
           </AppText>
         </View>
       </View>

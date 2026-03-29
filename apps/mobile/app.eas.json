@@ -1,15 +1,15 @@
 {
   "expo": {
-    "name": "fullstack-boilerplate",
-    "slug": "fullstack-boilerplate",
+    "name": "clawdy",
+    "slug": "clawdy",
     "version": "0.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "fullstack-boilerplate",
+    "scheme": "clawdy",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon",
-      "bundleIdentifier": "com.glncy.fullstack-boilerplate",
+      "bundleIdentifier": "me.ttap.clawdy",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
@@ -22,7 +22,7 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.glncy.fullstack-boilerplate"
+      "package": "me.ttap.clawdy"
     },
     "web": {
       "output": "static",
