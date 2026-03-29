@@ -27,8 +27,7 @@ on:
         type: string
       environment_prefix:
         description: Prefix for the GitHub Environment name
-        required: false
-        default: app-mobile
+        required: true
         type: string
       head_branch:
         description: Branch name associated with the build
@@ -51,8 +50,7 @@ on:
         type: string
       environment_prefix:
         description: Prefix for the GitHub Environment name
-        required: false
-        default: app-mobile
+        required: true
         type: string
       head_branch:
         description: Branch name associated with the build
@@ -66,7 +64,7 @@ on:
 jobs:
   trigger-xcode-cloud:
     name: ${{ format('🍎 [{0}] Trigger Xcode Cloud Build', inputs.app_label || inputs.app_path) }}
-    environment: ${{ format('{0}@{1}', inputs.environment_prefix || 'app-mobile', startsWith(inputs.head_branch, format('{0}@', inputs.environment_prefix || 'app-mobile')) && 'production' || 'main') }}
+    environment: ${{ format('{0}@{1}', inputs.environment_prefix, startsWith(inputs.head_branch, format('{0}@', inputs.environment_prefix)) && 'production' || 'main') }}
     runs-on: ubuntu-latest
     outputs:
       build_run_api_url: ${{ steps.trigger_xcode_cloud.outputs.build_run_api_url }}
@@ -143,13 +141,13 @@ jobs:
         id: fallback_context
         shell: bash
         run: |
-          if [[ "${{ inputs.head_branch || github.ref_name }}" == ${{ inputs.environment_prefix || 'app-mobile' }}@* ]]; then
+          if [[ "${{ inputs.head_branch || github.ref_name }}" == ${{ inputs.environment_prefix }}@* ]]; then
             STAGE="production"
           else
             STAGE="main"
           fi
 
-          echo "environment=${{ inputs.environment_prefix || 'app-mobile' }}-fallback@$STAGE" >> "$GITHUB_OUTPUT"
+          echo "environment=${{ inputs.environment_prefix }}-fallback@$STAGE" >> "$GITHUB_OUTPUT"
 
       - name: Trigger Xcode Cloud build
         id: trigger_xcode_cloud
