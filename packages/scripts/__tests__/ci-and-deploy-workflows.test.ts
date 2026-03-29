@@ -68,9 +68,12 @@ describe("ci and deploy workflows", () => {
   it("triggers Xcode Cloud instead of using the placeholder iOS build step", async () => {
     const workflow = await readWorkflow("ios-build.yml");
 
+    expect(workflow).toContain("approve-ios-build:");
+    expect(workflow).toContain("environment: ${{ format('{0}@ios-build', inputs.environment_prefix) }}");
     expect(workflow).toContain("- name: Validate Xcode Cloud configuration");
     expect(workflow).toContain("- name: Trigger Xcode Cloud build");
     expect(workflow).toContain("fallback-placeholder");
+    expect(workflow).not.toContain("-fallback@");
     expect(workflow).toContain("bun run repo-scripts trigger-xcode-cloud-build");
     expect(workflow).not.toContain("This is the placeholder iOS build step.");
   });

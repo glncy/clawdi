@@ -27,9 +27,14 @@ The reusable iOS workflow in:
 
 does the following:
 
-1. validates app metadata and required GitHub configuration
-2. triggers Xcode Cloud using App Store Connect API credentials
-3. records workflow/build metadata in the workflow summary
+1. waits on a protected GitHub Environment approval for iOS builds
+2. validates app metadata and required GitHub configuration
+3. triggers Xcode Cloud using App Store Connect API credentials
+4. records workflow/build metadata in the workflow summary
+
+The approval environment is:
+
+- `app-mobile@ios-build`
 
 If the trigger succeeds, the final build path is:
 
@@ -66,12 +71,7 @@ If the Xcode Cloud trigger fails with a quota/start-build style condition, the w
 
 - `fallback_eligible`
 
-The workflow then routes execution into a protected GitHub Environment:
-
-- `app-mobile-fallback@main`
-- `app-mobile-fallback@production`
-
-Those environments must require manual reviewers.
+The workflow does not use a separate fallback-only environment anymore. The same protected iOS build approval is granted before the workflow can trigger Xcode Cloud or continue into the fallback path.
 
 After approval, the workflow runs a placeholder fallback job. That job does not yet perform a real iOS archive; it exists to:
 
@@ -100,10 +100,9 @@ and stops without entering fallback approval.
 
 ### Protected Environments
 
-Create these GitHub Environments with required reviewers:
+Create this GitHub Environment with required reviewers:
 
-- `app-mobile-fallback@main`
-- `app-mobile-fallback@production`
+- `app-mobile@ios-build`
 
 ## Setup Guide
 
@@ -153,22 +152,21 @@ If the mobile workflow needs runtime values written into `.env`, set:
 
 - `ENV_FILE`
 
-as a GitHub Environment variable on the normal mobile environments.
+as a GitHub Environment variable on the stage environments that run the trigger job, such as `app-mobile@main` and `app-mobile@production`.
 
 The reusable workflow writes this content into the app before triggering Xcode Cloud.
 
-### 4. Configure Fallback Approval Environments
+### 4. Configure The iOS Build Approval Environment
 
 In GitHub repository settings:
 
 1. open **Settings**
 2. open **Environments**
 3. create:
-   - `app-mobile-fallback@main`
-   - `app-mobile-fallback@production`
+   - `app-mobile@ios-build`
 4. add required reviewers
 
-Those environments are used only when the Xcode Cloud trigger is fallback-eligible.
+This environment is used before the workflow can trigger Xcode Cloud, and the same approval also covers the fallback placeholder path if Xcode Cloud cannot start.
 
 ### 5. Configure Xcode Cloud To Use The Repo Script
 

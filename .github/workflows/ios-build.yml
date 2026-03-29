@@ -62,15 +62,28 @@ on:
         type: string
 
 jobs:
+  approve-ios-build:
+    name: ${{ format('✅ [{0}] Approve iOS Build', inputs.app_label || inputs.app_path) }}
+    environment: ${{ format('{0}@ios-build', inputs.environment_prefix) }}
+    runs-on: ubuntu-latest
+    outputs:
+      approval_environment: ${{ steps.context.outputs.environment }}
+    steps:
+      - name: Record approval context
+        id: context
+        shell: bash
+        run: |
+          echo "environment=${{ inputs.environment_prefix }}@ios-build" >> "$GITHUB_OUTPUT"
+
   trigger-xcode-cloud:
     name: ${{ format('🍎 [{0}] Trigger Xcode Cloud Build', inputs.app_label || inputs.app_path) }}
+    needs: approve-ios-build
     environment: ${{ format('{0}@{1}', inputs.environment_prefix, startsWith(inputs.head_branch, format('{0}@', inputs.environment_prefix)) && 'production' || 'main') }}
     runs-on: ubuntu-latest
     outputs:
       build_run_api_url: ${{ steps.trigger_xcode_cloud.outputs.build_run_api_url }}
       build_run_id: ${{ steps.trigger_xcode_cloud.outputs.build_run_id }}
       fallback_eligible: ${{ steps.trigger_xcode_cloud.outputs.fallback_eligible }}
-      fallback_environment: ${{ steps.fallback_context.outputs.environment }}
       fallback_reason: ${{ steps.trigger_xcode_cloud.outputs.reason }}
       git_reference_id: ${{ steps.trigger_xcode_cloud.outputs.git_reference_id }}
       git_reference_kind: ${{ steps.trigger_xcode_cloud.outputs.git_reference_kind }}
@@ -137,18 +150,6 @@ jobs:
             exit 1
           fi
 
-      - name: Determine fallback environment
-        id: fallback_context
-        shell: bash
-        run: |
-          if [[ "${{ inputs.head_branch || github.ref_name }}" == ${{ inputs.environment_prefix }}@* ]]; then
-            STAGE="production"
-          else
-            STAGE="main"
-          fi
-
-          echo "environment=${{ inputs.environment_prefix }}-fallback@$STAGE" >> "$GITHUB_OUTPUT"
-
       - name: Trigger Xcode Cloud build
         id: trigger_xcode_cloud
         shell: bash
@@ -176,9 +177,8 @@ jobs:
 
   fallback-placeholder:
     name: ${{ format('🛟 [{0}] Approved GitHub Fallback', inputs.app_label || inputs.app_path) }}
-    needs: trigger-xcode-cloud
+    needs: [approve-ios-build, trigger-xcode-cloud]
     if: needs.trigger-xcode-cloud.outputs.fallback_eligible == 'true'
-    environment: ${{ needs.trigger-xcode-cloud.outputs.fallback_environment }}
     runs-on: ubuntu-latest
     outputs:
       build_path: ${{ steps.report.outputs.build_path }}
@@ -196,7 +196,7 @@ jobs:
   finalize:
     name: ${{ format('📝 [{0}] Finalize iOS Build Result', inputs.app_label || inputs.app_path) }}
     if: always()
-    needs: [trigger-xcode-cloud, fallback-placeholder]
+    needs: [approve-ios-build, trigger-xcode-cloud, fallback-placeholder]
     runs-on: ubuntu-latest
     outputs:
       build_path: ${{ steps.outputs.outputs.build_path }}
@@ -230,10 +230,11 @@ jobs:
             echo "- Path: ${{ inputs.app_path }}"
             echo "- Ref: ${{ inputs.head_branch || github.ref_name }}"
             echo "- Commit: ${{ inputs.head_sha || github.sha }}"
+            echo "- Approval environment: ${{ needs.approve-ios-build.outputs.approval_environment }}"
+            echo "- Approval result: ${{ needs.approve-ios-build.result }}"
             echo "- Xcode Cloud status: ${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}"
             echo "- Fallback eligible: ${{ needs.trigger-xcode-cloud.outputs.fallback_eligible }}"
             echo "- Fallback reason: ${{ needs.trigger-xcode-cloud.outputs.fallback_reason }}"
-            echo "- Fallback environment: ${{ needs.trigger-xcode-cloud.outputs.fallback_environment }}"
             echo "- Fallback approval result: ${{ needs.fallback-placeholder.result }}"
             echo "- Final build path: ${{ steps.outputs.outputs.build_path }}"
             echo "- Workflow ID: ${{ needs.trigger-xcode-cloud.outputs.workflow_id }}"
