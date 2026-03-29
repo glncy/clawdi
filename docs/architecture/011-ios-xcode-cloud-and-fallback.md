@@ -51,9 +51,11 @@ The post-clone setup script lives at:
 Xcode Cloud resolves the post-clone entrypoint from the iOS project root. That script currently runs:
 
 ```sh
+export CI=1
 bun install --frozen-lockfile
 bun run build
-bun x expo prebuild -p ios --clean --non-interactive
+node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking react-native-config --json --platform ios > /tmp/expo-autolinking-ios.json
+bun x expo prebuild -p ios --clean
 ```
 
 This means:

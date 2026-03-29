@@ -100,20 +100,10 @@ describe("ci and deploy workflows", () => {
 
     expect(script).toContain("export CI");
     expect(script).toContain("command -v node");
+    expect(script).toContain("node --no-warnings --eval");
     expect(script).toContain("bun run build");
     expect(script).toContain("expo-modules-autolinking react-native-config --json --platform ios");
     expect(script).toContain("bun x expo prebuild -p ios --clean");
     expect(script).not.toContain("pod install");
-  });
-
-  it("provides the Xcode Cloud post-clone entrypoint at the iOS project root", async () => {
-    const script = await readFile(
-      new URL("../../../apps/mobile/ios/ci_scripts/ci_post_clone.sh", import.meta.url),
-      "utf8",
-    );
-
-    expect(script).toContain("node --no-warnings --eval");
-    expect(script).toContain("bun run build");
-    expect(script).toContain("bun x expo prebuild -p ios --clean");
   });
 });

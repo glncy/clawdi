@@ -142,6 +142,97 @@ describe("xcode cloud scripts", () => {
     });
   });
 
+  it("follows absolute pagination links when looking up git references", async () => {
+    const requests: string[] = [];
+    const fetchImpl: typeof fetch = async (input, init) => {
+      const url = String(input);
+      requests.push(url);
+
+      if (url.endsWith("/v1/ciWorkflows/workflow-123?include=repository")) {
+        return new Response(
+          JSON.stringify({
+            data: {
+              attributes: { name: "iOS Release" },
+              id: "workflow-123",
+              relationships: {
+                repository: {
+                  data: {
+                    id: "repo-123",
+                    type: "scmRepositories",
+                  },
+                },
+              },
+              type: "ciWorkflows",
+            },
+          }),
+        );
+      }
+
+      if (url.endsWith("/v1/scmRepositories/repo-123/gitReferences?limit=200")) {
+        return new Response(
+          JSON.stringify({
+            data: [],
+            links: {
+              next: "https://api.appstoreconnect.apple.com/v1/scmRepositories/repo-123/gitReferences?cursor=page-2",
+            },
+          }),
+        );
+      }
+
+      if (url.endsWith("/v1/scmRepositories/repo-123/gitReferences?cursor=page-2")) {
+        return new Response(
+          JSON.stringify({
+            data: [
+              {
+                attributes: {
+                  canonicalName: "refs/heads/main",
+                  kind: "branch",
+                  name: "origin/main",
+                },
+                id: "git-ref-main",
+                type: "scmGitReferences",
+              },
+            ],
+          }),
+        );
+      }
+
+      if (url.endsWith("/v1/ciBuildRuns")) {
+        expect(init?.method).toBe("POST");
+
+        return new Response(
+          JSON.stringify({
+            data: {
+              id: "build-run-123",
+              type: "ciBuildRuns",
+            },
+            links: {
+              self: "https://api.appstoreconnect.apple.com/v1/ciBuildRuns/build-run-123",
+            },
+          }),
+        );
+      }
+
+      throw new Error(`Unexpected request: ${url}`);
+    };
+
+    const result = await triggerXcodeCloudBuild({
+      credentials: {
+        issuerId: "issuer-id",
+        keyId: "ABC1234567",
+        privateKey: createPrivateKeyPem(),
+      },
+      fetchImpl,
+      refName: "main",
+      workflowId: "workflow-123",
+    });
+
+    expect(result.gitReferenceId).toBe("git-ref-main");
+    expect(requests).toContain(
+      "https://api.appstoreconnect.apple.com/v1/scmRepositories/repo-123/gitReferences?cursor=page-2",
+    );
+  });
+
   it("fails clearly when the git reference is missing", async () => {
     const fetchImpl: typeof fetch = async (input) => {
       const url = String(input);

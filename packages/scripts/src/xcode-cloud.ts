@@ -244,7 +244,8 @@ async function findGitReference({
       break;
     }
 
-    nextPath = next.replace("https://api.appstoreconnect.apple.com", "");
+    const nextUrl = new URL(next);
+    nextPath = `${nextUrl.pathname}${nextUrl.search}`;
   }
 
   throw new Error(
