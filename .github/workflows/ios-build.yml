@@ -6,9 +6,9 @@ on:
       build_path:
         description: Final build path selected for the iOS build.
         value: ${{ jobs.finalize.outputs.build_path }}
-      fallback_eligible:
-        description: Whether the backup GitHub fallback path was eligible.
-        value: ${{ jobs.finalize.outputs.fallback_eligible }}
+      backup_build_eligible:
+        description: Whether the backup GitHub build path was eligible.
+        value: ${{ jobs.finalize.outputs.backup_build_eligible }}
       fallback_reason:
         description: Reason the backup GitHub fallback path was selected or skipped.
         value: ${{ jobs.finalize.outputs.fallback_reason }}
@@ -83,7 +83,7 @@ jobs:
     outputs:
       build_run_api_url: ${{ steps.trigger_xcode_cloud.outputs.build_run_api_url }}
       build_run_id: ${{ steps.trigger_xcode_cloud.outputs.build_run_id }}
-      fallback_eligible: ${{ steps.trigger_xcode_cloud.outputs.fallback_eligible }}
+      backup_build_eligible: ${{ steps.trigger_xcode_cloud.outputs.backup_build_eligible }}
       fallback_reason: ${{ steps.trigger_xcode_cloud.outputs.reason }}
       git_reference_id: ${{ steps.trigger_xcode_cloud.outputs.git_reference_id }}
       git_reference_kind: ${{ steps.trigger_xcode_cloud.outputs.git_reference_kind }}
@@ -162,7 +162,7 @@ jobs:
 
           while IFS='=' read -r key value; do
             case "$key" in
-              status|fallback_eligible|reason|workflow_id|workflow_name|repository_id|git_reference_id|git_reference_kind|build_run_id|build_run_api_url)
+              status|backup_build_eligible|reason|workflow_id|workflow_name|repository_id|git_reference_id|git_reference_kind|build_run_id|build_run_api_url)
                 echo "$key=$value" >> "$GITHUB_OUTPUT"
                 ;;
             esac
@@ -178,7 +178,7 @@ jobs:
   fallback-placeholder:
     name: ${{ format('🛟 [{0}] Approved GitHub Fallback', inputs.app_label || inputs.app_path) }}
     needs: [approve-ios-build, trigger-xcode-cloud]
-    if: needs.trigger-xcode-cloud.outputs.fallback_eligible == 'true'
+    if: needs.trigger-xcode-cloud.outputs.backup_build_eligible == 'true'
     runs-on: ubuntu-latest
     outputs:
       build_path: ${{ steps.report.outputs.build_path }}
@@ -200,7 +200,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build_path: ${{ steps.outputs.outputs.build_path }}
-      fallback_eligible: ${{ steps.outputs.outputs.fallback_eligible }}
+      backup_build_eligible: ${{ steps.outputs.outputs.backup_build_eligible }}
       fallback_reason: ${{ steps.outputs.outputs.fallback_reason }}
       xcode_cloud_status: ${{ steps.outputs.outputs.xcode_cloud_status }}
     steps:
@@ -216,7 +216,7 @@ jobs:
           fi
 
           echo "build_path=$BUILD_PATH" >> "$GITHUB_OUTPUT"
-          echo "fallback_eligible=${{ needs.trigger-xcode-cloud.outputs.fallback_eligible }}" >> "$GITHUB_OUTPUT"
+          echo "backup_build_eligible=${{ needs.trigger-xcode-cloud.outputs.backup_build_eligible }}" >> "$GITHUB_OUTPUT"
           echo "fallback_reason=${{ needs.trigger-xcode-cloud.outputs.fallback_reason }}" >> "$GITHUB_OUTPUT"
           echo "xcode_cloud_status=${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}" >> "$GITHUB_OUTPUT"
 
@@ -233,7 +233,7 @@ jobs:
             echo "- Approval environment: ${{ needs.approve-ios-build.outputs.approval_environment }}"
             echo "- Approval result: ${{ needs.approve-ios-build.result }}"
             echo "- Xcode Cloud status: ${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}"
-            echo "- Fallback eligible: ${{ needs.trigger-xcode-cloud.outputs.fallback_eligible }}"
+            echo "- Backup build eligible: ${{ needs.trigger-xcode-cloud.outputs.backup_build_eligible }}"
             echo "- Fallback reason: ${{ needs.trigger-xcode-cloud.outputs.fallback_reason }}"
             echo "- Fallback approval result: ${{ needs.fallback-placeholder.result }}"
             echo "- Final build path: ${{ steps.outputs.outputs.build_path }}"

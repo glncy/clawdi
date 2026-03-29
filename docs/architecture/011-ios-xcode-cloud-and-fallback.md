@@ -69,7 +69,7 @@ We rely on Expo prebuild to own native project generation and CocoaPods setup. T
 
 If the Xcode Cloud trigger fails with a quota/start-build style condition, the workflow classifies the result as:
 
-- `fallback_eligible`
+- `backup_build_eligible`
 
 The workflow does not use a separate fallback-only environment anymore. The same protected iOS build approval is granted before the workflow can trigger Xcode Cloud or continue into the fallback path.
 

@@ -190,7 +190,7 @@ describe("xcode cloud scripts", () => {
     ).rejects.toThrow('Could not find an App Store Connect git reference for "missing-tag"');
   });
 
-  it("marks quota/start failures as fallback eligible", async () => {
+  it("marks quota/start failures as backup-build eligible", async () => {
     const fetchImpl: typeof fetch = async (input) => {
       const url = String(input);
 
@@ -261,8 +261,8 @@ describe("xcode cloud scripts", () => {
         workflowId: "workflow-123",
       }),
     ).resolves.toMatchObject({
-      fallbackEligible: true,
-      status: "fallback_eligible",
+      backupBuildEligible: true,
+      status: "backup_build_eligible",
     });
   });
 
@@ -312,7 +312,7 @@ describe("xcode cloud scripts", () => {
         workflowId: "workflow-123",
       }),
     ).resolves.toMatchObject({
-      fallbackEligible: false,
+      backupBuildEligible: false,
       status: "hard_fail",
     });
   });

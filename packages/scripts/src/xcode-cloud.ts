@@ -41,7 +41,7 @@ type GitReferenceAttributes = {
   name?: string;
 };
 
-export type XcodeCloudTriggerStatus = "fallback_eligible" | "hard_fail" | "started";
+export type XcodeCloudTriggerStatus = "backup_build_eligible" | "hard_fail" | "started";
 
 export type TriggerXcodeCloudBuildResult = {
   buildRunApiUrl: string;
@@ -55,14 +55,14 @@ export type TriggerXcodeCloudBuildResult = {
 
 export type TriggerXcodeCloudBuildOutcome =
   | (TriggerXcodeCloudBuildResult & {
-      fallbackEligible: false;
+      backupBuildEligible: false;
       reason: string;
       status: "started";
     })
   | {
-      fallbackEligible: boolean;
+      backupBuildEligible: boolean;
       reason: string;
-      status: "fallback_eligible" | "hard_fail";
+      status: "backup_build_eligible" | "hard_fail";
     };
 
 class AppStoreConnectError extends Error {
@@ -330,14 +330,14 @@ function classifyAppStoreConnectFailure(error: AppStoreConnectError): TriggerXco
 
   if (quotaLike || [409, 429, 503].includes(error.statusCode)) {
     return {
-      fallbackEligible: true,
+      backupBuildEligible: true,
       reason: `Xcode Cloud trigger failed with a quota/start-build condition: ${error.message}`,
-      status: "fallback_eligible",
+      status: "backup_build_eligible",
     };
   }
 
   return {
-    fallbackEligible: false,
+    backupBuildEligible: false,
     reason: error.message,
     status: "hard_fail",
   };
@@ -364,7 +364,7 @@ export async function triggerXcodeCloudBuildWithFallback({
 
     return {
       ...result,
-      fallbackEligible: false,
+      backupBuildEligible: false,
       reason: "Xcode Cloud build started successfully.",
       status: "started",
     };
@@ -374,7 +374,7 @@ export async function triggerXcodeCloudBuildWithFallback({
     }
 
     return {
-      fallbackEligible: false,
+      backupBuildEligible: false,
       reason:
         error instanceof Error ? error.message : "Unknown error while triggering Xcode Cloud build.",
       status: "hard_fail",

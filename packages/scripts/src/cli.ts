@@ -521,7 +521,7 @@ async function runTriggerXcodeCloudBuild(context: CommandContext) {
   });
 
   console.log(`status=${result.status}`);
-  console.log(`fallback_eligible=${result.fallbackEligible}`);
+  console.log(`backup_build_eligible=${result.backupBuildEligible}`);
   console.log(`reason=${result.reason}`);
 
   if (result.status === "started") {

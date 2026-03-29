@@ -70,6 +70,7 @@ describe("ci and deploy workflows", () => {
 
     expect(workflow).toContain("approve-ios-build:");
     expect(workflow).toContain("environment: ${{ format('{0}@ios-build', inputs.environment_prefix) }}");
+    expect(workflow).toContain("backup_build_eligible");
     expect(workflow).toContain("- name: Validate Xcode Cloud configuration");
     expect(workflow).toContain("- name: Trigger Xcode Cloud build");
     expect(workflow).toContain("fallback-placeholder");
