@@ -36,11 +36,11 @@ describe("ci and deploy workflows", () => {
   it("forwards inherited secrets to reusable ios build workflows", async () => {
     for (const fileName of ["pr-workflow.yml", "main-branch.yml", "mobile-production-app.yml"]) {
       const workflow = await readWorkflow(fileName);
-      const iosBuildIndex = workflow.indexOf("uses: ./.github/workflows/ios-build.yml");
-      const inheritIndex = workflow.indexOf("secrets: inherit", iosBuildIndex);
+      const jobMatch = workflow.match(/(^  ios-build:\n[\s\S]*?)(?=^  [a-z0-9-]+:|\Z)/m);
 
-      expect(iosBuildIndex).toBeGreaterThan(-1);
-      expect(inheritIndex).toBeGreaterThan(iosBuildIndex);
+      expect(jobMatch).not.toBeNull();
+      expect(jobMatch?.[1]).toContain("uses: ./.github/workflows/ios-build.yml");
+      expect(jobMatch?.[1]).toContain("secrets: inherit");
     }
   });
 

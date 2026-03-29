@@ -175,6 +175,7 @@ jobs:
       environment_prefix: app-mobile
       head_branch: ${{ needs.resolve-release.outputs.tag-name }}
       head_sha: ${{ needs.resolve-release.outputs.release-sha }}
+    secrets: inherit
 
   mobile-release-update:
     name: "🚀 Release Update"
