@@ -17,16 +17,23 @@ platform :ios do
     UI.user_error!("Expected exactly one Xcode workspace in #{ios_path}, found #{workspaces.length}") unless workspaces.length == 1
     UI.user_error!("Xcode project not found at #{ios_path}") if xcodeproj.nil?
 
+    # Extract app_identifier from the project.pbxproj using a regex
+    pbxproj_path = File.join(xcodeproj, "project.pbxproj")
+    app_identifier = File.read(pbxproj_path)[/PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([^;]+);/, 1]&.strip
+    UI.user_error!("app_identifier not found in project.pbxproj") if app_identifier.to_s.empty?
+
     scheme = File.basename(workspaces.first, ".xcworkspace")
 
     # Capture environment variables for validation and reuse
     key_id = ENV["APP_STORE_CONNECT_KEY_ID"]
     issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"]
     private_key = ENV["APP_STORE_CONNECT_PRIVATE_KEY"]
+    match_git_url = ENV["MATCH_GIT_URL"]
 
     UI.user_error!("APP_STORE_CONNECT_KEY_ID is required") if key_id.to_s.empty?
     UI.user_error!("APP_STORE_CONNECT_ISSUER_ID is required") if issuer_id.to_s.empty?
     UI.user_error!("APP_STORE_CONNECT_PRIVATE_KEY is required") if private_key.to_s.empty?
+    UI.user_error!("MATCH_GIT_URL is required") if match_git_url.to_s.empty?
 
     api_key = app_store_connect_api_key(
       key_id: key_id,
@@ -38,11 +45,15 @@ platform :ios do
 
     setup_ci if ENV["CI"] == "true"
 
-    # Write the API key to disk so xcodebuild can use it for authentication
-    api_key_path = File.join(Dir.tmpdir, "AuthKey_#{key_id}.p8")
-    File.write(api_key_path, private_key.gsub("\\n", "\n"))
-
-    auth_flags = "-allowProvisioningUpdates -authenticationKeyPath '#{api_key_path}' -authenticationKeyID '#{key_id}' -authenticationKeyIssuerID '#{issuer_id}'"
+    match(
+      type: "appstore",
+      app_identifier: app_identifier,
+      readonly: true,
+      git_url: match_git_url,
+      git_branch: ENV["MATCH_GIT_BRANCH"],
+      shallow_clone: true,
+      clone_branch_directly: true,
+    )
 
     build_app(
       workspace: workspaces.first,
@@ -50,13 +61,13 @@ platform :ios do
       archive_path: File.join(Dir.tmpdir, "#{scheme}.xcarchive"),
       export_method: "app-store",
       export_options: {
-        signingStyle: "automatic",
-        signingCertificate: "Apple Distribution",
+        signingStyle: "manual",
+        provisioningProfiles: {
+          app_identifier => "match AppStore #{app_identifier}",
+        },
       },
       output_directory: File.join(Dir.tmpdir, "exported-ios"),
       output_name: "#{scheme}.ipa",
-      xcargs: auth_flags,
-      skip_profile_detection: true,
     )
 
     ipa_path = Actions.lane_context[SharedValues::IPA_OUTPUT_PATH]

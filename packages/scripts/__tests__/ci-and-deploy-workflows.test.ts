@@ -181,21 +181,13 @@ describe("ci and deploy workflows", () => {
     expect(fastfile).toContain('workspaces = Dir[File.join(ios_path, "*.xcworkspace")]');
     expect(fastfile).toContain('scheme = File.basename(workspaces.first, ".xcworkspace")');
     expect(fastfile).toContain('setup_ci if ENV["CI"] == "true"');
-    expect(fastfile).not.toContain("match(");
+    expect(fastfile).toContain("match(");
+    expect(fastfile).toContain("app_identifier: app_identifier");
     expect(fastfile).toContain("build_app(");
     expect(fastfile).toContain('export_method: "app-store"');
-    expect(fastfile).toContain('signingStyle: "automatic"');
-    expect(fastfile).toContain('signingCertificate: "Apple Distribution"');
-    expect(fastfile).toContain("skip_profile_detection: true");
-    expect(fastfile).toContain("-allowProvisioningUpdates");
-    expect(fastfile).toContain("-authenticationKeyPath");
-    expect(fastfile).toContain("-authenticationKeyID");
-    expect(fastfile).toContain("-authenticationKeyIssuerID");
-    expect(fastfile).toContain("xcargs: auth_flags");
-    expect(fastfile).not.toContain("export_xcargs");
+    expect(fastfile).toContain('signingStyle: "manual"');
     expect(fastfile).toContain("upload_to_testflight(");
     expect(fastfile).not.toContain("appleTeamId");
-    expect(fastfile).not.toContain("MATCH_GIT_URL");
   });
 
   it("documents the iOS CI prep script in the native project", async () => {
