@@ -7,5 +7,23 @@
     "ref": "codex/ios-xcode-cloud-fallback",
     "channel": "main",
     "createdAt": "2026-03-29T19:01:16.874Z"
+  },
+  "d0450adee6e1552e512f77a8ec43d563dea0f2ef": {
+    "version": "0.0.1",
+    "versionCode": 8,
+    "profile": "preview",
+    "previewChannel": "codex/ios-build-visibility-routing",
+    "ref": "codex/ios-build-visibility-routing",
+    "channel": "main",
+    "createdAt": "2026-03-30T16:43:30.067Z"
+  },
+  "f74fa4be32bd72ef7e6d2b14002f6712a4c99475": {
+    "version": "0.0.1",
+    "versionCode": 7,
+    "profile": "preview",
+    "previewChannel": "codex/ios-build-visibility-routing",
+    "ref": "codex/ios-build-visibility-routing",
+    "channel": "main",
+    "createdAt": "2026-03-30T15:55:51.744Z"
   }
 }

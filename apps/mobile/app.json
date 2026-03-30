@@ -10,8 +10,11 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "me.ttap.clawdi",
-      "buildNumber": "1",
-      "appleTeamId": "U5H755ZAHL"
+      "buildNumber": "8",
+      "appleTeamId": "U5H755ZAHL",
+      "config": {
+        "usesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +25,7 @@
       },
       "predictiveBackGestureEnabled": false,
       "package": "me.ttap.clawdi",
-      "versionCode": 1
+      "versionCode": 8
     },
     "web": {
       "output": "static",
