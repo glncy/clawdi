@@ -11,9 +11,9 @@ The mobile app uses Expo in a monorepo, but the native `ios/` project remains ge
 We want:
 
 - GitHub Actions to remain the orchestration layer for CI
-- Xcode Cloud to remain the primary source of truth for Apple-native iOS builds
+- repository visibility to decide which iOS path runs first
 - a backup GitHub path when Xcode Cloud cannot start a build because of compute-hour or start-build limits
-- explicit human approval before any fallback path is used
+- explicit human approval before any path is used
 
 The repo uses a reusable iOS workflow that triggers Xcode Cloud through the App Store Connect API rather than archiving the app directly on GitHub-hosted runners.
 
@@ -27,20 +27,48 @@ The reusable iOS workflow in:
 
 does the following:
 
-1. waits on a protected GitHub Environment approval for iOS builds
-2. validates app metadata and required GitHub configuration
-3. triggers Xcode Cloud using App Store Connect API credentials
-4. records workflow/build metadata in the workflow summary
+1. resolves repository visibility from GitHub context
+2. applies an optional visibility override input when provided
+3. selects the primary iOS path from that effective visibility
+4. waits on the protected environment for the selected path
+5. runs the selected primary path and, if needed, pauses on the second path before fallback
+6. records workflow/build metadata in the workflow summary
 
-The approval environment is:
+The path-selection rules are:
 
-- `app-mobile@ios-build`
+- public repositories: `github_actions`
+- private repositories: `xcode_cloud`
 
-If the trigger succeeds, the final build path is:
+The Xcode Cloud approval environment is:
 
-- `xcode_cloud`
+- `app-mobile@ios-build-xcode`
 
-### Xcode Cloud Native Generation
+The GitHub Actions approval environment is:
+
+- `app-mobile@ios-build-gha`
+
+The workflow also accepts:
+
+- `repository_visibility_override`
+
+with supported values:
+
+- `public`
+- `private`
+
+### GitHub Actions Path
+
+GitHub Actions is the primary iOS path for public repositories.
+
+Today that path is still placeholder-only. The workflow treats it as a first-class path for routing and approvals, but it does not yet perform a real iOS archive.
+
+When the GitHub Actions path is selected first, the workflow:
+
+1. pauses on `app-mobile@ios-build-gha`
+2. reports that GitHub Actions was selected as the primary path
+3. marks the Xcode Cloud path as eligible fallback because the GitHub Actions path is still placeholder-only
+
+### Xcode Cloud Path
 
 Xcode Cloud owns the real Apple-native archive/sign/distribution steps.
 
@@ -54,7 +82,7 @@ Xcode Cloud resolves the post-clone entrypoint from the iOS project root. That s
 export CI=1
 bun install --frozen-lockfile
 bun run build
-node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking react-native-config --json --platform ios > /tmp/expo-autolinking-ios.json
+node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking react-native-config --json --platform ios > /dev/null
 bun x expo prebuild -p ios --clean
 ```
 
@@ -63,33 +91,29 @@ This means:
 - monorepo dependencies are installed in the Xcode Cloud environment
 - the workspace build runs before native generation
 - Expo prebuild generates the iOS project during CI
-- `ios/` remains untracked in git
 
 We rely on Expo prebuild to own native project generation and CocoaPods setup. The script does not run a separate `pod install`.
 
 ### Fallback Path
 
-If the Xcode Cloud trigger fails with a quota/start-build style condition, the workflow classifies the result as:
+If the active path cannot continue, the workflow can switch to the other path after its own approval gate.
+
+The workflow allows at most one fallback per run:
+
+- public repo: GitHub Actions primary -> Xcode Cloud fallback -> stop
+- private repo: Xcode Cloud primary -> GitHub Actions fallback -> stop
+
+After the secondary path has been attempted, the workflow does not ask for another backup path in the same run.
+
+For Xcode Cloud, quota/start-build style conditions are classified as:
 
 - `backup_build_eligible`
-
-If the trigger is backup-build eligible, the workflow pauses again on a second protected environment before the GitHub backup path can continue.
-
-That backup approval environment is:
-
-- `app-mobile@ios-build-gha`
-
-After backup approval, the workflow runs a placeholder fallback job. That job does not yet perform a real iOS archive; it exists to:
-
-- confirm approval happened
-- mark the backup path as selected
-- leave a clear workflow summary and audit trail
 
 If the trigger fails because of credentials, workflow ID, git reference, or another non-quota API/config problem, the workflow classifies the result as:
 
 - `hard_fail`
 
-and stops without entering fallback approval.
+and stops without entering fallback.
 
 ## Required GitHub Configuration
 
@@ -112,7 +136,7 @@ Store these as GitHub Environment variables on the stage environments that execu
 
 Create these GitHub Environments with required reviewers:
 
-- `app-mobile@ios-build`
+- `app-mobile@ios-build-xcode`
 - `app-mobile@ios-build-gha`
 
 ## Setup Guide
@@ -184,10 +208,10 @@ In GitHub repository settings:
 1. open **Settings**
 2. open **Environments**
 3. create:
-   - `app-mobile@ios-build`
+   - `app-mobile@ios-build-xcode`
 4. add required reviewers
 
-This environment is used before the workflow can trigger Xcode Cloud.
+This environment is used whenever the workflow is about to run Xcode Cloud, whether Xcode Cloud is the primary path or the fallback path.
 
 ### 4a. Configure The GitHub Backup Approval Environment
 
@@ -199,7 +223,23 @@ In GitHub repository settings:
    - `app-mobile@ios-build-gha`
 4. add required reviewers
 
-This environment is used only when Xcode Cloud reports a backup-build-eligible condition and the workflow needs explicit approval before entering the GitHub fallback path.
+This environment is used whenever the workflow is about to use the GitHub Actions iOS path, whether GitHub Actions is the primary path or the fallback path.
+
+There is no third approval step after fallback. Once the workflow has switched from the primary path to the secondary path, the run ends with that secondary result.
+
+### 4b. Configure Visibility Overrides When Needed
+
+The reusable workflow detects repo visibility from GitHub automatically.
+
+Only set `repository_visibility_override` when:
+
+- you want a manual run to behave like a different repo visibility
+- you need to test the opposite path without changing repository settings
+
+If omitted, the workflow defaults to GitHub context:
+
+- public repo → GitHub Actions first
+- private repo → Xcode Cloud first
 
 ### 5. Configure Xcode Cloud To Use The Repo Script
 
@@ -213,13 +253,15 @@ The iOS-project script is the Xcode Cloud entrypoint when the workflow is bound 
 
 ### Benefits
 
-- iOS builds stay aligned with Apple-native infrastructure
-- the repo does not need committed generated iOS source
+- repository visibility can steer build cost toward the cheaper path
+- both iOS paths are explicitly approved and auditable
 - GitHub still provides orchestration, visibility, and approval controls
-- fallback use is explicit and auditable
+- Xcode Cloud remains available as the Apple-native path for private repos and fallback cases
 
 ### Tradeoffs
 
-- Xcode Cloud remains a hard dependency for the primary path
+- the GitHub Actions iOS path is still placeholder-only
+- public repositories still depend on Xcode Cloud today if a real archive is needed
 - there is no proactive remaining-hours check in this implementation
-- the fallback path is placeholder-only until a real GitHub-hosted iOS build is added later
+- both paths now require separate approvals, which adds one more manual gate when fallback occurs
+- each run allows only one fallback, so a failed secondary path ends the run instead of chaining into another backup attempt

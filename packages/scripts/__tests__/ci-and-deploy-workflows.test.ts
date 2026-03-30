@@ -79,14 +79,27 @@ describe("ci and deploy workflows", () => {
   it("triggers Xcode Cloud instead of using the placeholder iOS build step", async () => {
     const workflow = await readWorkflow("ios-build.yml");
 
-    expect(workflow).toContain("approve-ios-build:");
-    expect(workflow).toContain("environment: ${{ format('{0}@ios-build', inputs.environment_prefix) }}");
-    expect(workflow).toContain("approve-github-fallback:");
+    expect(workflow).toContain("resolve-build-strategy:");
+    expect(workflow).toContain("repository_visibility_override:");
+    expect(workflow).toContain("approve-primary-xcode-build:");
+    expect(workflow).toContain("approve-fallback-xcode-build:");
+    expect(workflow).toContain("environment: ${{ format('{0}@ios-build-xcode', inputs.environment_prefix) }}");
+    expect(workflow).toContain("approve-primary-github-actions-build:");
+    expect(workflow).toContain("approve-fallback-github-actions-build:");
     expect(workflow).toContain("environment: ${{ format('{0}@ios-build-gha', inputs.environment_prefix) }}");
+    expect(workflow).toContain("primary_build_path");
+    expect(workflow).toContain("repo_visibility");
+    expect(workflow).toContain("effective_repo_visibility");
     expect(workflow).toContain("backup_build_eligible");
+    expect(workflow).toContain('if [ "$FALLBACK_USED" = "true" ]; then');
+    expect(workflow).toContain("- name: Report GitHub Actions iOS placeholder status");
+    expect(workflow).toContain("- name: Report GitHub Actions fallback placeholder status");
     expect(workflow).toContain("- name: Validate Xcode Cloud configuration");
     expect(workflow).toContain("- name: Trigger Xcode Cloud build");
-    expect(workflow).toContain("fallback-placeholder");
+    expect(workflow).toContain("primary-github-actions-build");
+    expect(workflow).toContain("primary-or-fallback-xcode-cloud");
+    expect(workflow).toContain("fallback-github-actions-build");
+    expect(workflow).toContain("the workflow will not ask for another backup path in this run");
     expect(workflow).not.toContain("-fallback@");
     expect(workflow).toContain("bun run repo-scripts trigger-xcode-cloud-build");
     expect(workflow).not.toContain("This is the placeholder iOS build step.");

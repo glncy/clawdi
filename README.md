@@ -83,7 +83,8 @@ The updates worker also needs its project mapping in `apps/updates-worker/src/in
 - `APP_STORE_CONNECT_ISSUER_ID` repository GitHub secret for App Store Connect API access
 - `APP_STORE_CONNECT_KEY_ID` repository GitHub secret for App Store Connect API access
 - `APP_STORE_CONNECT_PRIVATE_KEY` repository GitHub secret for App Store Connect API access
-- `app-mobile@ios-build` GitHub Environment with required reviewers for iOS build approval
+- `app-mobile@ios-build-xcode` GitHub Environment with required reviewers for Xcode Cloud iOS build approval
+- `app-mobile@ios-build-gha` GitHub Environment with required reviewers for GitHub Actions iOS build approval
 
 ## Upstream Sync
 

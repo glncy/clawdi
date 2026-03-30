@@ -3,15 +3,24 @@ name: "🍎 iOS Build"
 on:
   workflow_call:
     outputs:
+      backup_build_eligible:
+        description: Whether the backup path was eligible for the iOS build.
+        value: ${{ jobs.finalize.outputs.backup_build_eligible }}
       build_path:
         description: Final build path selected for the iOS build.
         value: ${{ jobs.finalize.outputs.build_path }}
-      backup_build_eligible:
-        description: Whether the backup GitHub build path was eligible.
-        value: ${{ jobs.finalize.outputs.backup_build_eligible }}
+      effective_repo_visibility:
+        description: Effective repository visibility after applying overrides.
+        value: ${{ jobs.finalize.outputs.effective_repo_visibility }}
       fallback_reason:
-        description: Reason the backup GitHub fallback path was selected or skipped.
+        description: Reason the backup path was selected or skipped.
         value: ${{ jobs.finalize.outputs.fallback_reason }}
+      primary_build_path:
+        description: Primary build path selected from repository visibility.
+        value: ${{ jobs.finalize.outputs.primary_build_path }}
+      repo_visibility:
+        description: Repository visibility detected from GitHub context.
+        value: ${{ jobs.finalize.outputs.repo_visibility }}
       xcode_cloud_status:
         description: Xcode Cloud trigger status.
         value: ${{ jobs.finalize.outputs.xcode_cloud_status }}
@@ -37,6 +46,11 @@ on:
         description: Commit SHA associated with the build
         required: true
         type: string
+      repository_visibility_override:
+        description: Optional override for repository visibility (public or private)
+        required: false
+        default: ""
+        type: string
   workflow_dispatch:
     inputs:
       app_label:
@@ -60,11 +74,50 @@ on:
         description: Commit SHA associated with the build
         required: false
         type: string
+      repository_visibility_override:
+        description: Optional override for repository visibility (public or private)
+        required: false
+        default: ""
+        type: string
 
 jobs:
-  approve-ios-build:
-    name: ${{ format('✅ [{0}] Approve iOS Build', inputs.app_label || inputs.app_path) }}
-    environment: ${{ format('{0}@ios-build', inputs.environment_prefix) }}
+  resolve-build-strategy:
+    name: ${{ format('🧭 [{0}] Resolve iOS Build Strategy', inputs.app_label || inputs.app_path) }}
+    runs-on: ubuntu-latest
+    outputs:
+      effective_repo_visibility: ${{ steps.resolve.outputs.effective_repo_visibility }}
+      primary_build_path: ${{ steps.resolve.outputs.primary_build_path }}
+      repo_visibility: ${{ steps.resolve.outputs.repo_visibility }}
+    steps:
+      - name: Resolve repository visibility and primary path
+        id: resolve
+        shell: bash
+        run: |
+          REPO_VISIBILITY="public"
+          if [ "${{ github.event.repository.private && 'true' || 'false' }}" = "true" ]; then
+            REPO_VISIBILITY="private"
+          fi
+
+          EFFECTIVE_REPO_VISIBILITY="$REPO_VISIBILITY"
+          OVERRIDE="${{ inputs.repository_visibility_override }}"
+          if [ "$OVERRIDE" = "public" ] || [ "$OVERRIDE" = "private" ]; then
+            EFFECTIVE_REPO_VISIBILITY="$OVERRIDE"
+          fi
+
+          PRIMARY_BUILD_PATH="xcode_cloud"
+          if [ "$EFFECTIVE_REPO_VISIBILITY" = "public" ]; then
+            PRIMARY_BUILD_PATH="github_actions"
+          fi
+
+          echo "repo_visibility=$REPO_VISIBILITY" >> "$GITHUB_OUTPUT"
+          echo "effective_repo_visibility=$EFFECTIVE_REPO_VISIBILITY" >> "$GITHUB_OUTPUT"
+          echo "primary_build_path=$PRIMARY_BUILD_PATH" >> "$GITHUB_OUTPUT"
+
+  approve-primary-github-actions-build:
+    name: ${{ format('✅ [{0}] Approve GitHub Actions iOS Build', inputs.app_label || inputs.app_path) }}
+    needs: resolve-build-strategy
+    if: needs.resolve-build-strategy.outputs.primary_build_path == 'github_actions'
+    environment: ${{ format('{0}@ios-build-gha', inputs.environment_prefix) }}
     runs-on: ubuntu-latest
     outputs:
       approval_environment: ${{ steps.context.outputs.environment }}
@@ -73,17 +126,81 @@ jobs:
         id: context
         shell: bash
         run: |
-          echo "environment=${{ inputs.environment_prefix }}@ios-build" >> "$GITHUB_OUTPUT"
+          echo "environment=${{ inputs.environment_prefix }}@ios-build-gha" >> "$GITHUB_OUTPUT"
 
-  trigger-xcode-cloud:
+  primary-github-actions-build:
+    name: ${{ format('🏗️ [{0}] GitHub Actions iOS Build', inputs.app_label || inputs.app_path) }}
+    needs: [approve-primary-github-actions-build, resolve-build-strategy]
+    if: needs.resolve-build-strategy.outputs.primary_build_path == 'github_actions'
+    runs-on: ubuntu-latest
+    outputs:
+      backup_build_eligible: ${{ steps.report.outputs.backup_build_eligible }}
+      build_path: ${{ steps.report.outputs.build_path }}
+      fallback_reason: ${{ steps.report.outputs.fallback_reason }}
+      github_actions_status: ${{ steps.report.outputs.github_actions_status }}
+    steps:
+      - name: Report GitHub Actions iOS placeholder status
+        id: report
+        shell: bash
+        run: |
+          echo "GitHub Actions is selected as the primary iOS path for public repositories."
+          echo "The GitHub Actions iOS path is still placeholder-only, so Xcode Cloud can be used once as fallback."
+          echo "backup_build_eligible=true" >> "$GITHUB_OUTPUT"
+          echo "build_path=github_actions" >> "$GITHUB_OUTPUT"
+          echo "fallback_reason=GitHub Actions iOS path is selected first for public repositories, but the path is still placeholder-only." >> "$GITHUB_OUTPUT"
+          echo "github_actions_status=placeholder_only" >> "$GITHUB_OUTPUT"
+
+  approve-fallback-xcode-build:
+    name: ${{ format('✅ [{0}] Approve Xcode Cloud Fallback', inputs.app_label || inputs.app_path) }}
+    needs: [primary-github-actions-build, resolve-build-strategy]
+    if: |
+      needs.resolve-build-strategy.outputs.primary_build_path == 'github_actions' &&
+      needs.primary-github-actions-build.outputs.backup_build_eligible == 'true'
+    environment: ${{ format('{0}@ios-build-xcode', inputs.environment_prefix) }}
+    runs-on: ubuntu-latest
+    outputs:
+      approval_environment: ${{ steps.context.outputs.environment }}
+    steps:
+      - name: Record approval context
+        id: context
+        shell: bash
+        run: |
+          echo "environment=${{ inputs.environment_prefix }}@ios-build-xcode" >> "$GITHUB_OUTPUT"
+
+  approve-primary-xcode-build:
+    name: ${{ format('✅ [{0}] Approve Xcode Cloud Build', inputs.app_label || inputs.app_path) }}
+    needs: resolve-build-strategy
+    if: needs.resolve-build-strategy.outputs.primary_build_path == 'xcode_cloud'
+    environment: ${{ format('{0}@ios-build-xcode', inputs.environment_prefix) }}
+    runs-on: ubuntu-latest
+    outputs:
+      approval_environment: ${{ steps.context.outputs.environment }}
+    steps:
+      - name: Record approval context
+        id: context
+        shell: bash
+        run: |
+          echo "environment=${{ inputs.environment_prefix }}@ios-build-xcode" >> "$GITHUB_OUTPUT"
+
+  primary-or-fallback-xcode-cloud:
     name: ${{ format('🍎 [{0}] Trigger Xcode Cloud Build', inputs.app_label || inputs.app_path) }}
-    needs: approve-ios-build
+    needs:
+      - approve-fallback-xcode-build
+      - approve-primary-xcode-build
+      - primary-github-actions-build
+      - resolve-build-strategy
+    if: |
+      needs.resolve-build-strategy.outputs.primary_build_path == 'xcode_cloud' ||
+      (
+        needs.resolve-build-strategy.outputs.primary_build_path == 'github_actions' &&
+        needs.primary-github-actions-build.outputs.backup_build_eligible == 'true'
+      )
     environment: ${{ format('{0}@{1}', inputs.environment_prefix, startsWith(inputs.head_branch, format('{0}@', inputs.environment_prefix)) && 'production' || 'main') }}
     runs-on: ubuntu-latest
     outputs:
+      backup_build_eligible: ${{ steps.trigger_xcode_cloud.outputs.backup_build_eligible }}
       build_run_api_url: ${{ steps.trigger_xcode_cloud.outputs.build_run_api_url }}
       build_run_id: ${{ steps.trigger_xcode_cloud.outputs.build_run_id }}
-      backup_build_eligible: ${{ steps.trigger_xcode_cloud.outputs.backup_build_eligible }}
       fallback_reason: ${{ steps.trigger_xcode_cloud.outputs.reason }}
       git_reference_id: ${{ steps.trigger_xcode_cloud.outputs.git_reference_id }}
       git_reference_kind: ${{ steps.trigger_xcode_cloud.outputs.git_reference_kind }}
@@ -175,10 +292,12 @@ jobs:
           echo "${{ steps.trigger_xcode_cloud.outputs.reason }}" >&2
           exit 1
 
-  approve-github-fallback:
-    name: ${{ format('✅ [{0}] Approve GitHub Backup Build', inputs.app_label || inputs.app_path) }}
-    needs: trigger-xcode-cloud
-    if: needs.trigger-xcode-cloud.outputs.backup_build_eligible == 'true'
+  approve-fallback-github-actions-build:
+    name: ${{ format('✅ [{0}] Approve GitHub Actions Fallback', inputs.app_label || inputs.app_path) }}
+    needs: [primary-or-fallback-xcode-cloud, resolve-build-strategy]
+    if: |
+      needs.resolve-build-strategy.outputs.primary_build_path == 'xcode_cloud' &&
+      needs.primary-or-fallback-xcode-cloud.outputs.backup_build_eligible == 'true'
     environment: ${{ format('{0}@ios-build-gha', inputs.environment_prefix) }}
     runs-on: ubuntu-latest
     outputs:
@@ -190,33 +309,46 @@ jobs:
         run: |
           echo "environment=${{ inputs.environment_prefix }}@ios-build-gha" >> "$GITHUB_OUTPUT"
 
-  fallback-placeholder:
-    name: ${{ format('🛟 [{0}] Approved GitHub Fallback', inputs.app_label || inputs.app_path) }}
-    needs: [approve-github-fallback, trigger-xcode-cloud]
-    if: needs.trigger-xcode-cloud.outputs.backup_build_eligible == 'true'
+  fallback-github-actions-build:
+    name: ${{ format('🛟 [{0}] GitHub Actions Fallback', inputs.app_label || inputs.app_path) }}
+    needs: [approve-fallback-github-actions-build, primary-or-fallback-xcode-cloud, resolve-build-strategy]
+    if: |
+      needs.resolve-build-strategy.outputs.primary_build_path == 'xcode_cloud' &&
+      needs.primary-or-fallback-xcode-cloud.outputs.backup_build_eligible == 'true'
     runs-on: ubuntu-latest
     outputs:
       build_path: ${{ steps.report.outputs.build_path }}
-      fallback_approved: ${{ steps.report.outputs.fallback_approved }}
+      github_actions_status: ${{ steps.report.outputs.github_actions_status }}
     steps:
-      - name: Placeholder GitHub fallback build
+      - name: Report GitHub Actions fallback placeholder status
         id: report
         shell: bash
         run: |
-          echo "Fallback path approved for ${{ inputs.app_label || inputs.app_path }}."
-          echo "This placeholder job confirms the GitHub backup path was selected after Xcode Cloud could not start."
-          echo "build_path=fallback_placeholder" >> "$GITHUB_OUTPUT"
-          echo "fallback_approved=true" >> "$GITHUB_OUTPUT"
+          echo "GitHub Actions is running as the fallback iOS path after Xcode Cloud could not start."
+          echo "The GitHub Actions iOS path is still placeholder-only and will not attempt another fallback."
+          echo "build_path=github_actions" >> "$GITHUB_OUTPUT"
+          echo "github_actions_status=placeholder_only" >> "$GITHUB_OUTPUT"
 
   finalize:
     name: ${{ format('📝 [{0}] Finalize iOS Build Result', inputs.app_label || inputs.app_path) }}
     if: always()
-    needs: [approve-ios-build, trigger-xcode-cloud, approve-github-fallback, fallback-placeholder]
+    needs:
+      - approve-fallback-github-actions-build
+      - approve-fallback-xcode-build
+      - approve-primary-github-actions-build
+      - approve-primary-xcode-build
+      - fallback-github-actions-build
+      - primary-github-actions-build
+      - primary-or-fallback-xcode-cloud
+      - resolve-build-strategy
     runs-on: ubuntu-latest
     outputs:
-      build_path: ${{ steps.outputs.outputs.build_path }}
       backup_build_eligible: ${{ steps.outputs.outputs.backup_build_eligible }}
+      build_path: ${{ steps.outputs.outputs.build_path }}
+      effective_repo_visibility: ${{ steps.outputs.outputs.effective_repo_visibility }}
       fallback_reason: ${{ steps.outputs.outputs.fallback_reason }}
+      primary_build_path: ${{ steps.outputs.outputs.primary_build_path }}
+      repo_visibility: ${{ steps.outputs.outputs.repo_visibility }}
       xcode_cloud_status: ${{ steps.outputs.outputs.xcode_cloud_status }}
     steps:
       - name: Compute final outputs
@@ -224,16 +356,44 @@ jobs:
         shell: bash
         run: |
           BUILD_PATH="failed"
-          if [ "${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}" = "started" ]; then
+          FALLBACK_USED="false"
+          if [ "${{ needs.primary-or-fallback-xcode-cloud.outputs.xcode_cloud_status }}" = "started" ]; then
             BUILD_PATH="xcode_cloud"
-          elif [ "${{ needs.fallback-placeholder.result }}" = "success" ]; then
-            BUILD_PATH="fallback_placeholder"
+          elif [ "${{ needs.fallback-github-actions-build.result }}" = "success" ]; then
+            BUILD_PATH="${{ needs.fallback-github-actions-build.outputs.build_path }}"
+          elif [ "${{ needs.primary-github-actions-build.result }}" = "success" ]; then
+            BUILD_PATH="${{ needs.primary-github-actions-build.outputs.build_path }}"
+          fi
+
+          if [ "${{ needs.resolve-build-strategy.outputs.primary_build_path }}" = "github_actions" ] && [ "${{ needs.primary-or-fallback-xcode-cloud.result }}" != "skipped" ]; then
+            FALLBACK_USED="true"
+          fi
+
+          if [ "${{ needs.resolve-build-strategy.outputs.primary_build_path }}" = "xcode_cloud" ] && [ "${{ needs.fallback-github-actions-build.result }}" != "skipped" ]; then
+            FALLBACK_USED="true"
+          fi
+
+          BACKUP_BUILD_ELIGIBLE="${{ needs.primary-or-fallback-xcode-cloud.outputs.backup_build_eligible }}"
+          if [ -z "$BACKUP_BUILD_ELIGIBLE" ]; then
+            BACKUP_BUILD_ELIGIBLE="${{ needs.primary-github-actions-build.outputs.backup_build_eligible }}"
+          fi
+
+          if [ "$FALLBACK_USED" = "true" ]; then
+            BACKUP_BUILD_ELIGIBLE="false"
+          fi
+
+          FALLBACK_REASON="${{ needs.primary-or-fallback-xcode-cloud.outputs.fallback_reason }}"
+          if [ -z "$FALLBACK_REASON" ]; then
+            FALLBACK_REASON="${{ needs.primary-github-actions-build.outputs.fallback_reason }}"
           fi
 
           echo "build_path=$BUILD_PATH" >> "$GITHUB_OUTPUT"
-          echo "backup_build_eligible=${{ needs.trigger-xcode-cloud.outputs.backup_build_eligible }}" >> "$GITHUB_OUTPUT"
-          echo "fallback_reason=${{ needs.trigger-xcode-cloud.outputs.fallback_reason }}" >> "$GITHUB_OUTPUT"
-          echo "xcode_cloud_status=${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}" >> "$GITHUB_OUTPUT"
+          echo "backup_build_eligible=$BACKUP_BUILD_ELIGIBLE" >> "$GITHUB_OUTPUT"
+          echo "fallback_reason=$FALLBACK_REASON" >> "$GITHUB_OUTPUT"
+          echo "repo_visibility=${{ needs.resolve-build-strategy.outputs.repo_visibility }}" >> "$GITHUB_OUTPUT"
+          echo "effective_repo_visibility=${{ needs.resolve-build-strategy.outputs.effective_repo_visibility }}" >> "$GITHUB_OUTPUT"
+          echo "primary_build_path=${{ needs.resolve-build-strategy.outputs.primary_build_path }}" >> "$GITHUB_OUTPUT"
+          echo "xcode_cloud_status=${{ needs.primary-or-fallback-xcode-cloud.outputs.xcode_cloud_status }}" >> "$GITHUB_OUTPUT"
 
       - name: Write summary
         shell: bash
@@ -245,19 +405,33 @@ jobs:
             echo "- Path: ${{ inputs.app_path }}"
             echo "- Ref: ${{ inputs.head_branch || github.ref_name }}"
             echo "- Commit: ${{ inputs.head_sha || github.sha }}"
-            echo "- Approval environment: ${{ needs.approve-ios-build.outputs.approval_environment }}"
-            echo "- Approval result: ${{ needs.approve-ios-build.result }}"
-            echo "- Xcode Cloud status: ${{ needs.trigger-xcode-cloud.outputs.xcode_cloud_status }}"
-            echo "- Backup build eligible: ${{ needs.trigger-xcode-cloud.outputs.backup_build_eligible }}"
-            echo "- Fallback reason: ${{ needs.trigger-xcode-cloud.outputs.fallback_reason }}"
-            echo "- Backup approval environment: ${{ needs.approve-github-fallback.outputs.approval_environment }}"
-            echo "- Backup approval result: ${{ needs.approve-github-fallback.result }}"
-            echo "- Fallback approval result: ${{ needs.fallback-placeholder.result }}"
+            echo "- Repo visibility: ${{ needs.resolve-build-strategy.outputs.repo_visibility }}"
+            echo "- Effective repo visibility: ${{ needs.resolve-build-strategy.outputs.effective_repo_visibility }}"
+            echo "- Primary build path: ${{ needs.resolve-build-strategy.outputs.primary_build_path }}"
+            echo "- Primary GHA approval environment: ${{ needs.approve-primary-github-actions-build.outputs.approval_environment }}"
+            echo "- Primary GHA approval result: ${{ needs.approve-primary-github-actions-build.result }}"
+            echo "- Fallback GHA approval environment: ${{ needs.approve-fallback-github-actions-build.outputs.approval_environment }}"
+            echo "- Fallback GHA approval result: ${{ needs.approve-fallback-github-actions-build.result }}"
+            echo "- Primary Xcode approval environment: ${{ needs.approve-primary-xcode-build.outputs.approval_environment }}"
+            echo "- Primary Xcode approval result: ${{ needs.approve-primary-xcode-build.result }}"
+            echo "- Fallback Xcode approval environment: ${{ needs.approve-fallback-xcode-build.outputs.approval_environment }}"
+            echo "- Fallback Xcode approval result: ${{ needs.approve-fallback-xcode-build.result }}"
+            echo "- Xcode Cloud status: ${{ needs.primary-or-fallback-xcode-cloud.outputs.xcode_cloud_status }}"
+            echo "- Backup build eligible: ${{ steps.outputs.outputs.backup_build_eligible }}"
+            echo "- Fallback reason: ${{ steps.outputs.outputs.fallback_reason }}"
             echo "- Final build path: ${{ steps.outputs.outputs.build_path }}"
-            echo "- Workflow ID: ${{ needs.trigger-xcode-cloud.outputs.workflow_id }}"
-            echo "- Workflow name: ${{ needs.trigger-xcode-cloud.outputs.workflow_name }}"
-            echo "- Git reference ID: ${{ needs.trigger-xcode-cloud.outputs.git_reference_id }}"
-            echo "- Git reference kind: ${{ needs.trigger-xcode-cloud.outputs.git_reference_kind }}"
-            echo "- Build run ID: ${{ needs.trigger-xcode-cloud.outputs.build_run_id }}"
-            echo "- Build run API URL: ${{ needs.trigger-xcode-cloud.outputs.build_run_api_url }}"
+            echo "- Workflow ID: ${{ needs.primary-or-fallback-xcode-cloud.outputs.workflow_id }}"
+            echo "- Workflow name: ${{ needs.primary-or-fallback-xcode-cloud.outputs.workflow_name }}"
+            echo "- Git reference ID: ${{ needs.primary-or-fallback-xcode-cloud.outputs.git_reference_id }}"
+            echo "- Git reference kind: ${{ needs.primary-or-fallback-xcode-cloud.outputs.git_reference_kind }}"
+            echo "- Build run ID: ${{ needs.primary-or-fallback-xcode-cloud.outputs.build_run_id }}"
+            echo "- Build run API URL: ${{ needs.primary-or-fallback-xcode-cloud.outputs.build_run_api_url }}"
+
+            if [ "${{ needs.primary-github-actions-build.outputs.github_actions_status }}" = "placeholder_only" ] || [ "${{ needs.fallback-github-actions-build.outputs.github_actions_status }}" = "placeholder_only" ]; then
+              echo "- GitHub Actions note: placeholder-only path selected; no real iOS archive ran on GitHub Actions."
+            fi
+
+            if [ "${{ steps.outputs.outputs.backup_build_eligible }}" = "false" ] && { [ "${{ needs.primary-or-fallback-xcode-cloud.result }}" != "skipped" ] || [ "${{ needs.fallback-github-actions-build.result }}" != "skipped" ]; }; then
+              echo "- Fallback note: a secondary path was already attempted; the workflow will not ask for another backup path in this run."
+            fi
           } >> "$GITHUB_STEP_SUMMARY"
