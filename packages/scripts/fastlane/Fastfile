@@ -84,7 +84,7 @@ platform :ios do
       archive_path: archive_path,
       export_method: "app-store",
       export_options: {
-        signingStyle: "automatic",
+        signingStyle: "manual",
         stripSwiftSymbols: true,
         uploadSymbols: true,
       },
@@ -95,7 +95,7 @@ platform :ios do
         "-authenticationKeyPath #{auth_key_path.shellescape}",
         "-authenticationKeyID #{key_id.shellescape}",
         "-authenticationKeyIssuerID #{issuer_id.shellescape}",
-        "CODE_SIGN_STYLE=Automatic",
+        "CODE_SIGN_STYLE=Manual",
       ].join(" "),
       export_xcargs: [
         "-allowProvisioningUpdates",

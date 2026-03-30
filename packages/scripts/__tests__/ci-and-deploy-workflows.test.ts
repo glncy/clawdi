@@ -189,6 +189,8 @@ describe("ci and deploy workflows", () => {
     expect(fastfile).toContain("app_identifier: app_identifier");
     expect(fastfile).toContain("build_app(");
     expect(fastfile).toContain('export_method: "app-store"');
+    expect(fastfile).toContain('signingStyle: "manual"');
+    expect(fastfile).toContain("CODE_SIGN_STYLE=Manual");
     expect(fastfile).toContain("upload_to_testflight(");
     expect(fastfile).not.toContain("appleTeamId");
   });
