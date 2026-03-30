@@ -192,7 +192,7 @@ describe("ci and deploy workflows", () => {
     expect(fastfile).toContain("provisioningProfiles: Actions.lane_context[SharedValues::MATCH_PROVISIONING_PROFILE_MAPPING]");
     expect(fastfile).toContain('signingStyle: "manual"');
     expect(fastfile).toContain("CODE_SIGN_STYLE=Manual");
-    expect(fastfile).toContain("DEVELOPMENT_TEAM=U5H755ZAHL");
+    expect(fastfile).toContain('CODE_SIGN_IDENTITY=\\"Apple Distribution\\"');
     expect(fastfile).toContain("upload_to_testflight(");
     expect(fastfile).not.toContain("appleTeamId");
   });

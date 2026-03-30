@@ -97,7 +97,7 @@ platform :ios do
         "-authenticationKeyID #{key_id.shellescape}",
         "-authenticationKeyIssuerID #{issuer_id.shellescape}",
         "CODE_SIGN_STYLE=Manual",
-        "DEVELOPMENT_TEAM=U5H755ZAHL",
+        "CODE_SIGN_IDENTITY=\"Apple Distribution\"",
       ].join(" "),
       export_xcargs: [
         "-allowProvisioningUpdates",
