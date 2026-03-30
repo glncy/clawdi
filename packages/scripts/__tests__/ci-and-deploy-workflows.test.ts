@@ -192,7 +192,7 @@ describe("ci and deploy workflows", () => {
     expect(fastfile).toContain("-authenticationKeyID");
     expect(fastfile).toContain("-authenticationKeyIssuerID");
     expect(fastfile).toContain("xcargs: auth_flags");
-    expect(fastfile).toContain("export_xcargs: auth_flags");
+    expect(fastfile).not.toContain("export_xcargs");
     expect(fastfile).toContain("upload_to_testflight(");
     expect(fastfile).not.toContain("appleTeamId");
     expect(fastfile).not.toContain("MATCH_GIT_URL");

@@ -56,7 +56,6 @@ platform :ios do
       output_directory: File.join(Dir.tmpdir, "exported-ios"),
       output_name: "#{scheme}.ipa",
       xcargs: auth_flags,
-      export_xcargs: auth_flags,
       skip_profile_detection: true,
     )
 
