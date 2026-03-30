@@ -177,16 +177,17 @@ describe("ci and deploy workflows", () => {
     expect(matchfile).toContain('type("appstore")');
     expect(matchfile).toContain('git_branch(ENV["MATCH_GIT_BRANCH"])');
     expect(fastfile).toContain("lane :ci_build");
-    expect(fastfile).toContain('repo_root = File.expand_path("../../..", __dir__)');
-    expect(fastfile).toContain('app_root = File.expand_path(app_path, repo_root)');
+    expect(fastfile).toContain('ios_path = File.join(app_root, "ios")');
     expect(fastfile).toContain('workspaces = Dir[File.join(ios_path, "*.xcworkspace")]');
+    expect(fastfile).toContain('xcodeproj = Dir[File.join(ios_path, "*.xcodeproj")].first');
+    expect(fastfile).toContain("app_identifier = get_product_bundle_id(project_filepath: xcodeproj)");
     expect(fastfile).toContain('scheme = File.basename(workspace, ".xcworkspace")');
     expect(fastfile).toContain('setup_ci if ENV["CI"] == "true"');
     expect(fastfile).toContain("match(");
+    expect(fastfile).toContain("app_identifier: app_identifier");
     expect(fastfile).toContain("build_app(");
     expect(fastfile).toContain('export_method: "app-store"');
     expect(fastfile).toContain("upload_to_testflight(");
-    expect(fastfile).not.toContain("app.json");
     expect(fastfile).not.toContain("appleTeamId");
   });
 

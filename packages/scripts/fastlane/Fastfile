@@ -1,6 +1,7 @@
 require "fileutils"
 require "shellwords"
 require "tmpdir"
+require "json"
 
 default_platform(:ios)
 
@@ -12,9 +13,15 @@ platform :ios do
 
     repo_root = File.expand_path("../../..", __dir__)
     app_root = File.expand_path(app_path, repo_root)
+
     ios_path = File.join(app_root, "ios")
     workspaces = Dir[File.join(ios_path, "*.xcworkspace")]
+    xcodeproj = Dir[File.join(ios_path, "*.xcodeproj")].first
     UI.user_error!("Expected exactly one Xcode workspace in #{ios_path}, found #{workspaces.length}") unless workspaces.length == 1
+    UI.user_error!("Xcode project not found at #{ios_path}") if xcodeproj.nil?
+
+    app_identifier = get_product_bundle_id(project_filepath: xcodeproj)
+    UI.user_error!("app_identifier not found in Xcode project") if app_identifier.to_s.empty?
 
     workspace = workspaces.first
     scheme = File.basename(workspace, ".xcworkspace")
@@ -50,6 +57,7 @@ platform :ios do
     match(
       api_key: api_key,
       type: "appstore",
+      app_identifier: app_identifier,
       readonly: true,
       git_url: match_git_url,
       git_branch: ENV["MATCH_GIT_BRANCH"],
