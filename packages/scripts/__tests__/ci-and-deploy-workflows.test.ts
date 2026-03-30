@@ -179,10 +179,14 @@ describe("ci and deploy workflows", () => {
     expect(fastfile).toContain("lane :ci_build");
     expect(fastfile).toContain('ios_path = File.join(app_root, "ios")');
     expect(fastfile).toContain('workspaces = Dir[File.join(ios_path, "*.xcworkspace")]');
+    expect(fastfile).toContain('xcodeproj = Dir[File.join(ios_path, "*.xcodeproj")].first');
+    expect(fastfile).toContain('pbxproj_path = File.join(xcodeproj, "project.pbxproj")');
+    expect(fastfile).toContain("app_identifier = nil");
+    expect(fastfile).toContain("if line =~ /PRODUCT_BUNDLE_IDENTIFIER\\s*=\\s*([^;]+);/");
     expect(fastfile).toContain('scheme = File.basename(workspace, ".xcworkspace")');
     expect(fastfile).toContain('setup_ci if ENV["CI"] == "true"');
-    expect(fastfile).not.toContain("match(");
-    expect(fastfile).not.toContain("app_identifier =");
+    expect(fastfile).toContain("match(");
+    expect(fastfile).toContain("app_identifier: app_identifier");
     expect(fastfile).toContain("build_app(");
     expect(fastfile).toContain('export_method: "app-store"');
     expect(fastfile).toContain('signingStyle: "automatic"');

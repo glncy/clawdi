@@ -20,15 +20,30 @@ platform :ios do
     UI.user_error!("Expected exactly one Xcode workspace in #{ios_path}, found #{workspaces.length}") unless workspaces.length == 1
     UI.user_error!("Xcode project not found at #{ios_path}") if xcodeproj.nil?
 
+    # Extract app_identifier from the project.pbxproj
+    pbxproj_path = File.join(xcodeproj, "project.pbxproj")
+    UI.user_error!("project.pbxproj not found at #{pbxproj_path}") unless File.exist?(pbxproj_path)
+    # Read the file and find the first line matching PRODUCT_BUNDLE_IDENTIFIER
+    app_identifier = nil
+    File.readlines(pbxproj_path).each do |line|
+      if line =~ /PRODUCT_BUNDLE_IDENTIFIER\s*=\s*([^;]+);/
+        app_identifier = $1.strip
+        break
+      end
+    end
+    UI.user_error!("app_identifier not found in project.pbxproj") if app_identifier.to_s.empty?
+
     workspace = workspaces.first
     scheme = File.basename(workspace, ".xcworkspace")
 
     key_id = ENV["APP_STORE_CONNECT_KEY_ID"]
     issuer_id = ENV["APP_STORE_CONNECT_ISSUER_ID"]
     private_key = ENV["APP_STORE_CONNECT_PRIVATE_KEY"]
+    match_git_url = ENV["MATCH_GIT_URL"]
     UI.user_error!("APP_STORE_CONNECT_KEY_ID is required") if key_id.to_s.empty?
     UI.user_error!("APP_STORE_CONNECT_ISSUER_ID is required") if issuer_id.to_s.empty?
     UI.user_error!("APP_STORE_CONNECT_PRIVATE_KEY is required") if private_key.to_s.empty?
+    UI.user_error!("MATCH_GIT_URL is required") if match_git_url.to_s.empty?
     private_key_content = private_key.gsub("\\n", "\n")
 
     auth_key_dir = File.join(Dir.tmpdir, "fastlane-auth-keys")
@@ -49,6 +64,17 @@ platform :ios do
 
     setup_ci if ENV["CI"] == "true"
 
+    match(
+      api_key: api_key,
+      type: "appstore",
+      app_identifier: app_identifier,
+      readonly: true,
+      git_url: match_git_url,
+      git_branch: ENV["MATCH_GIT_BRANCH"],
+      shallow_clone: true,
+      clone_branch_directly: true,
+    )
+
     build_app(
       workspace: workspace,
       scheme: scheme,
@@ -57,6 +83,7 @@ platform :ios do
       destination: "generic/platform=iOS",
       archive_path: archive_path,
       export_method: "app-store",
+      api_key: api_key,
       export_options: {
         signingStyle: "automatic",
         stripSwiftSymbols: true,
