@@ -183,14 +183,19 @@ describe("ci and deploy workflows", () => {
     expect(fastfile).toContain('setup_ci if ENV["CI"] == "true"');
     expect(fastfile).not.toContain("match(");
     expect(fastfile).toContain("build_app(");
-    expect(fastfile).toContain('export_method: "app-store-connect"');
+    expect(fastfile).toContain('export_method: "app-store"');
     expect(fastfile).toContain('signingStyle: "automatic"');
+    expect(fastfile).toContain('signingCertificate: "Apple Distribution"');
+    expect(fastfile).toContain("skip_profile_detection: true");
     expect(fastfile).toContain("-allowProvisioningUpdates");
     expect(fastfile).toContain("-authenticationKeyPath");
     expect(fastfile).toContain("-authenticationKeyID");
     expect(fastfile).toContain("-authenticationKeyIssuerID");
+    expect(fastfile).toContain("xcargs: auth_flags");
+    expect(fastfile).toContain("export_xcargs: auth_flags");
     expect(fastfile).toContain("upload_to_testflight(");
     expect(fastfile).not.toContain("appleTeamId");
+    expect(fastfile).not.toContain("MATCH_GIT_URL");
   });
 
   it("documents the iOS CI prep script in the native project", async () => {
