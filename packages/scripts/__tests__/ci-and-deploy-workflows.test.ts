@@ -42,7 +42,16 @@ describe("ci and deploy workflows", () => {
       expect(jobMatch).not.toBeNull();
       expect(jobMatch?.[1]).toContain("uses: ./.github/workflows/ios-build.yml");
       expect(jobMatch?.[1]).toContain("secrets: inherit");
+      expect(jobMatch?.[1]).toContain("build_profile:");
     }
+  });
+
+  it("passes the production build profile to the iOS build workflow", async () => {
+    const workflow = await readWorkflow("mobile-production-app.yml");
+    const jobMatch = workflow.match(/(^  ios-build:\n[\s\S]*?)(?=^  [a-z0-9-]+:|\Z)/m);
+
+    expect(jobMatch).not.toBeNull();
+    expect(jobMatch?.[1]).toContain("build_profile: production");
   });
 
   it("adds non-canceling concurrency to release workflows", async () => {
@@ -91,7 +100,10 @@ describe("ci and deploy workflows", () => {
     };
 
     expect(workflow).toContain("resolve-build-strategy:");
+    expect(workflow).toContain("build_profile:");
+    expect(workflow).toContain("ios_primary_builder:");
     expect(workflow).toContain("repository_visibility_override:");
+    expect(workflow).toContain('Accepted values: github_actions, xcode_cloud');
     expect(workflow).toContain("approve-primary-xcode-build:");
     expect(workflow).toContain("approve-fallback-xcode-build:");
     expect(parsedWorkflow.jobs["approve-primary-xcode-build"]?.environment).toBe(
@@ -156,6 +168,8 @@ describe("ci and deploy workflows", () => {
     expect(action).toContain("Cache CocoaPods");
     expect(action).toContain("Build workspace packages");
     expect(action).toContain("Verify Expo iOS autolinking");
+    expect(action).toContain("Prepare Expo config for build profile");
+    expect(action).toContain("prepare-expo-production-config");
     expect(action).toContain("Generate iOS native project");
     expect(action).toContain("ruby/setup-ruby@v1");
     expect(action).toContain("Cache Fastlane gems");
@@ -202,6 +216,8 @@ describe("ci and deploy workflows", () => {
     expect(script).toContain("bun run build");
     expect(script).toContain("expo-modules-autolinking react-native-config --json --platform ios");
     expect(script).toContain("bun x expo prebuild -p ios --clean");
+    expect(script).toContain("BUILD_PROFILE");
+    expect(script).toContain("prepare-expo-production-config");
     expect(script).not.toContain("pod install");
   });
 });

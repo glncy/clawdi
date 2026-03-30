@@ -8,6 +8,9 @@ inputs:
     description: "Environment file contents to write for the app"
     required: false
     default: ""
+  build_profile:
+    description: "Expo build profile (e.g. internal, preview, production)"
+    required: true
   app_store_connect_issuer_id:
     description: "App Store Connect API issuer ID"
     required: true
@@ -102,6 +105,13 @@ runs:
       run: |
         export CI=1
         node --no-warnings --eval "require('expo/bin/autolinking')" expo-modules-autolinking react-native-config --json --platform ios > /dev/null
+
+    - name: Prepare Expo config for build profile
+      if: inputs.build_profile == 'production'
+      shell: bash
+      run: |
+        bun run repo-scripts prepare-expo-production-config \
+          --path "${{ inputs.app_path }}"
 
     - name: Generate iOS native project
       shell: bash

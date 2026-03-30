@@ -34,6 +34,10 @@ on:
         description: App path associated with the build
         required: true
         type: string
+      build_profile:
+        description: Expo build profile to use for the iOS build (e.g. internal, preview, production)
+        required: true
+        type: string
       environment_prefix:
         description: Prefix for the GitHub Environment name
         required: true
@@ -45,6 +49,11 @@ on:
       head_sha:
         description: Commit SHA associated with the build
         required: true
+        type: string
+      ios_primary_builder:
+        description: Override the primary iOS build system (github_actions or xcode_cloud)
+        required: false
+        default: ""
         type: string
       repository_visibility_override:
         description: Optional override for repository visibility (public or private)
@@ -62,6 +71,10 @@ on:
         description: App path associated with the build
         required: true
         type: string
+      build_profile:
+        description: Expo build profile to use for the iOS build (e.g. internal, preview, production)
+        required: true
+        type: string
       environment_prefix:
         description: Prefix for the GitHub Environment name
         required: true
@@ -73,6 +86,11 @@ on:
       head_sha:
         description: Commit SHA associated with the build
         required: false
+        type: string
+      ios_primary_builder:
+        description: Override the primary iOS build system (github_actions or xcode_cloud)
+        required: false
+        default: ""
         type: string
       repository_visibility_override:
         description: Optional override for repository visibility (public or private)
@@ -104,9 +122,18 @@ jobs:
             EFFECTIVE_REPO_VISIBILITY="$OVERRIDE"
           fi
 
-          PRIMARY_BUILD_PATH="xcode_cloud"
-          if [ "$EFFECTIVE_REPO_VISIBILITY" = "public" ]; then
-            PRIMARY_BUILD_PATH="github_actions"
+          IOS_PRIMARY_BUILDER="${{ inputs.ios_primary_builder }}"
+          if [ -n "$IOS_PRIMARY_BUILDER" ]; then
+            if [ "$IOS_PRIMARY_BUILDER" != "github_actions" ] && [ "$IOS_PRIMARY_BUILDER" != "xcode_cloud" ]; then
+              echo "::error::Invalid ios_primary_builder value '$IOS_PRIMARY_BUILDER'. Accepted values: github_actions, xcode_cloud."
+              exit 1
+            fi
+            PRIMARY_BUILD_PATH="$IOS_PRIMARY_BUILDER"
+          else
+            PRIMARY_BUILD_PATH="xcode_cloud"
+            if [ "$EFFECTIVE_REPO_VISIBILITY" = "public" ]; then
+              PRIMARY_BUILD_PATH="github_actions"
+            fi
           fi
 
           echo "repo_visibility=$REPO_VISIBILITY" >> "$GITHUB_OUTPUT"
@@ -151,6 +178,7 @@ jobs:
         uses: ./.github/actions/ios-build-gha
         with:
           app_path: ${{ inputs.app_path }}
+          build_profile: ${{ inputs.build_profile }}
           env_file: ${{ vars.ENV_FILE }}
           app_store_connect_issuer_id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           app_store_connect_key_id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
@@ -368,6 +396,7 @@ jobs:
         uses: ./.github/actions/ios-build-gha
         with:
           app_path: ${{ inputs.app_path }}
+          build_profile: ${{ inputs.build_profile }}
           env_file: ${{ vars.ENV_FILE }}
           app_store_connect_issuer_id: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
           app_store_connect_key_id: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}

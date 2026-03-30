@@ -28,17 +28,30 @@ The reusable iOS workflow in:
 
 does the following:
 
-1. resolves repository visibility from GitHub context
-2. applies an optional visibility override input when provided
-3. selects the primary iOS path from that effective visibility
-4. waits on the protected environment for the selected path
-5. runs the selected primary path and, if needed, pauses on the second path before fallback
-6. records workflow/build metadata in the workflow summary
+1. checks for an explicit `ios_primary_builder` input
+2. if not set, resolves repository visibility from GitHub context
+3. applies an optional visibility override input when provided
+4. selects the primary iOS path from the builder override or effective visibility
+5. waits on the protected environment for the selected path
+6. runs the selected primary path and, if needed, pauses on the second path before fallback
+7. records workflow/build metadata in the workflow summary
 
-The path-selection rules are:
+The path-selection priority is:
 
-- public repositories: `github_actions`
-- private repositories: `xcode_cloud`
+1. `ios_primary_builder` input (if set and valid)
+2. repository visibility (public → `github_actions`, private → `xcode_cloud`)
+
+If `ios_primary_builder` is set to an invalid value, the workflow fails with an error listing the accepted values.
+
+### Builder Override
+
+The `ios_primary_builder` input allows overriding the primary build system per environment. Callers pass it from the `IOS_PRIMARY_BUILDER` GitHub repository or environment variable:
+
+- `github_actions` — use GitHub Actions as the primary path
+- `xcode_cloud` — use Xcode Cloud as the primary path
+- (empty) — fall back to repository visibility detection
+
+### Approval Environments
 
 The Xcode Cloud approval environment is:
 
@@ -48,6 +61,8 @@ The GitHub Actions approval environment is:
 
 - `app-mobile@ios-build-gha`
 
+### Visibility Override
+
 The workflow also accepts:
 
 - `repository_visibility_override`
@@ -56,6 +71,8 @@ with supported values:
 
 - `public`
 - `private`
+
+This is only used when `ios_primary_builder` is not set.
 
 ### GitHub Actions Path
 
@@ -141,6 +158,7 @@ Store these as GitHub Environment variables on the stage environments that execu
 - `ENV_FILE` when mobile builds need environment values written into the app
 - `IOS_MATCH_GIT_URL` for the private Fastlane `match` signing repository
 - `IOS_MATCH_GIT_BRANCH` when the signing repo uses a branch other than `ios`
+- `IOS_PRIMARY_BUILDER` (optional) override the primary iOS build system (`github_actions` or `xcode_cloud`); when not set, the workflow defaults to repository visibility detection
 
 ### Protected Environments
 
