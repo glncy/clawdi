@@ -177,6 +177,8 @@ describe("ci and deploy workflows", () => {
     expect(matchfile).toContain('type("appstore")');
     expect(matchfile).toContain('git_branch(ENV["MATCH_GIT_BRANCH"])');
     expect(fastfile).toContain("lane :ci_build");
+    expect(fastfile).toContain('repo_root = File.expand_path("../../..", __dir__)');
+    expect(fastfile).toContain('app_root = File.expand_path(app_path, repo_root)');
     expect(fastfile).toContain('workspaces = Dir[File.join(ios_path, "*.xcworkspace")]');
     expect(fastfile).toContain('scheme = File.basename(workspace, ".xcworkspace")');
     expect(fastfile).toContain('setup_ci if ENV["CI"] == "true"');
