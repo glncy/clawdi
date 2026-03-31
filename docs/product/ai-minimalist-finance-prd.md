@@ -1,8 +1,8 @@
-# PRD: Clawdi — AI-First Minimalist Finance App
+# PRD: clawdi — AI-First Minimalist Finance App
 
 ## 1. Objective
 
-Build an open-source, privacy-first mobile finance app that eliminates budgeting friction through natural language input, predictive forecasting, and hyper-minimalist design. Clawdi turns every major competitor weakness into a feature.
+Build an open-source, privacy-first mobile finance app that eliminates budgeting friction through natural language input, predictive forecasting, and hyper-minimalist design. clawdi turns every major competitor weakness into a feature.
 
 ## 2. Tagline Options
 
@@ -31,11 +31,11 @@ Build an open-source, privacy-first mobile finance app that eliminates budgeting
 - **Data Ownership:** "As a user, I want to export all my data or delete everything with one tap."
 - **Transparency:** "As a user, I want to see the app's source code so I can verify it doesn't send my data anywhere."
 
-## 5. Problems Clawdi Solves
+## 5. Problems clawdi Solves
 
 ### What's Wrong with Existing Finance Apps
 
-| Problem | Examples | How Clawdi Solves It |
+| Problem | Examples | How clawdi Solves It |
 |---------|----------|---------------------|
 | **Subscription pricing irony** | Brand A: $50→$109/yr. Brand B: $99/yr. Brand C: $18/mo for bank sync. | One-time purchase. "We practice what we preach." |
 | **Broken bank sync** | Third-party aggregator connections break weekly. Transactions vanish. Balances wrong. | No bank sync. No third-party aggregators. AI-powered manual entry. |
@@ -52,11 +52,11 @@ Build an open-source, privacy-first mobile finance app that eliminates budgeting
 
 - 30% day-1 retention, 11.6% by day-30 for finance apps
 - 68% of consumers abandon financial apps
-- Users literally say: "Just tell me what I can safely spend today" — that's Clawdi's entire hero screen
+- Users literally say: "Just tell me what I can safely spend today" — that's clawdi's entire hero screen
 
 ## 6. Competitive Positioning
 
-| Feature | Traditional Finance Apps | Clawdi |
+| Feature | Traditional Finance Apps | clawdi |
 |---------|-------------------|--------|
 | Data storage | Their servers | Your phone |
 | Input method | Forms & bank sync | Talk to it |

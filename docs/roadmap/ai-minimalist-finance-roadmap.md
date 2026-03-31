@@ -1,4 +1,4 @@
-# Roadmap: Clawdi — AI-First Minimalist Finance App
+# Roadmap: clawdi — AI-First Minimalist Finance App
 
 ## Phase 1: The Core — "Just Works" (7-Day Ship)
 

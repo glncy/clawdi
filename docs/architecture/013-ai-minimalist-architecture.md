@@ -8,7 +8,7 @@ Accepted
 
 The app needs to be unique and transparent in a crowded finance app market. Most finance apps rely on cloud sync, third-party bank aggregators, subscription pricing, and complex multi-screen UIs. Users report broken bank connections, privacy violations, overwhelming complexity, guilt-driven design, and subscription fatigue as their top pain points.
 
-Clawdi's competitive position: open-source, local-only, AI-powered, hyper-minimalist, one-time purchase.
+clawdi's competitive position: open-source, local-only, AI-powered, hyper-minimalist, one-time purchase.
 
 ## Decision
 
@@ -78,7 +78,7 @@ The primary metric is forward-looking ("Safe to Spend") rather than backward-loo
 
 - **"One Thumb" Rule:** Every daily action reachable with one thumb on a phone held in one hand.
 - **No onboarding:** App must be intuitive enough for a child or older adult without explanation.
-- **Rationale:** Fewer screens is the competitive moat. Every competitor adds screens over time. Clawdi goes the opposite direction.
+- **Rationale:** Fewer screens is the competitive moat. Every competitor adds screens over time. clawdi goes the opposite direction.
 
 ### 7. Notification System
 
