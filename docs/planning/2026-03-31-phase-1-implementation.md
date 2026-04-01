@@ -1,139 +1,182 @@
-# Implementation Plan: Phase 1 MVP — 7-Day Ship
+# Implementation Plan: Phase 1 — 7-Day Ship
 
 ## Tech Stack
 
 | Component     | Package                           | Purpose                                    |
 | ------------- | --------------------------------- | ------------------------------------------ |
 | Database      | `expo-sqlite` + `drizzle-orm`     | Local-first storage with type-safe schemas |
-| Local LLM     | `llama.rn` + Qwen 2.5 0.5B Q4_K_M | On-device transaction parsing              |
+| Local LLM     | `llama.rn` + Qwen 2.5 0.5B Q4_K_M | On-device expense parsing                 |
 | Voice STT     | `@jamsch/expo-speech-recognition` | Offline speech-to-text                     |
 | Icons         | `phosphor-react-native`           | Replace lucide-react-native                |
-| Notifications | `expo-notifications`              | Local reminders and alerts                 |
+| Notifications | `expo-notifications`              | Local reminders (max 3/day)                |
 | Device Info   | `expo-device`                     | RAM check for LLM capability               |
 | State         | `zustand`                         | Global state management                    |
 | Styling       | `uniwind` + HeroUI Native         | Tailwind-style + component library         |
 
-## Screen Architecture
+## App Architecture
 
-3 screens + 1 input modal. Daily usage = 1 screen + 1 modal.
+5 tabs + center raised add button (floating, not a tab):
 
-| Screen          | Contents                                                                                                       |
-| --------------- | -------------------------------------------------------------------------------------------------------------- |
-| **Home**        | Safe to Spend hero number, color-as-data background (green→amber→red), Bill Countdown list, floating input FAB |
-| **History**     | Transaction list + recurring bills (tabbed or segmented control), swipe to edit/delete                         |
-| **Settings**    | Premium status, notification preferences, export data, delete data, theme toggle, AI provider info             |
-| **Input Modal** | Bottom sheet overlay from any screen. Text field + voice button → AI parse → confirmation card → save          |
+```
+              [+ ADD] ← raised above tab bar, floating
+                 |
+[🏠 Home] [💰 Money] [🌿 Life] [☀️ Day] [❤️ People]
+```
+
+The "+" opens a context-aware quick-action bottom sheet.
+
+## Drizzle ORM Schemas
+
+```
+transactions: id, type (income/expense), amount, currency, item, category, date, note, createdAt, updatedAt
+recurrences: id, name, type (bill/subscription), amount, currency, category, frequency, nextDueDate, createdAt
+savings_goals: id, name, targetAmount, currentAmount, currency, targetDate, createdAt
+categories: id, name, icon, isDefault, createdAt
+moods: id, type (morning/night), rating (1-5), note, createdAt
+habits: id, name, icon, isActive, createdAt
+habit_logs: id, habitId, completedAt
+sleep_logs: id, sleepAt, wakeAt, createdAt
+priorities: id, text, type (must/win/overdue), date, completed, createdAt
+contacts: id, name, relationship, birthday, photo, lastTalkedAt, createdAt
+contact_notes: id, contactId, type (gift_idea/things_they_love/conversation), text, createdAt
+metadata: key, value (trialStartDate, income, dream, struggle, lifeCheckupScores)
+stress_logs: id, level (1-10), date, createdAt
+water_logs: id, date, completed
+sparks: id, text, domain, date, completed
+quick_list: id, text, completed, createdAt
+```
 
 ## Day-by-Day Breakdown
 
-### Day 1–2: Data Layer + Core Infrastructure
+### Day 0: Setup
 
 - [ ] Install and configure `drizzle-orm` with `expo-sqlite` driver
-- [ ] Define Drizzle schemas:
-  - `transactions`: id, amount, currency, item, category, date, createdAt, updatedAt
-  - `recurrences`: id, name, amount, currency, category, frequency, nextDueDate, createdAt
-  - `metadata`: key-value store (trialStartDate, balance, preferences)
-- [ ] Set up Drizzle migrations
-- [ ] Implement Safe to Spend calculation engine:
-  - `safeToSpend = (currentBalance - sumUpcomingBills30Days) / Math.max(1, daysRemaining)`
-- [ ] Multi-currency support (store currency code per transaction, display in user's preferred currency)
-- [ ] Device capability detection:
-  - `expo-device` → `Device.totalMemory`
-  - If `>= 4GB` → enable local LLM
-  - If `< 4GB` → default to structured manual input
+- [ ] Define all Drizzle schemas above with migrations
+- [ ] Set up 5-tab navigation skeleton with Expo Router
 - [ ] Install `phosphor-react-native`, remove `lucide-react-native`
+- [ ] Device capability detection (`expo-device` → `Device.totalMemory`)
+- [ ] Set up Zustand stores for each domain
 
-### Day 3–4: AI Parsing + Voice
+### Day 1: 🏠 Home + Onboarding
 
-- [ ] Install and configure `llama.rn` with Expo config plugin
-- [ ] Implement model download manager:
-  - Background download of Qwen 2.5 0.5B Q4_K_M (~491MB) on first launch
-  - Download progress UI
-  - Store model in app's document directory
-  - Skip download if device < 4GB RAM
-- [ ] Define JSON schema for transaction parsing output:
-  ```json
-  {
-    "item": "string",
-    "amount": "number",
-    "currency": "string (ISO 4217)",
-    "category": "string",
-    "date": "string (ISO 8601)"
-  }
-  ```
-- [ ] Implement grammar-constrained decoding with the JSON schema
-- [ ] Build parsing service with system prompt for financial transaction extraction
-- [ ] Install and configure `@jamsch/expo-speech-recognition`:
-  - Enable `requiresOnDeviceRecognition: true` for offline mode
-  - Wire up start/stop/result handlers
-- [ ] Build parsing confirmation UI:
-  - Show parsed fields (item, amount, currency, category, date)
-  - Allow user to edit any field before saving
-  - Save to SQLite via Drizzle
-- [ ] Build structured manual input fallback:
-  - Simple form: amount, description, currency picker, category picker, date picker
-  - Used when LLM not available
+- [ ] **First-install "Mirror" experience:**
+  - 5 slider questions (one per screen, large slider, one tap each)
+  - Result screen: names their reality in plain words
+  - "Until now." → positions clawdi as the answer
+- [ ] **3-question onboarding:**
+  - Monthly income (currency auto-detect or picker)
+  - What are you saving for? (selection)
+  - Biggest daily struggle? (selection)
+- [ ] **clawdi Score calculation engine:**
+  - Aggregate scores from all 6 domains (0-100)
+  - Initial score from Life Checkup sliders
+  - Weekly recalculation logic
+- [ ] **Home dashboard (read-only):**
+  - clawdi Score hero number with 6-domain bars
+  - Budget left today
+  - Habits progress ring (X/Y)
+  - Today's top priority
+  - clawdi Spark (daily challenge from weakest domain)
+  - Relationship nudge
+  - Personalized morning greeting based on user data
+- [ ] Pre-fill dashboard from onboarding answers (no empty screens)
+- [ ] Generate 30 Spark challenges (categorized by domain)
 
-### Day 5–6: UI Screens
+### Day 2: 💰 Money Tab
 
-- [ ] **Home Screen:**
-  - Safe to Spend hero number (large, centered)
-  - Color-as-data background: compute health ratio → map to green/amber/red gradient
-  - Bill Countdown section: list upcoming bills with days-until and affordability context
-  - Floating Action Button (FAB) for input modal
-- [ ] **Input Bottom Sheet Modal:**
-  - Text input field with placeholder "What did you spend?"
-  - Voice input button (mic icon) → triggers STT → populates text field
-  - Submit → run through parsing chain → show confirmation card
-  - Confirmation card: editable parsed fields → save button
-- [ ] **History Screen:**
-  - Tabbed/segmented: "Transactions" | "Recurring"
-  - Transaction list: item, amount, currency, category, date — sorted by date desc
-  - Recurring bills list: name, amount, frequency, next due date
-  - Swipe actions: edit, delete
-- [ ] **Settings Screen:**
-  - Premium status & trial countdown
-  - Notification preferences (toggle each type, set schedules)
-  - Export Everything button (CSV/JSON)
-  - Delete Everything button (with single confirmation)
-  - Theme toggle (light/dark)
-  - AI status indicator (LLM downloaded / downloading / not available)
+- [ ] **Income tracking** — log income sources, payday schedule
+- [ ] **Balance tracking** — current balance display
+- [ ] Quick expense logger (amount + category + optional note, 3-tap flow)
+- [ ] Category system: Food, Transport, Bills, Shopping, Health, Other + **custom categories**
+- [ ] Auto-category detect (AI via local LLM or keyword matching)
+- [ ] Monthly budget setter per category
+- [ ] Budget bar with color indicator (green → yellow → red)
+- [ ] **Bill tracking** — due dates + reminder logic (3 days before)
+- [ ] **Subscription tracking** — recurring subscriptions with cost
+- [ ] 9 PM daily spending recap notification
+
+### Day 3: 💰 Money Tab (Deep)
+
+- [ ] Savings goals with progress bar + target date calculator
+- [ ] Payday auto-plan: income → suggested allocation (50/30/20 or custom)
+- [ ] Budget Shield alert notification (approaching category limit)
+- [ ] Emergency fund meter (months of expenses covered)
+- [ ] No-Spend Day challenge toggle (tracks savings at midnight)
+- [ ] Monthly spending chart (simple pie or bar)
+- [ ] Payday countdown
+
+### Day 4: 🌿 Life Tab
+
+- [ ] Mood check-in (morning + night, 5 emoji scale)
+- [ ] clawdi mood reactions (adjusts focus blocks, warns about stress spending)
+- [ ] Habit tracker: up to 5 habits, one-tap completion
+- [ ] Flexible streaks (6/7 = "almost perfect", not broken)
+- [ ] Sleep log: tap sleep / wake, weekly average, sleep debt calculation
+- [ ] Water checkbox (single daily check)
+- [ ] Medication reminder with push notification
+- [ ] Stress level (1-10 daily slider, weekly trend)
+
+### Day 5: ☀️ Day Tab
+
+- [ ] Top 3 Priorities with 3 guided questions:
+  - "What must happen today?"
+  - "What would feel like a win?"
+  - "What's long overdue?"
+- [ ] Priority roll-over from previous day (unfinished → auto-suggested)
+- [ ] Energy-aware reordering (if morning mood low → easy tasks first)
+- [ ] Pomodoro timer (50-min work / 10-min break)
+- [ ] Break activity randomizer (stretch / water / step outside / short walk)
+- [ ] Tonight planner (time-block builder for evening)
+- [ ] Tomorrow planner (fill at night, ready in morning)
+- [ ] Quick List (universal brain dump: groceries, errands, thoughts)
+
+### Day 6: ❤️ People Tab
+
+- [ ] Contact cards (name, birthday, relationship, photo)
+- [ ] Last-talked tracker (auto-updates when conversation memory is logged)
+- [ ] Reach-out reminder notifications ("You haven't talked to [name] in X days")
+- [ ] Birthday reminder with full moment (message suggestions + gift ideas)
+- [ ] "Things they love" notes per person
+- [ ] Conversation memory capture (one text field after interaction)
 
 ### Day 7: Polish + Distribution
 
-- [ ] **30-Day Trial Tracking:**
-  - Store `trialStartDate` in metadata table on first launch
-  - Calculate remaining trial days
-  - Show trial status in Settings
-  - Gate premium features after trial expiry
-- [ ] **Export Everything:**
-  - Generate CSV file from all transactions and recurrences
-  - Generate JSON file with complete database dump
-  - Share via system share sheet
-- [ ] **Delete Everything:**
-  - Destructive confirmation (e.g., type "DELETE" to permanently wipe all data)
-  - Drop all data from SQLite tables
-  - Reset metadata
-  - Return to fresh state
-- [ ] **Local Notifications Setup (expo-notifications):**
-  - Request notification permissions on first launch
-  - Daily Safe to Spend reminder (configurable time, default 8:00 AM)
-  - Bill countdown alerts (3 days, 1 day before due)
-  - Hourly expense input reminders ("Any expenses to log?" — configurable interval)
-  - Finance tips (weekly rotation from curated list)
-  - All toggleable in Settings with custom schedules
-- [ ] **App Store / Play Store Config:**
-  - App icons and splash screen
-  - App Store metadata (description, screenshots, keywords)
-  - Bundle ID: `me.ttap.clawdi`
-- [ ] **IAP Setup:**
-  - Configure one-time purchase product in App Store Connect and Google Play Console
-  - Implement purchase flow and receipt validation
-  - Unlock premium features on successful purchase
-- [ ] **End-to-End Testing:**
-  - Voice → STT → LLM parse → confirm → save → see in history
-  - Manual input fallback flow
-  - Safe to Spend calculation accuracy
+- [ ] **Center raised "+" button:**
+  - Floating above tab bar center
+  - Opens quick-action bottom sheet
+  - Context-aware options based on time of day
+- [ ] **Wire Home dashboard with live data from all 4 tabs**
+- [ ] **Set up all 11 push notifications:**
+  - Max 3/day logic
+  - Quiet hours (10 PM - 7 AM default)
+  - All customizable in settings
+- [ ] **Dark mode implementation**
+- [ ] **30-day trial tracking:**
+  - Store trialStartDate in metadata on first launch
+  - Gate premium features after expiry
+- [ ] **Export Everything** (CSV/JSON via system share sheet)
+- [ ] **Delete Everything** (type "DELETE" to confirm, wipe all tables)
+- [ ] **Shareable cards (all 8 types):**
+  - Card template engine (generates image from data)
+  - Daily Spark Done card
+  - Habit Streak Milestone card (Day 7/14/30/60/100)
+  - No-Spend Day Win card (midnight trigger)
+  - Savings Goal Reached card
+  - Weekly Life Score card (Sunday 8 PM)
+  - Monthly Wrap card (last day of month)
+  - First Week Complete card (Day 7)
+  - 7-Day Challenge daily progress card
+  - One-tap share to Stories / social / save to camera roll
+  - Rule: emotion-based copy, never raw numbers
+- [ ] **Empty state messages with personality** for all tabs
+- [ ] **App icon + splash screen**
+- [ ] **App Store / Play Store config** (description, screenshots, keywords)
+- [ ] **IAP setup** — one-time purchase (~$6 USD)
+- [ ] **End-to-end testing:**
+  - Full daily loop: morning → daytime → evening → night
+  - Voice → STT → LLM parse → confirm → save
+  - clawdi Score calculation accuracy
+  - Notification scheduling (max 3/day)
   - Export/Delete functionality
-  - Notification scheduling
   - Trial tracking
+  - All 5 tabs with real data flow to Home
