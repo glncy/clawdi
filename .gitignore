@@ -38,3 +38,7 @@ dist/
 packages/scripts/src/generated/
 
 gha-creds-*.json
+
+# obsidian
+docs/.obsidian/workspace.json
+docs/.obsidian/workspace-mobile.json
