@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "planning/2026-03-31-phase-1-implementation.md",
+                "file": "roadmap/ai-minimalist-finance-roadmap.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "2026-03-31-phase-1-implementation"
+              "title": "ai-minimalist-finance-roadmap"
             }
           }
         ]
@@ -185,21 +185,25 @@
   },
   "active": "626409bc7803d714",
   "lastOpenFiles": [
-    "design/pegs/settings-light-web.png",
-    "design/final-reference/input-light-v2.png",
-    "design/pegs/home-dark-green-web.png",
-    "design/pegs/home-light-red-web.png",
-    "design/pegs/home-light-green-web.png",
-    "roadmap/ai-minimalist-finance-roadmap.md",
+    "design/v3-daily-companion/light/quick-action.png",
+    "design/v3-daily-companion/light/people-light.png",
+    "design/v3-daily-companion/light/money-light.png",
+    "design/v3-daily-companion/light/life-light.png",
+    "design/v3-daily-companion/light/home-light.png",
+    "design/v3-daily-companion/light/day-light.png",
+    "design/v3-daily-companion/dark/people-dark.png",
+    "design/v3-daily-companion/dark/money-dark.png",
+    "design/v3-daily-companion/dark/life-dark.png",
+    "design/v3-daily-companion/dark/home-dark.png",
+    "design/v3-daily-companion/dark/day-dark.png",
+    "design/v3-daily-companion/light",
+    "design/v3-daily-companion/dark",
+    "design/v3-daily-companion",
     "product/ai-minimalist-finance-prd.md",
     "planning/2026-03-31-phase-1-implementation.md",
-    "design/final-reference/input-light.png",
+    "ideas/README.md",
+    "roadmap/ai-minimalist-finance-roadmap.md",
     "design/README.md",
-    "design/final-reference/home-light-green.png",
-    "design/final-reference/settings-light.png",
-    "design/final-reference/settings-dark.png",
-    "design/final-reference/home-light-red.png",
-    "design/final-reference/history-light.png",
     "design/final-reference",
     "design/pegs",
     "design",
