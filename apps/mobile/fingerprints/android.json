@@ -1,4 +1,13 @@
 {
+  "6bfea5688e2dde81d072a29fd4c5f95b1cd2876c": {
+    "version": "0.0.1",
+    "versionCode": 9,
+    "profile": "preview",
+    "previewChannel": "feat/ota-code-signing",
+    "ref": "feat/ota-code-signing",
+    "channel": "main",
+    "createdAt": "2026-04-01T08:19:44.382Z"
+  },
   "77493c490aa377149bfafe96d0cdf9c120719d03": {
     "version": "0.0.1",
     "versionCode": 1,

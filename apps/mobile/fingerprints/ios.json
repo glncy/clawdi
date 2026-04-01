@@ -8,6 +8,15 @@
     "channel": "main",
     "createdAt": "2026-03-30T15:55:51.744Z"
   },
+  "26f7c45ba36f47a45211971abb734a3c848b8e78": {
+    "version": "0.0.1",
+    "buildNumber": "9",
+    "profile": "preview",
+    "previewChannel": "feat/ota-code-signing",
+    "ref": "feat/ota-code-signing",
+    "channel": "main",
+    "createdAt": "2026-04-01T08:19:44.382Z"
+  },
   "5f774357cad0029c5be8c12ec04b4d56c28ca31d": {
     "version": "0.0.1",
     "buildNumber": "8",
