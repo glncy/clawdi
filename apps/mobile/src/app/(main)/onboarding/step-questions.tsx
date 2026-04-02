@@ -1,18 +1,15 @@
 import React, { useState } from "react";
-import { View, TextInput, ScrollView, TouchableOpacity } from "react-native";
+import { View, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/atoms/Text";
-import { Button } from "heroui-native";
+import { Button, Input } from "heroui-native";
 import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
-import { useActiveColorScheme } from "@/providers/ActiveColorSchemeProvider";
 
 const SAVING_GOALS = ["Emergency Fund", "Travel", "House", "Debt Payoff"];
 const STRUGGLES = ["Saving money", "Sleeping well", "Staying focused", "Finding time"];
 
 export default function OnboardingStepQuestions() {
   const router = useRouter();
-  const { activeColorScheme } = useActiveColorScheme();
-  const isDark = activeColorScheme === "dark";
 
   const [currentStep, setCurrentStep] = useState(0);
   const [income, setIncome] = useState("");
@@ -60,16 +57,17 @@ export default function OnboardingStepQuestions() {
             <Text variant="h2" className="text-center mb-8">
               What is your monthly income?
             </Text>
-            <View className="flex-row items-center border-b-2 border-border pb-2 mx-4">
-              <Text variant="h1" className="text-foreground mr-2">$</Text>
-              <TextInput
+            <View className="mx-4">
+              <Input
                 value={income}
                 onChangeText={setIncome}
                 keyboardType="numeric"
                 placeholder="0.00"
-                placeholderTextColor={isDark ? "#555" : "#aaa"}
-                style={{ fontSize: 40, fontWeight: "bold", color: isDark ? "#fff" : "#000", flex: 1 }}
                 autoFocus
+                size="lg"
+                startContent={
+                  <Text variant="h2" className="text-foreground-500 mr-2">$</Text>
+                }
               />
             </View>
           </View>
