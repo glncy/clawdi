@@ -1,9 +1,28 @@
 import React, { useState } from "react";
-import { View, Platform } from "react-native";
+import { View, Platform, UIManager } from "react-native";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/atoms/Text";
 import { Button, Slider as HeroSlider } from "heroui-native";
-import { Host, Slider as ExpoSlider } from "@expo/ui/swift-ui";
+
+let Host: any;
+let ExpoSlider: any;
+let isExpoUIAvailable = false;
+
+if (Platform.OS === "ios") {
+  // Check if the underlying native module for Expo UI SwiftUI Host exists before trying to require it
+  // This prevents unrecoverable startup crashes during OTA updates when the native view is missing.
+  isExpoUIAvailable = UIManager.getViewManagerConfig("SwiftUIHostView") != null;
+  if (isExpoUIAvailable) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const ExpoUI = require("@expo/ui/swift-ui");
+      Host = ExpoUI.Host;
+      ExpoSlider = ExpoUI.Slider;
+    } catch {
+      isExpoUIAvailable = false;
+    }
+  }
+}
 
 const SLIDES = [
   {
@@ -79,11 +98,11 @@ export default function OnboardingStepSliders() {
         </Text>
 
         <View className="px-4">
-          {Platform.OS === "ios" ? (
+          {Platform.OS === "ios" && isExpoUIAvailable ? (
             <Host style={{ height: 40, width: "100%" }}>
               <ExpoSlider
                 value={values[currentSlideIndex]}
-                onValueChange={(val) => {
+                onValueChange={(val: number) => {
                   const newValues = [...values];
                   newValues[currentSlideIndex] = val;
                   setValues(newValues);
@@ -93,7 +112,7 @@ export default function OnboardingStepSliders() {
           ) : (
             <HeroSlider
               value={values[currentSlideIndex]}
-              onChange={(val) => {
+              onChange={(val: number | number[]) => {
                 const newValues = [...values];
                 newValues[currentSlideIndex] = Array.isArray(val) ? val[0] : val;
                 setValues(newValues);

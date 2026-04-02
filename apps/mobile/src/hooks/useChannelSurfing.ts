@@ -46,6 +46,23 @@ export function useChannelSurfing() {
     let mounted = true;
     const loadChannel = async () => {
       try {
+        // If the app is recovering from a fatal crash (like a missing native module),
+        // we must clear the channel override so it doesn't get stuck in a crash loop
+        // attempting to redownload the broken update.
+        if (Updates.isEmergencyLaunch) {
+          Updates.setUpdateRequestHeadersOverride(null);
+          await Updates.setExtraParamAsync(ACTIVE_CHANNEL_PARAM_KEY, "");
+          if (mounted) {
+            setState((prev) => ({
+              ...prev,
+              activeChannel: "main",
+              isVisible: true, // Show the panel so the user knows what happened
+            }));
+            addLog("Emergency launch detected. Reverted channel to 'main'.", "error");
+          }
+          return;
+        }
+
         const extraParams = await Updates.getExtraParamsAsync();
         const persisted = extraParams[ACTIVE_CHANNEL_PARAM_KEY];
         if (mounted && persisted) {
@@ -59,7 +76,7 @@ export function useChannelSurfing() {
     return () => {
       mounted = false;
     };
-  }, []);
+  }, [addLog]);
 
   const addLog = useCallback(
     (message: string, type: LogEntry["type"] = "info") => {
