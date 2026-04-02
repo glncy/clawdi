@@ -1,9 +1,11 @@
 {
   "lockfileVersion": 1,
-  "configVersion": 1,
   "workspaces": {
     "": {
       "name": "fullstack-boilerplate-monorepo",
+      "dependencies": {
+        "@react-native-community/slider": "^5.1.2",
+      },
       "devDependencies": {
         "@changesets/cli": "^2.30.0",
         "@expo-up/cli": "^0.1.7",
@@ -1047,6 +1049,8 @@
     "@radix-ui/react-use-layout-effect": ["@radix-ui/react-use-layout-effect@1.1.1", "", { "peerDependencies": { "@types/react": "*", "react": "^16.8 || ^17.0 || ^18.0 || ^19.0 || ^19.0.0-rc" }, "optionalPeers": ["@types/react"] }, "sha512-RbJRS4UWQFkzHTTwVymMTUv8EqYhOp8dOOviLj2ugtTiXRaRQS7GLGxZTLL1jWhMeoSCf5zmcZkqTl9IiYfXcQ=="],
 
     "@react-native-ai/llama": ["@react-native-ai/llama@0.12.0", "", { "dependencies": { "@ai-sdk/provider": "^3.0.5", "@ai-sdk/provider-utils": "^4.0.1", "react-native-blob-util": "^0.24.5", "zod": "^4.0.0" }, "peerDependencies": { "llama.rn": "^0.10.1", "react-native": ">=0.76.0" } }, "sha512-v/zhk9SEAk7P4/iELHMkAfIEEIn1TaMdIwfaFv41Yu3wm3sRbws7qRufTeq3nFBnSLj3MtVMZy4Vew7Fy5uyaA=="],
+
+    "@react-native-community/slider": ["@react-native-community/slider@5.1.2", "", {}, "sha512-UV/MjCyCtSjS5BQDrrGIMmCXm309xEG6XbR0Dj65kzTraJSVDxSjQS2uBUXgX+5SZUOCzCxzv3OufOZBdtQY4w=="],
 
     "@react-native/assets-registry": ["@react-native/assets-registry@0.83.2", "", {}, "sha512-9I5l3pGAKnlpQ15uVkeB9Mgjvt3cZEaEc8EDtdexvdtZvLSjtwBzgourrOW4yZUijbjJr8h3YO2Y0q+THwUHTA=="],
 
