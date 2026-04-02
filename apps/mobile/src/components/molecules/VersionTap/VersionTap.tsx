@@ -20,8 +20,8 @@ const channelSchema = z.object({
     .string()
     .trim()
     .refine(
-      (val) => !val || /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/.test(val),
-      "Only lowercase letters, numbers, and hyphens allowed."
+      (val) => !val || /^[a-zA-Z0-9]([a-zA-Z0-9\-\_\/\.]*[a-zA-Z0-9])?$/.test(val),
+      "Invalid channel name."
     ),
 });
 
