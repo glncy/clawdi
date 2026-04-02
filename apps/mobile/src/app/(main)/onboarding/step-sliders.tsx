@@ -1,8 +1,9 @@
 import React, { useState } from "react";
-import { View } from "react-native";
+import { View, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { Text } from "@/components/atoms/Text";
-import { Button, Slider } from "heroui-native";
+import { Button, Slider as HeroSlider } from "heroui-native";
+import { Host, Slider as ExpoSlider } from "@expo/ui/swift-ui";
 
 const SLIDES = [
   {
@@ -78,14 +79,27 @@ export default function OnboardingStepSliders() {
         </Text>
 
         <View className="px-4">
-          <Slider
-            value={values[currentSlideIndex]}
-            onChange={(val) => {
-              const newValues = [...values];
-              newValues[currentSlideIndex] = Array.isArray(val) ? val[0] : val;
-              setValues(newValues);
-            }}
-          />
+          {Platform.OS === "ios" ? (
+            <Host style={{ height: 40, width: "100%" }}>
+              <ExpoSlider
+                value={values[currentSlideIndex]}
+                onValueChange={(val) => {
+                  const newValues = [...values];
+                  newValues[currentSlideIndex] = val;
+                  setValues(newValues);
+                }}
+              />
+            </Host>
+          ) : (
+            <HeroSlider
+              value={values[currentSlideIndex]}
+              onChange={(val) => {
+                const newValues = [...values];
+                newValues[currentSlideIndex] = Array.isArray(val) ? val[0] : val;
+                setValues(newValues);
+              }}
+            />
+          )}
           <View className="flex-row justify-between mt-4">
             <Text variant="caption" className="text-foreground-500 font-medium">
               {currentSlide.minLabel}
