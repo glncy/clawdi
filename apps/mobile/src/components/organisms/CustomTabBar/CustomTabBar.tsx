@@ -43,10 +43,10 @@ export function CustomTabBar({
 }: BottomTabBarProps) {
   const insets = useSafeAreaInsets();
   const toggleQuickAction = useQuickActionStore((s) => s.toggle);
-  const [primaryColor, mutedColor, foregroundColor] = useCSSVariable([
+  const [primaryColor, mutedColor, primaryForegroundColor] = useCSSVariable([
     "--color-primary",
     "--color-muted",
-    "--color-foreground",
+    "--color-primary-foreground",
   ]);
 
   const renderTab = (routeName: string) => {
@@ -88,24 +88,26 @@ export function CustomTabBar({
         key={route.key}
         accessibilityRole="button"
         accessibilityState={isFocused ? { selected: true } : {}}
-        accessibilityLabel={options.tabBarAccessibilityLabel}
+        accessibilityLabel={options.tabBarAccessibilityLabel ?? config.label}
         onPress={onPress}
         onLongPress={onLongPress}
-        className="flex-1 items-center gap-0.5 py-1"
+        className="flex-1 items-center gap-0.5 py-1.5"
       >
         <Icon
-          size={20}
+          size={22}
           weight={isFocused ? "fill" : "regular"}
           color={iconColor}
         />
-        <AppText
-          size="xs"
-          color={isFocused ? "primary" : "muted"}
-          align="center"
-          style={{ fontSize: 10 }}
-        >
-          {config.label}
-        </AppText>
+        {isFocused && (
+          <AppText
+            size="xs"
+            color="primary"
+            align="center"
+            style={{ fontSize: 9 }}
+          >
+            {config.label}
+          </AppText>
+        )}
       </Pressable>
     );
   };
@@ -129,7 +131,7 @@ export function CustomTabBar({
             <Plus
               size={22}
               weight="bold"
-              color={foregroundColor as string}
+              color={primaryForegroundColor as string}
             />
           </Pressable>
         </View>

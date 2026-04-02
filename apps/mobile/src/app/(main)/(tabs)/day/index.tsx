@@ -20,7 +20,11 @@ export default function DayScreen() {
             Today
           </AppText>
           <AppText size="sm" color="muted">
-            Tuesday, April 1
+            {new Intl.DateTimeFormat("en-US", {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+            }).format(new Date())}
           </AppText>
         </View>
 

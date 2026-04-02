@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback } from "react";
 import { streamText } from "ai";
 import {
   llama,
@@ -11,9 +11,13 @@ import {
 import { MODEL } from "@/services/localAI";
 import { useAIStore } from "@/stores/useAIStore";
 
-export function useLocalAI() {
-  const modelRef = useRef<LlamaLanguageModel | null>(null);
+/**
+ * Singleton model instance — shared across all hook consumers.
+ * Prevents OOM from multiple components each loading a ~900MB model.
+ */
+let sharedModel: LlamaLanguageModel | null = null;
 
+export function useLocalAI() {
   const setStatus = useAIStore((s) => s.setStatus);
   const setDownloadProgress = useAIStore((s) => s.setDownloadProgress);
   const setError = useAIStore((s) => s.setError);
@@ -37,6 +41,9 @@ export function useLocalAI() {
   }, [setModelDownloaded]);
 
   const downloadModel = useCallback(async () => {
+    // Guard against concurrent downloads
+    if (useAIStore.getState().status === "downloading") return;
+
     setStatus("downloading");
     setDownloadProgress(0, 0, MODEL.sizeBytes);
     setError(null);
@@ -68,10 +75,20 @@ export function useLocalAI() {
     setError(null);
 
     try {
+      // Unload existing model to prevent memory leaks
+      if (sharedModel) {
+        await sharedModel.unload();
+        sharedModel = null;
+      }
+
       const modelPath = getModelPath(MODEL.id);
-      const model = llama.languageModel(modelPath);
+      const model = llama.languageModel(modelPath, {
+        contextParams: {
+          n_gpu_layers: 99,
+        },
+      });
       await model.prepare();
-      modelRef.current = model;
+      sharedModel = model;
       setStatus("ready");
     } catch (e) {
       const msg = e instanceof Error
@@ -84,8 +101,10 @@ export function useLocalAI() {
 
   const complete = useCallback(
     async (userMessage: string, systemPrompt?: string) => {
-      const model = modelRef.current;
-      if (!model) {
+      // Guard against concurrent inference
+      if (useAIStore.getState().status === "inferring") return null;
+
+      if (!sharedModel) {
         setError("Model not loaded.");
         return null;
       }
@@ -96,7 +115,7 @@ export function useLocalAI() {
 
       try {
         const { textStream } = streamText({
-          model,
+          model: sharedModel,
           messages: [
             ...(systemPrompt
               ? [{ role: "system" as const, content: systemPrompt }]
@@ -139,18 +158,38 @@ export function useLocalAI() {
       if (!result) return null;
 
       try {
-        // Extract JSON from response (model may include extra text)
-        const jsonMatch = result.text.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
+        // Extract first balanced JSON object from response
+        const startIdx = result.text.indexOf("{");
+        if (startIdx === -1) {
           setError("No JSON found in response.");
           return null;
         }
-        const parsed = JSON.parse(jsonMatch[0]) as T;
-        // Overwrite streaming response with formatted JSON
+
+        // Find matching closing brace (handles nested objects)
+        let depth = 0;
+        let endIdx = -1;
+        for (let i = startIdx; i < result.text.length; i++) {
+          if (result.text[i] === "{") depth++;
+          if (result.text[i] === "}") depth--;
+          if (depth === 0) {
+            endIdx = i + 1;
+            break;
+          }
+        }
+
+        if (endIdx === -1) {
+          setError("Incomplete JSON in response.");
+          return null;
+        }
+
+        const jsonStr = result.text.slice(startIdx, endIdx);
+        const parsed = JSON.parse(jsonStr) as T;
         setResponse(JSON.stringify(parsed, null, 2));
         return parsed;
       } catch (e) {
-        setError(`JSON parse failed: ${e instanceof Error ? e.message : String(e)}`);
+        setError(
+          `JSON parse failed: ${e instanceof Error ? e.message : String(e)}`
+        );
         return null;
       }
     },
@@ -158,17 +197,17 @@ export function useLocalAI() {
   );
 
   const releaseModel = useCallback(async () => {
-    if (modelRef.current) {
-      await modelRef.current.unload();
-      modelRef.current = null;
+    if (sharedModel) {
+      await sharedModel.unload();
+      sharedModel = null;
     }
     setStatus("idle");
   }, [setStatus]);
 
   const removeModel = useCallback(async () => {
-    if (modelRef.current) {
-      await modelRef.current.unload();
-      modelRef.current = null;
+    if (sharedModel) {
+      await sharedModel.unload();
+      sharedModel = null;
     }
     await deleteModelFromDisk(MODEL.id);
     setModelDownloaded(false);
@@ -192,7 +231,7 @@ export function useLocalAI() {
     releaseModel,
     removeModel,
     clearResponse,
-    isModelLoaded: !!modelRef.current,
+    isModelLoaded: !!sharedModel,
     MODEL,
   };
 }
