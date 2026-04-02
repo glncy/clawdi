@@ -61,7 +61,7 @@ export default function OnboardingStepQuestions() {
               <Input
                 value={income}
                 onChangeText={setIncome}
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 placeholder="0.00"
                 autoFocus
                 size="lg"

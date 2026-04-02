@@ -30,7 +30,7 @@ export default function OnboardingStepScore() {
           Your starting clawdi Score is
         </Text>
         <Animated.View style={animatedStyle}>
-          <Text style={{ fontSize: 120, fontWeight: "bold", color: "currentColor" }} className="text-primary text-center">
+          <Text style={{ fontSize: 120, fontWeight: "bold" }} className="text-primary text-center">
             42
           </Text>
         </Animated.View>
