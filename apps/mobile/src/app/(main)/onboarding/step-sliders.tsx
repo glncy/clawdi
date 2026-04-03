@@ -1,27 +1,10 @@
 import React, { useState } from "react";
-import { View, Platform, UIManager } from "react-native";
+import { View, Platform } from "react-native";
 import { useRouter } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
 import { Button, Card, Slider as HeroSlider } from "heroui-native";
 import { useOnboarding } from "./_layout";
-
-let Host: any;
-let ExpoSlider: any;
-let isExpoUIAvailable = false;
-
-if (Platform.OS === "ios") {
-  isExpoUIAvailable = UIManager.getViewManagerConfig("SwiftUIHostView") != null;
-  if (isExpoUIAvailable) {
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const ExpoUI = require("@expo/ui/swift-ui");
-      Host = ExpoUI.Host;
-      ExpoSlider = ExpoUI.Slider;
-    } catch {
-      isExpoUIAvailable = false;
-    }
-  }
-}
+import { Host, Slider as ExpoSlider } from "@expo/ui/swift-ui";
 
 const SLIDES = [
   { id: "money", emoji: "💰", label: "Finances", question: "How do you feel about your finances right now?", min: "Stressed", max: "Secure" },
@@ -117,11 +100,17 @@ export default function OnboardingStepSliders() {
               </AppText>
             </View>
 
-            {/* Slider */}
-            {Platform.OS === "ios" && isExpoUIAvailable ? (
-              <Host style={{ height: 40, width: "100%" }}>
+            {/* Slider — native SwiftUI on iOS, HeroUI on Android */}
+            {Platform.OS === "ios" ? (
+              <Host
+                matchContents
+                style={{ minHeight: 44, width: "100%" }}
+              >
                 <ExpoSlider
                   value={currentValue}
+                  min={0}
+                  max={100}
+                  step={1}
                   onValueChange={(val: number) => updateValue(val)}
                 />
               </Host>
