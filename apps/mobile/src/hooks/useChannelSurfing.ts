@@ -39,6 +39,16 @@ export function useChannelSurfing() {
     logs: [],
   });
 
+  const addLog = useCallback(
+    (message: string, type: LogEntry["type"] = "info") => {
+      setState((prev) => ({
+        ...prev,
+        logs: [createLog(message, type), ...prev.logs].slice(0, 50),
+      }));
+    },
+    []
+  );
+
   // Load persisted channel on mount
   useEffect(() => {
     if (__DEV__) return;
@@ -77,16 +87,6 @@ export function useChannelSurfing() {
       mounted = false;
     };
   }, [addLog]);
-
-  const addLog = useCallback(
-    (message: string, type: LogEntry["type"] = "info") => {
-      setState((prev) => ({
-        ...prev,
-        logs: [createLog(message, type), ...prev.logs].slice(0, 50),
-      }));
-    },
-    []
-  );
 
   const handleVersionTap = useCallback(() => {
     const now = Date.now();

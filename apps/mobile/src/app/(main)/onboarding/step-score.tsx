@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
-import { Text } from "@/components/atoms/Text";
+import { AppText } from "@/components/atoms/Text";
 import { Button } from "heroui-native";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming, withDelay } from "react-native-reanimated";
 
@@ -26,30 +26,28 @@ export default function OnboardingStepScore() {
   return (
     <View className="flex-1 bg-background px-6 py-12 justify-between">
       <View className="flex-1 justify-center items-center">
-        <Text variant="h2" className="text-center text-foreground-500 mb-6">
+        <AppText size="2xl" weight="bold" family="headline" className="text-center text-foreground-500 mb-6">
           Your starting clawdi Score is
-        </Text>
+        </AppText>
         <Animated.View style={animatedStyle}>
-          <Text style={{ fontSize: 120, fontWeight: "bold" }} className="text-primary text-center">
+          <AppText style={{ fontSize: 120, fontWeight: "bold" }} className="text-primary text-center">
             42
-          </Text>
+          </AppText>
         </Animated.View>
         <Animated.View style={animatedStyle} className="mt-8">
-          <Text variant="body" className="text-center text-foreground-500">
+          <AppText className="text-center text-foreground-500">
             It&apos;s not about where you start.{"\n"}It&apos;s about where you go from here.
-          </Text>
+          </AppText>
         </Animated.View>
       </View>
 
       <Animated.View style={animatedStyle} className="items-center w-full pb-8">
         <Button
-          color="primary"
+          variant="primary"
           className="w-full h-14 rounded-2xl"
           onPress={() => router.replace("/(main)/(tabs)/home")}
         >
-          <Text variant="body" className="font-bold text-white">
-            Enter Your Dashboard
-          </Text>
+          <Button.Label>Enter Your Dashboard</Button.Label>
         </Button>
       </Animated.View>
     </View>

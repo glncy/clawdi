@@ -1,9 +1,10 @@
 import React, { useState } from "react";
 import { View, ScrollView, TouchableOpacity } from "react-native";
 import { useRouter } from "expo-router";
-import { Text } from "@/components/atoms/Text";
+import { AppText } from "@/components/atoms/Text";
 import { Button, Input } from "heroui-native";
 import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
+import { CheckCircle } from "phosphor-react-native";
 
 const SAVING_GOALS = ["Emergency Fund", "Travel", "House", "Debt Payoff"];
 const STRUGGLES = ["Saving money", "Sleeping well", "Staying focused", "Finding time"];
@@ -54,20 +55,16 @@ export default function OnboardingStepQuestions() {
       <ScrollView className="flex-1" contentContainerStyle={{ flexGrow: 1, justifyContent: "center", paddingBottom: 80 }}>
         {currentStep === 0 && (
           <View>
-            <Text variant="h2" className="text-center mb-8">
+            <AppText size="2xl" weight="bold" family="headline" className="text-center mb-8">
               What is your monthly income?
-            </Text>
+            </AppText>
             <View className="mx-4">
               <Input
                 value={income}
-                onChangeText={setIncome}
+                onChangeText={(text: string) => setIncome(text)}
                 keyboardType="decimal-pad"
-                placeholder="0.00"
+                placeholder="$ 0.00"
                 autoFocus
-                size="lg"
-                startContent={
-                  <Text variant="h2" className="text-foreground-500 mr-2">$</Text>
-                }
               />
             </View>
           </View>
@@ -75,9 +72,9 @@ export default function OnboardingStepQuestions() {
 
         {currentStep === 1 && (
           <View>
-            <Text variant="h2" className="text-center mb-8">
+            <AppText size="2xl" weight="bold" family="headline" className="text-center mb-8">
               What are you saving for?
-            </Text>
+            </AppText>
             <View className="gap-4">
               {SAVING_GOALS.map((goal) => (
                 <TouchableOpacity
@@ -87,9 +84,9 @@ export default function OnboardingStepQuestions() {
                     savingFor === goal ? "border-primary bg-primary/10" : "border-border bg-surface"
                   }`}
                 >
-                  <Text variant="body" className="font-medium">{goal}</Text>
+                  <AppText weight="medium">{goal}</AppText>
                   {savingFor === goal && (
-                    <PhosphorIcon name="CheckCircle" weight="fill" size={24} color="currentColor" className="text-primary" />
+                    <PhosphorIcon icon={CheckCircle} weight="fill" size={24} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -99,9 +96,9 @@ export default function OnboardingStepQuestions() {
 
         {currentStep === 2 && (
           <View>
-            <Text variant="h2" className="text-center mb-8">
+            <AppText size="2xl" weight="bold" family="headline" className="text-center mb-8">
               What is your biggest daily struggle?
-            </Text>
+            </AppText>
             <View className="gap-4">
               {STRUGGLES.map((s) => (
                 <TouchableOpacity
@@ -111,9 +108,9 @@ export default function OnboardingStepQuestions() {
                     struggle === s ? "border-primary bg-primary/10" : "border-border bg-surface"
                   }`}
                 >
-                  <Text variant="body" className="font-medium">{s}</Text>
+                  <AppText weight="medium">{s}</AppText>
                   {struggle === s && (
-                    <PhosphorIcon name="CheckCircle" weight="fill" size={24} color="currentColor" className="text-primary" />
+                    <PhosphorIcon icon={CheckCircle} weight="fill" size={24} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -124,23 +121,21 @@ export default function OnboardingStepQuestions() {
 
       <View className="flex-row justify-between gap-4 pt-4 bg-background">
         <Button
-          variant="flat"
-          className="flex-1 h-14 rounded-2xl bg-surface"
+          variant="tertiary"
+          className="flex-1 h-14 rounded-2xl"
           onPress={handleBack}
         >
-          <Text variant="body" className="font-bold text-foreground">
-            Back
-          </Text>
+          <Button.Label>Back</Button.Label>
         </Button>
         <Button
-          color="primary"
+          variant="primary"
           className="flex-1 h-14 rounded-2xl"
           onPress={handleNext}
           isDisabled={isNextDisabled()}
         >
-          <Text variant="body" className="font-bold text-white">
+          <Button.Label>
             {currentStep === 2 ? "Finish" : "Next"}
-          </Text>
+          </Button.Label>
         </Button>
       </View>
     </View>

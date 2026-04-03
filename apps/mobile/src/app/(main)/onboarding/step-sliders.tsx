@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { View, Platform, UIManager } from "react-native";
 import { useRouter } from "expo-router";
-import { Text } from "@/components/atoms/Text";
+import { AppText } from "@/components/atoms/Text";
 import { Button, Slider as HeroSlider } from "heroui-native";
 
 let Host: any;
@@ -93,9 +93,9 @@ export default function OnboardingStepSliders() {
       </View>
 
       <View className="flex-1 justify-center pb-20">
-        <Text variant="h2" className="text-center mb-16">
+        <AppText size="2xl" weight="bold" family="headline" className="text-center mb-16">
           {currentSlide.question}
-        </Text>
+        </AppText>
 
         <View className="px-4">
           {Platform.OS === "ios" && isExpoUIAvailable ? (
@@ -120,34 +120,32 @@ export default function OnboardingStepSliders() {
             />
           )}
           <View className="flex-row justify-between mt-4">
-            <Text variant="caption" className="text-foreground-500 font-medium">
+            <AppText size="xs" weight="medium" className="text-foreground-500">
               {currentSlide.minLabel}
-            </Text>
-            <Text variant="caption" className="text-foreground-500 font-medium">
+            </AppText>
+            <AppText size="xs" weight="medium" className="text-foreground-500">
               {currentSlide.maxLabel}
-            </Text>
+            </AppText>
           </View>
         </View>
       </View>
 
       <View className="flex-row justify-between gap-4">
         <Button
-          variant="flat"
-          className="flex-1 h-14 rounded-2xl bg-surface"
+          variant="tertiary"
+          className="flex-1 h-14 rounded-2xl"
           onPress={handleBack}
         >
-          <Text variant="body" className="font-bold text-foreground">
-            Back
-          </Text>
+          <Button.Label>Back</Button.Label>
         </Button>
         <Button
-          color="primary"
+          variant="primary"
           className="flex-1 h-14 rounded-2xl"
           onPress={handleNext}
         >
-          <Text variant="body" className="font-bold text-white">
+          <Button.Label>
             {currentSlideIndex === SLIDES.length - 1 ? "See Results" : "Next"}
-          </Text>
+          </Button.Label>
         </Button>
       </View>
     </View>
