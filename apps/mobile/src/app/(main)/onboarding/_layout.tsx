@@ -80,7 +80,7 @@ export default function OnboardingLayout() {
         <Stack.Screen name="step-slider/health" />
         <Stack.Screen name="step-slider/people" />
         <Stack.Screen name="step-slider/mind" />
-        <Stack.Screen name="step-result" />
+        <Stack.Screen name="step-result" options={{ gestureEnabled: false }} />
         <Stack.Screen name="step-question/income" />
         <Stack.Screen name="step-question/saving-goal" />
         <Stack.Screen name="step-question/struggle" />

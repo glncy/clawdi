@@ -162,7 +162,7 @@ export function SliderScreen({
       </View>
 
       {/* Bottom section — pinned */}
-      <View className="w-full pb-12 gap-3">
+      <View className="w-full pb-8 pt-4 gap-3">
         <View className="flex-row justify-between gap-4">
           <Button
             variant="tertiary"

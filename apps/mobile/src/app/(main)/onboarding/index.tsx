@@ -123,7 +123,7 @@ export default function OnboardingIndex() {
       </View>
 
       {/* Bottom section */}
-      <Animated.View style={style4} className="w-full pb-12 gap-3">
+      <Animated.View style={style4} className="w-full pb-8 pt-4 gap-3">
         <Button
           variant="primary"
           size="lg"

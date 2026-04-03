@@ -126,7 +126,7 @@ export default function OnboardingStepName() {
         </View>
 
         {/* Bottom section */}
-        <Animated.View style={buttonStyle} className="w-full pb-12 gap-3">
+        <Animated.View style={buttonStyle} className="w-full pb-8 pt-4 gap-3">
           <Button
             variant="primary"
             size="lg"

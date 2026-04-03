@@ -2,11 +2,19 @@ import React, { useEffect } from "react";
 import { View } from "react-native";
 import { useRouter } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
-import { Button } from "heroui-native";
 import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
-import { Warning } from "phosphor-react-native";
+import {
+  MagnifyingGlass,
+  CurrencyDollar,
+  Clock,
+  Heartbeat,
+  UsersThree,
+  Brain,
+} from "phosphor-react-native";
+import { Button } from "heroui-native";
 import { useCSSVariable } from "uniwind";
 import { AIDownloadStatus } from "@/components/molecules/AIDownloadStatus";
+import { useOnboarding } from "./_layout";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -16,6 +24,73 @@ import Animated, {
   withSequence,
   Easing,
 } from "react-native-reanimated";
+import type { ComponentType } from "react";
+import type { IconProps } from "phosphor-react-native";
+
+// --- Domain phrase mapping ---
+
+interface DomainConfig {
+  icon: ComponentType<IconProps>;
+  phrases: { threshold: number; text: string }[];
+}
+
+const DOMAINS: DomainConfig[] = [
+  {
+    icon: CurrencyDollar,
+    phrases: [
+      { threshold: 30, text: "Your finances feel stressful" },
+      { threshold: 50, text: "Your finances need attention" },
+      { threshold: 70, text: "Your finances are okay" },
+      { threshold: 101, text: "Your finances feel secure" },
+    ],
+  },
+  {
+    icon: Clock,
+    phrases: [
+      { threshold: 30, text: "Your time feels out of control" },
+      { threshold: 50, text: "Time is slipping away" },
+      { threshold: 70, text: "You manage your time okay" },
+      { threshold: 101, text: "You control your time well" },
+    ],
+  },
+  {
+    icon: Heartbeat,
+    phrases: [
+      { threshold: 30, text: "Your energy is running low" },
+      { threshold: 50, text: "Your health needs care" },
+      { threshold: 70, text: "Your health is decent" },
+      { threshold: 101, text: "Your energy is strong" },
+    ],
+  },
+  {
+    icon: UsersThree,
+    phrases: [
+      { threshold: 30, text: "You feel disconnected from people" },
+      { threshold: 50, text: "Your relationships need nurturing" },
+      { threshold: 70, text: "Your connections are okay" },
+      { threshold: 101, text: "You feel close to people you love" },
+    ],
+  },
+  {
+    icon: Brain,
+    phrases: [
+      { threshold: 30, text: "Growth feels stagnant" },
+      { threshold: 50, text: "You want to grow more" },
+      { threshold: 70, text: "You're learning at your own pace" },
+      { threshold: 101, text: "You're actively growing" },
+    ],
+  },
+];
+
+function getDomainPhrase(domainIndex: number, value: number): string {
+  const domain = DOMAINS[domainIndex];
+  for (const p of domain.phrases) {
+    if (value < p.threshold) return p.text;
+  }
+  return domain.phrases[domain.phrases.length - 1].text;
+}
+
+// --- Animation hooks ---
 
 function useFadeIn(delay: number) {
   const opacity = useSharedValue(0);
@@ -59,9 +134,39 @@ function useFadeInScale(delay: number) {
   }));
 }
 
+// --- Screen ---
+
 export default function OnboardingStepResult() {
   const router = useRouter();
-  const [dangerColor] = useCSSVariable(["--color-danger"]);
+  const { sliderValues } = useOnboarding();
+  const [primaryColor, mutedColor] = useCSSVariable([
+    "--color-primary",
+    "--color-muted",
+  ]);
+
+  // Determine weak and strong domains
+  const weakDomains = DOMAINS.map((d, i) => ({ ...d, index: i, value: sliderValues[i] }))
+    .filter((d) => d.value < 50);
+  const strongCount = 5 - weakDomains.length;
+
+  // Dynamic headline + subtext
+  let headline: string;
+  let subtext: string;
+  let pivotText: string;
+
+  if (weakDomains.length >= 3) {
+    headline = "Here\u2019s what you told us.";
+    subtext = weakDomains.map((d) => getDomainPhrase(d.index, d.value)).join(". ") + ".";
+    pivotText = "But that changes today.";
+  } else if (weakDomains.length >= 1) {
+    headline = "Most things are going well.";
+    subtext = weakDomains.map((d) => getDomainPhrase(d.index, d.value)).join(". ") + ".";
+    pivotText = "Let\u2019s strengthen what\u2019s left.";
+  } else {
+    headline = "You\u2019re doing great.";
+    subtext = "All your domains look healthy. That\u2019s rare.";
+    pivotText = "Let\u2019s keep the momentum.";
+  }
 
   // Pulsing icon
   const iconOpacity = useSharedValue(0);
@@ -77,7 +182,6 @@ export default function OnboardingStepResult() {
       300,
       withTiming(1, { duration: 600, easing: Easing.out(Easing.back(2)) })
     );
-    // Start pulsing after initial animation
     pulseScale.value = withDelay(
       1000,
       withRepeat(
@@ -96,63 +200,78 @@ export default function OnboardingStepResult() {
     transform: [{ scale: iconScale.value * pulseScale.value }],
   }));
 
-  const line1Style = useFadeIn(700);
-  const line2Style = useFadeIn(1000);
-  const subtextStyle = useFadeIn(1400);
-  const untilStyle = useFadeInScale(1900);
-  const buttonStyle = useFadeIn(2400);
+  const headlineStyle = useFadeIn(700);
+  const domainsStyle = useFadeIn(1200);
+  const pivotStyle = useFadeInScale(1800);
+  const buttonStyle = useFadeIn(2200);
 
   return (
     <View className="flex-1 bg-background px-6 justify-between">
       <View className="flex-1 justify-center items-center">
-        {/* Warning icon — pulsing */}
+        {/* Mirror icon */}
         <Animated.View
           style={iconStyle}
-          className="w-24 h-24 rounded-full bg-danger/10 items-center justify-center mb-10"
+          className="w-20 h-20 rounded-full bg-primary/10 items-center justify-center mb-8"
         >
           <PhosphorIcon
-            icon={Warning}
-            size={48}
+            icon={MagnifyingGlass}
+            size={40}
             weight="duotone"
-            color={dangerColor as string}
+            color={primaryColor as string}
           />
         </Animated.View>
 
-        {/* Dramatic text */}
-        <Animated.View style={line1Style}>
-          <AppText size="3xl" weight="bold" family="headline" align="center">
-            You are surviving,
+        {/* Headline */}
+        <Animated.View style={headlineStyle} className="mb-6">
+          <AppText size="2xl" weight="bold" family="headline" align="center">
+            {headline}
           </AppText>
         </Animated.View>
 
-        <Animated.View style={line2Style} className="mb-6">
-          <AppText size="3xl" weight="bold" family="headline" align="center" color="danger">
-            not living.
-          </AppText>
+        {/* Domain callouts */}
+        <Animated.View style={domainsStyle} className="mb-8 gap-3 w-full px-2">
+          {weakDomains.length > 0 ? (
+            weakDomains.map((d) => (
+              <View key={d.index} className="flex-row items-center gap-3">
+                <PhosphorIcon
+                  icon={d.icon}
+                  size={18}
+                  weight="duotone"
+                  color={primaryColor as string}
+                />
+                <AppText size="sm" color="muted">
+                  {getDomainPhrase(d.index, d.value)}
+                </AppText>
+              </View>
+            ))
+          ) : (
+            <AppText align="center" color="muted">
+              {subtext}
+            </AppText>
+          )}
+          {strongCount > 0 && weakDomains.length > 0 && (
+            <AppText size="xs" color="muted" align="center" className="mt-2">
+              {strongCount} {strongCount === 1 ? "area" : "areas"} looking good
+            </AppText>
+          )}
         </Animated.View>
 
-        <Animated.View style={subtextStyle} className="mb-10 px-4">
-          <AppText align="center" color="muted">
-            Your finances feel scattered, time is slipping away, and your energy is low.
-          </AppText>
-        </Animated.View>
-
-        {/* "Until now" — scale up with bounce */}
-        <Animated.View style={untilStyle}>
-          <AppText size="2xl" weight="bold" family="headline" align="center" color="primary">
-            Until now.
+        {/* Pivot text — bounce */}
+        <Animated.View style={pivotStyle}>
+          <AppText size="xl" weight="bold" family="headline" align="center" color="primary">
+            {pivotText}
           </AppText>
         </Animated.View>
       </View>
 
-      <Animated.View style={buttonStyle} className="w-full pb-12 gap-3">
+      <Animated.View style={buttonStyle} className="w-full pb-8 pt-4 gap-3">
         <Button
           variant="primary"
           size="lg"
           className="w-full rounded-2xl"
           onPress={() => router.push("/(main)/onboarding/step-question/income")}
         >
-          <Button.Label>Change Everything</Button.Label>
+          <Button.Label>Continue</Button.Label>
         </Button>
         <AIDownloadStatus />
       </Animated.View>
