@@ -27,6 +27,7 @@ import {
   useActiveColorScheme,
 } from "../providers/ActiveColorSchemeProvider";
 import React from "react";
+import { AIModelDownloadProvider } from "../providers/AIModelDownloadProvider";
 
 function AppNavigationProvider({ children }: { children: React.ReactNode }) {
   const { activeColorScheme } = useActiveColorScheme();
@@ -88,10 +89,11 @@ export default function RootLayout() {
         (props) => <HeroUINativeProvider {...props} />,
         (props) => <KeyboardProvider {...props} />,
         (props) => <AppNavigationProvider {...props} />,
+        (props) => <AIModelDownloadProvider {...props} />,
       ]}
     >
       <StatusBar style="auto" />
-      <Stack />
+      <Stack screenOptions={{ headerShown: false }} />
     </RootProviders>
   );
 }

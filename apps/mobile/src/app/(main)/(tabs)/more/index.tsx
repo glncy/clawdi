@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import { Stack, router } from "expo-router";
-import { Card, Separator } from "heroui-native";
+import { Card, Separator, Dialog, Button } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
 import { VersionTap } from "@/components/molecules/VersionTap";
 import {
@@ -13,22 +14,53 @@ import {
   Code,
 } from "phosphor-react-native";
 import { useCSSVariable } from "uniwind";
+import { useUserStore } from "@/stores/useUserStore";
+import { useAIStore } from "@/stores/useAIStore";
 
-const MENU_ITEMS = [
-  { icon: Crown, label: "Premium", description: "Trial & purchase", route: null },
-  { icon: Brain, label: "Local AI", description: "Model & inference", route: "/home/ai-test" },
-  { icon: Bell, label: "Notifications", description: "Reminders & alerts", route: null },
-  { icon: Gear, label: "Appearance", description: "Theme & display", route: null },
-  { icon: Export, label: "Export Data", description: "CSV or JSON", route: null },
-  { icon: Trash, label: "Delete Everything", description: "Type DELETE to confirm", route: null, danger: true },
-  { icon: Code, label: "View Source Code", description: "GitHub repository", route: null },
-];
+interface MenuItem {
+  icon: typeof Gear;
+  label: string;
+  description: string;
+  route: string | null;
+  danger?: boolean;
+  onPress?: () => void;
+}
 
 export default function MoreScreen() {
   const [foregroundColor, dangerColor] = useCSSVariable([
     "--color-foreground",
     "--color-danger",
   ]);
+  const setUserData = useUserStore((s) => s.setUserData);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+
+  const handleDeleteAndReset = () => {
+    setShowDeleteDialog(false);
+    setUserData({
+      name: "",
+      income: "",
+      moneyScore: null,
+      timeScore: null,
+      healthScore: null,
+      peopleScore: null,
+      mindScore: null,
+      savingGoals: [],
+      struggles: [],
+      hasCompletedOnboarding: false,
+    });
+    useAIStore.getState().reset();
+    router.replace("/(main)/onboarding");
+  };
+
+  const MENU_ITEMS: MenuItem[] = [
+    { icon: Crown, label: "Premium", description: "Trial & purchase", route: null },
+    { icon: Brain, label: "Local AI", description: "Model & inference", route: "/home/ai-test" },
+    { icon: Bell, label: "Notifications", description: "Reminders & alerts", route: null },
+    { icon: Gear, label: "Appearance", description: "Theme & display", route: null },
+    { icon: Export, label: "Export Data", description: "CSV or JSON", route: null },
+    { icon: Trash, label: "Delete Everything", description: "Erase all data and restart", route: null, danger: true, onPress: () => setShowDeleteDialog(true) },
+    { icon: Code, label: "View Source Code", description: "GitHub repository", route: null },
+  ];
 
   return (
     <>
@@ -50,7 +82,11 @@ export default function MoreScreen() {
                 <Pressable
                   className="flex-row items-center gap-3 px-3 py-3.5"
                   onPress={() => {
-                    if (item.route) router.push(item.route as never);
+                    if (item.onPress) {
+                      item.onPress();
+                    } else if (item.route) {
+                      router.push(item.route as never);
+                    }
                   }}
                 >
                   <item.icon
@@ -82,6 +118,37 @@ export default function MoreScreen() {
 
         <VersionTap />
       </ScrollView>
+
+      {/* Delete Everything confirmation */}
+      <Dialog isOpen={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <Dialog.Content>
+            <Dialog.Title>Delete Everything?</Dialog.Title>
+            <Dialog.Description>
+              This will erase all your data — scores, goals, habits, and
+              preferences — and take you back to the onboarding setup. This
+              cannot be undone.
+            </Dialog.Description>
+            <View className="flex-row gap-3 mt-4">
+              <Button
+                variant="tertiary"
+                className="flex-1"
+                onPress={() => setShowDeleteDialog(false)}
+              >
+                <Button.Label>Cancel</Button.Label>
+              </Button>
+              <Button
+                variant="danger"
+                className="flex-1"
+                onPress={handleDeleteAndReset}
+              >
+                <Button.Label>Delete & Reset</Button.Label>
+              </Button>
+            </View>
+          </Dialog.Content>
+        </Dialog.Portal>
+      </Dialog>
     </>
   );
 }

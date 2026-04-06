@@ -35,6 +35,15 @@
     "channel": "main",
     "createdAt": "2026-04-02T16:35:10.022Z"
   },
+  "c0b5c999410797a6716860e49c07fd4820f942bc": {
+    "version": "0.0.1",
+    "versionCode": 12,
+    "profile": "preview",
+    "previewChannel": "feature/mobile-onboarding-flow-9967160158375639632",
+    "ref": "feature/mobile-onboarding-flow-9967160158375639632",
+    "channel": "main",
+    "createdAt": "2026-04-06T11:33:43.032Z"
+  },
   "d0450adee6e1552e512f77a8ec43d563dea0f2ef": {
     "version": "0.0.1",
     "versionCode": 8,

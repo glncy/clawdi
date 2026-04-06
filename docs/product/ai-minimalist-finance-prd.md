@@ -74,8 +74,8 @@ The "+" opens a universal quick-action bottom sheet — context-aware based on t
 ## 7. Key Features (V1)
 
 ### 🏠 Home Tab (Read-Only Dashboard)
-- **clawdi Score** — single 0-100 number across all 6 life domains, updated weekly
-- 6-domain score bars (visual health indicators)
+- **Focus Areas** — domains the user wants to improve, identified during onboarding (below 50 threshold). No life score — just awareness of what needs attention.
+- 5-domain progress bars (visual health indicators)
 - Budget left today
 - Habits progress ring (X/Y done)
 - Today's top priority
@@ -136,27 +136,33 @@ Open clawdi
       ↓
 "Be honest with yourself for 60 seconds"
       ↓
-5 slider questions about their life
+5 slider questions about their life (money, time, health, people, mind)
       ↓
 "Here's what you just told us." — names their reality
       ↓
-3 onboarding questions (income, dream, biggest struggle)
+3 onboarding questions (income, saving goal, biggest struggle)
       ↓
-clawdi Score reveal — first wow moment
+Focus areas reveal — domains below 50 become focus areas
+"We'll help you focus on: Finances, Time"
+      ↓
+Ask user's name — enables personalized greeting
       ↓
 Pre-filled dashboard (no empty screens)
       ↓
-Daily budget number — second wow moment
+Daily budget number — first wow moment
       ↓
-First habit pre-ticked — third wow moment
+First habit pre-ticked — second wow moment
 ```
+
+**No life scoring.** clawdi does not score your life — it identifies focus areas. Domains where the user rated below 50 on the sliders become suggested focus areas. This feels like a plan, not a grade.
 
 The dashboard is pre-filled from onboarding answers:
 - Budget already set (estimated from income)
 - One habit already added ("Drink enough water")
-- One savings goal draft from their dream choice
+- One savings goal draft from their saving goal choice
 - Today's Spark already showing
 - Quick List has a suggested starter item
+- Personalized greeting using the user's name
 
 ## 9. Shareable Cards (V1 — Free Marketing Engine)
 

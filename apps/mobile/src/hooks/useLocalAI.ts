@@ -2,7 +2,6 @@ import { useCallback } from "react";
 import { streamText } from "ai";
 import {
   llama,
-  downloadModel as downloadModelFromHF,
   isModelDownloaded as checkModelDownloaded,
   removeModel as deleteModelFromDisk,
   getModelPath,
@@ -10,6 +9,11 @@ import {
 } from "@react-native-ai/llama";
 import { MODEL } from "@/services/localAI";
 import { useAIStore } from "@/stores/useAIStore";
+import {
+  downloadModelResumable,
+  pauseModelDownload,
+  clearResumeData,
+} from "@/services/modelDownloader";
 
 /**
  * Singleton model instance — shared across all hook consumers.
@@ -49,26 +53,39 @@ export function useLocalAI() {
     setError(null);
 
     try {
-      await downloadModelFromHF(MODEL.id, (progress) => {
-        const downloaded = Math.round(
-          (progress.percentage / 100) * MODEL.sizeBytes
-        );
-        setDownloadProgress(
-          progress.percentage / 100,
-          downloaded,
-          MODEL.sizeBytes
-        );
+      await downloadModelResumable(MODEL.id, {
+        onProgress: (downloaded, total) => {
+          const effectiveTotal = total > 0 ? total : MODEL.sizeBytes;
+          setDownloadProgress(
+            downloaded / effectiveTotal,
+            downloaded,
+            effectiveTotal
+          );
+        },
+        onComplete: () => {
+          setDownloadProgress(1, MODEL.sizeBytes, MODEL.sizeBytes);
+          setModelDownloaded(true);
+          setStatus("idle");
+        },
+        onError: (msg) => {
+          setStatus("idle");
+          setError(msg);
+        },
       });
-
-      setDownloadProgress(1, MODEL.sizeBytes, MODEL.sizeBytes);
-      setModelDownloaded(true);
-      setStatus("idle");
     } catch (e) {
-      const msg = e instanceof Error ? e.message : "Download failed.";
-      setStatus("idle");
-      setError(msg);
+      // Only set error if not already handled by onError callback
+      if (useAIStore.getState().status === "downloading") {
+        const msg = e instanceof Error ? e.message : "Download failed.";
+        setStatus("idle");
+        setError(msg);
+      }
     }
   }, [setStatus, setDownloadProgress, setModelDownloaded, setError]);
+
+  const pauseDownload = useCallback(async () => {
+    await pauseModelDownload();
+    setStatus("idle");
+  }, [setStatus]);
 
   const loadModel = useCallback(async () => {
     setStatus("loading");
@@ -210,6 +227,7 @@ export function useLocalAI() {
       sharedModel = null;
     }
     await deleteModelFromDisk(MODEL.id);
+    await clearResumeData();
     setModelDownloaded(false);
     setStatus("idle");
     setDownloadProgress(0, 0, 0);
@@ -225,6 +243,7 @@ export function useLocalAI() {
     response,
     checkModel,
     downloadModel,
+    pauseDownload,
     loadModel,
     complete,
     completeJSON,
