@@ -10,7 +10,7 @@ export default function HomeStack() {
       screenOptions={{
         headerTransparent: true,
         headerTitleStyle,
-        headerRight: () => <HeaderGearButton />,
+        headerRight: () => <HeaderGearButton tab="home" />,
       }}
     />
   );

@@ -9,15 +9,25 @@ interface SavingsGoalCardProps {
 
 export const SavingsGoalCard = ({ goal }: SavingsGoalCardProps) => {
   const progress = goal.currentAmount / goal.targetAmount;
+  const percentage = Math.round(progress * 100);
   const currency = goal.currency === "USD" ? "$" : goal.currency;
+  const remaining = goal.targetAmount - goal.currentAmount;
+
+  const progressBarColor =
+    percentage >= 75 ? "bg-success" : "bg-primary";
 
   return (
-    <Card className="bg-surface p-4">
-      <Card.Body className="gap-2">
+    <Card className="bg-surface p-5">
+      <Card.Body className="gap-3">
         <View className="flex-row items-center justify-between">
-          <AppText size="sm" weight="semibold">
-            {goal.name}
-          </AppText>
+          <View className="flex-row items-center gap-2">
+            {goal.icon && (
+              <AppText size="lg">{goal.icon}</AppText>
+            )}
+            <AppText size="sm" weight="semibold">
+              {goal.name}
+            </AppText>
+          </View>
           <AppText size="xs" color="muted">
             {goal.targetDate}
           </AppText>
@@ -32,11 +42,21 @@ export const SavingsGoalCard = ({ goal }: SavingsGoalCardProps) => {
             {goal.targetAmount.toLocaleString()}
           </AppText>
         </View>
-        <View className="h-2 overflow-hidden rounded-full bg-default">
-          <View
-            className="h-full rounded-full bg-primary"
-            style={{ width: `${Math.round(progress * 100)}%` }}
-          />
+        <View className="gap-1.5">
+          <View className="flex-row items-center justify-between">
+            <AppText size="xs" color="muted">
+              {currency}{remaining.toLocaleString()} to go
+            </AppText>
+            <AppText size="xs" weight="semibold" color={percentage >= 75 ? "success" : "primary"}>
+              {percentage}%
+            </AppText>
+          </View>
+          <View className="h-2 overflow-hidden rounded-full bg-default">
+            <View
+              className={`h-full rounded-full ${progressBarColor}`}
+              style={{ width: `${Math.min(percentage, 100)}%` }}
+            />
+          </View>
         </View>
       </Card.Body>
     </Card>

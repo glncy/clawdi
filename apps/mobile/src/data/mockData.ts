@@ -10,6 +10,8 @@ import type {
   DomainScore,
   CategoryBudget,
   DailySpending,
+  Account,
+  RecurringBill,
 } from "@/types";
 
 export const MOCK_DOMAIN_SCORES: DomainScore[] = [
@@ -29,7 +31,9 @@ export const MOCK_TRANSACTIONS: Transaction[] = [
 ];
 
 export const MOCK_SAVINGS_GOALS: SavingsGoal[] = [
-  { id: "1", name: "Travel Fund", targetAmount: 3000, currentAmount: 1200, currency: "USD", targetDate: "Oct 2026" },
+  { id: "1", name: "Travel Fund", targetAmount: 3000, currentAmount: 1200, currency: "USD", targetDate: "Oct 2026", icon: "✈️" },
+  { id: "2", name: "Emergency Fund", targetAmount: 10000, currentAmount: 6500, currency: "USD", targetDate: "Dec 2026", icon: "🚨" },
+  { id: "3", name: "New Laptop", targetAmount: 1500, currentAmount: 400, currency: "USD", targetDate: "Aug 2026", icon: "💻" },
 ];
 
 export const MOCK_HABITS: Habit[] = [
@@ -88,6 +92,20 @@ export const MOCK_CATEGORY_BUDGETS: CategoryBudget[] = [
   { category: "Groceries", icon: "🛒", budgetAmount: 300, spentAmount: 32 },
   { category: "Shopping", icon: "🛍", budgetAmount: 150, spentAmount: 0 },
   { category: "Bills", icon: "📄", budgetAmount: 400, spentAmount: 120 },
+];
+
+export const MOCK_ACCOUNTS: Account[] = [
+  { id: "1", name: "Main Checking", type: "checking", balance: 1850, currency: "USD", icon: "🏦" },
+  { id: "2", name: "Savings", type: "savings", balance: 4200, currency: "USD", icon: "🐷" },
+  { id: "3", name: "Credit Card", type: "credit", balance: -320, currency: "USD", icon: "💳" },
+  { id: "4", name: "Cash", type: "cash", balance: 120, currency: "USD", icon: "💵" },
+];
+
+export const MOCK_RECURRING_BILLS: RecurringBill[] = [
+  { id: "1", name: "Netflix", amount: 15.99, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-15", category: "Entertainment", isPaid: false },
+  { id: "2", name: "Rent", amount: 1200, currency: "USD", frequency: "monthly", nextDueDate: "2026-05-01", category: "Bills", isPaid: true },
+  { id: "3", name: "Gym", amount: 29.99, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-20", category: "Health", isPaid: false },
+  { id: "4", name: "Phone Plan", amount: 45, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-18", category: "Bills", isPaid: false },
 ];
 
 export const MOCK_DAILY_SPENDING: DailySpending[] = [

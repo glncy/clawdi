@@ -1,13 +1,15 @@
-import { View } from "react-native";
+import { View, Pressable } from "react-native";
+import { router } from "expo-router";
 import { TransactionRow } from "@/components/molecules/TransactionRow";
 import { AppText } from "@/components/atoms/Text";
 import type { Transaction } from "@/types";
 
 interface TransactionListProps {
   transactions: Transaction[];
+  limit?: number;
 }
 
-function getDateLabel(dateStr: string): string {
+export function getDateLabel(dateStr: string): string {
   const today = new Date();
   const date = new Date(dateStr + "T12:00:00");
   const todayStr = today.toISOString().split("T")[0];
@@ -21,7 +23,7 @@ function getDateLabel(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-function groupByDate(
+export function groupByDate(
   transactions: Transaction[]
 ): { date: string; label: string; items: Transaction[] }[] {
   const groups = new Map<string, Transaction[]>();
@@ -44,8 +46,10 @@ function groupByDate(
     }));
 }
 
-export const TransactionList = ({ transactions }: TransactionListProps) => {
-  const grouped = groupByDate(transactions);
+export const TransactionList = ({ transactions, limit }: TransactionListProps) => {
+  const displayed = limit ? transactions.slice(0, limit) : transactions;
+  const grouped = groupByDate(displayed);
+  const hasMore = limit !== undefined && transactions.length > limit;
 
   return (
     <View className="gap-3">
@@ -53,9 +57,16 @@ export const TransactionList = ({ transactions }: TransactionListProps) => {
         <AppText size="sm" weight="semibold">
           Recent Activity
         </AppText>
-        <AppText size="xs" color="primary" weight="medium">
-          See all
-        </AppText>
+        {hasMore && (
+          <Pressable
+            onPress={() => router.push("/(main)/(tabs)/money/transactions" as never)}
+            hitSlop={8}
+          >
+            <AppText size="xs" color="primary" weight="medium">
+              See all
+            </AppText>
+          </Pressable>
+        )}
       </View>
       {grouped.map((group) => (
         <View key={group.date} className="gap-2">

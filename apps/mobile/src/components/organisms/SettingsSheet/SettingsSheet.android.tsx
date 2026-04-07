@@ -16,10 +16,14 @@ import {
   Export,
   Trash,
   Code,
+  Tag,
+  Wallet,
+  Repeat,
+  ChartLine,
 } from "phosphor-react-native";
 import { Separator, Dialog, Button } from "heroui-native";
 import { useCSSVariable } from "uniwind";
-import { useMoreSheetStore } from "@/stores/useMoreSheetStore";
+import { useSettingsSheetStore } from "@/stores/useSettingsSheetStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useAIStore } from "@/stores/useAIStore";
 import type { ComponentType } from "react";
@@ -33,8 +37,15 @@ interface MenuItem {
   onPress?: () => void;
 }
 
+const FINANCE_ITEMS: MenuItem[] = [
+  { icon: Tag, label: "Manage Categories", description: "Add, edit, or reorder" },
+  { icon: Wallet, label: "Budget Settings", description: "Monthly limits & alerts" },
+  { icon: Repeat, label: "Recurring Bills", description: "Manage subscriptions" },
+  { icon: ChartLine, label: "Spending Insights", description: "Reports & trends" },
+];
+
 export const SettingsSheet = () => {
-  const { isOpen, close } = useMoreSheetStore();
+  const { isOpen, close, activeTab } = useSettingsSheetStore();
   const [foregroundColor, dangerColor] = useCSSVariable([
     "--color-foreground",
     "--color-danger",
@@ -101,10 +112,42 @@ export const SettingsSheet = () => {
       <Host style={{ position: "absolute", width: "100%", height: "100%" }}>
         <ModalBottomSheet onDismissRequest={close} showDragHandle>
           <RNHostView matchContents>
-            <View className="gap-1 px-4 py-6">
-              <AppText size="lg" weight="bold" family="headline">
+            <View className="gap-1 px-5 py-6">
+              <AppText size="xl" weight="bold" family="headline">
                 Settings
               </AppText>
+              {activeTab === "money" && (
+                <View className="mt-4 gap-1.5">
+                  <AppText size="xs" color="muted" weight="semibold" className="px-1">
+                    FINANCE
+                  </AppText>
+                  <View className="rounded-xl bg-surface">
+                    {FINANCE_ITEMS.map((item, index) => (
+                      <View key={item.label}>
+                        {index > 0 && <Separator />}
+                        <Pressable
+                          className="flex-row items-center gap-3 px-3 py-3.5"
+                          onPress={item.onPress}
+                        >
+                          <item.icon
+                            size={20}
+                            weight="regular"
+                            color={foregroundColor as string}
+                          />
+                          <View className="flex-1">
+                            <AppText size="base" weight="medium" color="foreground">
+                              {item.label}
+                            </AppText>
+                            <AppText size="xs" color="muted">
+                              {item.description}
+                            </AppText>
+                          </View>
+                        </Pressable>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
               <View className="mt-3 rounded-xl bg-surface">
                 {MENU_ITEMS.map((item, index) => (
                   <View key={item.label}>
@@ -124,7 +167,7 @@ export const SettingsSheet = () => {
                       />
                       <View className="flex-1">
                         <AppText
-                          size="sm"
+                          size="base"
                           weight="medium"
                           color={item.danger ? "danger" : "foreground"}
                         >

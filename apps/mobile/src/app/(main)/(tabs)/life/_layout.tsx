@@ -10,7 +10,7 @@ export default function LifeStack() {
       screenOptions={{
         headerTransparent: true,
         headerTitleStyle,
-        headerRight: () => <HeaderGearButton />,
+        headerRight: () => <HeaderGearButton tab="life" />,
       }}
     />
   );

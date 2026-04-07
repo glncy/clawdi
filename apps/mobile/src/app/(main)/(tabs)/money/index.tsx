@@ -4,10 +4,12 @@ import { Card } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
 import { BudgetCard } from "@/components/molecules/BudgetCard";
 import { BudgetShieldBanner } from "@/components/atoms/BudgetShieldBanner";
-import { SavingsGoalCard } from "@/components/molecules/SavingsGoalCard";
 import { CategorySpendingRow } from "@/components/molecules/CategorySpendingRow";
 import { SpendingTrend } from "@/components/molecules/SpendingTrend";
 import { TransactionList } from "@/components/organisms/TransactionList";
+import { AccountsSection } from "@/components/organisms/AccountsSection";
+import { RecurringBillsSection } from "@/components/organisms/RecurringBillsSection";
+import { SavingsGoalsSection } from "@/components/organisms/SavingsGoalsSection";
 import {
   MOCK_BALANCE,
   MOCK_INCOME,
@@ -18,6 +20,8 @@ import {
   MOCK_SAVINGS_GOALS,
   MOCK_CATEGORY_BUDGETS,
   MOCK_DAILY_SPENDING,
+  MOCK_ACCOUNTS,
+  MOCK_RECURRING_BILLS,
 } from "@/data/mockData";
 
 export default function MoneyScreen() {
@@ -63,6 +67,9 @@ export default function MoneyScreen() {
           </Card.Body>
         </Card>
 
+        {/* Accounts */}
+        <AccountsSection accounts={MOCK_ACCOUNTS} />
+
         {/* Category Spending */}
         <CategorySpendingRow categories={MOCK_CATEGORY_BUDGETS} />
 
@@ -79,13 +86,14 @@ export default function MoneyScreen() {
         />
         <BudgetShieldBanner overAmount={overBudget} />
 
+        {/* Recurring Bills */}
+        <RecurringBillsSection bills={MOCK_RECURRING_BILLS} />
+
         {/* Transactions */}
-        <TransactionList transactions={MOCK_TRANSACTIONS} />
+        <TransactionList transactions={MOCK_TRANSACTIONS} limit={5} />
 
         {/* Savings Goals */}
-        {MOCK_SAVINGS_GOALS.map((goal) => (
-          <SavingsGoalCard key={goal.id} goal={goal} />
-        ))}
+        <SavingsGoalsSection goals={MOCK_SAVINGS_GOALS} />
       </ScrollView>
     </>
   );

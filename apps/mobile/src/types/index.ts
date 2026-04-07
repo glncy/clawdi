@@ -16,6 +16,7 @@ export interface SavingsGoal {
   currentAmount: number;
   currency: string;
   targetDate: string;
+  icon?: string;
 }
 
 export interface Habit {
@@ -85,4 +86,24 @@ export interface CategoryBudget {
 export interface DailySpending {
   date: string;
   amount: number;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: "checking" | "savings" | "credit" | "cash" | "investment";
+  balance: number;
+  currency: string;
+  icon: string;
+}
+
+export interface RecurringBill {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  frequency: "weekly" | "monthly" | "yearly";
+  nextDueDate: string;
+  category: string;
+  isPaid: boolean;
 }

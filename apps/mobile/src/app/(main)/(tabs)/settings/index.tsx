@@ -94,16 +94,16 @@ export default function SettingsScreen() {
     return (
       <View key={label}>
         <Pressable
-          className="flex-row items-center gap-3 px-3 py-2.5"
+          className="flex-row items-center gap-3 px-3.5 py-3.5"
           onPress={onPress}
         >
           <View
-            className={`h-8 w-8 items-center justify-center rounded-lg ${
+            className={`h-9 w-9 items-center justify-center rounded-lg ${
               danger ? "bg-danger/15" : "bg-primary/10"
             }`}
           >
             <Icon
-              size={16}
+              size={18}
               weight="fill"
               color={
                 danger
@@ -114,19 +114,19 @@ export default function SettingsScreen() {
           </View>
           <View className="flex-1">
             <AppText
-              size="sm"
+              size="base"
               weight="medium"
               color={danger ? "danger" : "foreground"}
             >
               {label}
             </AppText>
-            <AppText size="xs" color="muted" style={{ fontSize: 10 }}>
+            <AppText size="xs" color="muted">
               {description}
             </AppText>
           </View>
           {!danger && (
             <CaretRight
-              size={12}
+              size={14}
               weight="bold"
               color={mutedColor as string}
             />

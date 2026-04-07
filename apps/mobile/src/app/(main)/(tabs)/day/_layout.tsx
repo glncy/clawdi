@@ -10,7 +10,7 @@ export default function DayStack() {
       screenOptions={{
         headerTransparent: true,
         headerTitleStyle,
-        headerRight: () => <HeaderGearButton />,
+        headerRight: () => <HeaderGearButton tab="day" />,
       }}
     />
   );

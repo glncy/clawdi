@@ -22,10 +22,14 @@ import {
   Trash,
   Code,
   CaretRight,
+  Tag,
+  Wallet,
+  Repeat,
+  ChartLine,
 } from "phosphor-react-native";
 import { Dialog, Button } from "heroui-native";
 import { useCSSVariable } from "uniwind";
-import { useMoreSheetStore } from "@/stores/useMoreSheetStore";
+import { useSettingsSheetStore } from "@/stores/useSettingsSheetStore";
 import { useUserStore } from "@/stores/useUserStore";
 import { useAIStore } from "@/stores/useAIStore";
 import type { ComponentType } from "react";
@@ -62,8 +66,15 @@ const SETTINGS_ITEMS: MenuItem[] = [
   { icon: Code, label: "View Source Code", description: "GitHub repository" },
 ];
 
+const FINANCE_ITEMS: MenuItem[] = [
+  { icon: Tag, label: "Manage Categories", description: "Add, edit, or reorder" },
+  { icon: Wallet, label: "Budget Settings", description: "Monthly limits & alerts" },
+  { icon: Repeat, label: "Recurring Bills", description: "Manage subscriptions" },
+  { icon: ChartLine, label: "Spending Insights", description: "Reports & trends" },
+];
+
 export const SettingsSheet = () => {
-  const { isOpen, close } = useMoreSheetStore();
+  const { isOpen, close, activeTab } = useSettingsSheetStore();
   const [foregroundColor, dangerColor, primaryColor, mutedColor] =
     useCSSVariable([
       "--color-foreground",
@@ -101,7 +112,7 @@ export const SettingsSheet = () => {
     return (
       <View key={label}>
         <Pressable
-          className="flex-row items-center gap-3 px-3 py-2.5"
+          className="flex-row items-center gap-3 px-3.5 py-3.5"
           onPress={() => {
             if (onPress) {
               close();
@@ -110,12 +121,12 @@ export const SettingsSheet = () => {
           }}
         >
           <View
-            className={`h-8 w-8 items-center justify-center rounded-lg ${
+            className={`h-9 w-9 items-center justify-center rounded-lg ${
               danger ? "bg-danger/15" : "bg-primary/10"
             }`}
           >
             <Icon
-              size={16}
+              size={18}
               weight="fill"
               color={
                 danger
@@ -126,19 +137,19 @@ export const SettingsSheet = () => {
           </View>
           <View className="flex-1">
             <AppText
-              size="sm"
+              size="base"
               weight="medium"
               color={danger ? "danger" : "foreground"}
             >
               {label}
             </AppText>
-            <AppText size="xs" color="muted" style={{ fontSize: 10 }}>
+            <AppText size="xs" color="muted">
               {description}
             </AppText>
           </View>
           {!danger && (
             <CaretRight
-              size={12}
+              size={14}
               weight="bold"
               color={mutedColor as string}
             />
@@ -173,12 +184,22 @@ export const SettingsSheet = () => {
             ]}
           >
             <RNHostView>
-              <View style={{ flex: 1 }} className="px-4 py-6">
-                <AppText size="lg" weight="bold" family="headline">
+              <View style={{ flex: 1 }} className="px-5 py-6">
+                <AppText size="xl" weight="bold" family="headline">
                   Settings
                 </AppText>
 
                 <View className="mt-5 gap-4">
+                  {/* Context-specific settings */}
+                  {activeTab === "money" && (
+                    <View className="gap-1.5">
+                      <AppText size="xs" color="muted" weight="semibold" className="px-1 uppercase tracking-wide">
+                        Finance
+                      </AppText>
+                      {renderGroup(FINANCE_ITEMS)}
+                    </View>
+                  )}
+
                   {/* Main navigation group */}
                   {renderGroup(MAIN_ITEMS)}
 
