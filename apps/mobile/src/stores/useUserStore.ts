@@ -12,6 +12,7 @@ import type {
 export interface UserState {
   name: string;
   income: string;
+  currency: string;
   moneyScore: MoneyScore | null;
   timeScore: TimeScore | null;
   healthScore: HealthScore | null;
@@ -28,6 +29,7 @@ export const useUserStore = create<UserState>()(
     (set) => ({
       name: "",
       income: "",
+      currency: "",
       moneyScore: null,
       timeScore: null,
       healthScore: null,

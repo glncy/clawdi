@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { AppText } from "@/components/atoms/Text";
 import { SavingsGoalCard } from "@/components/molecules/SavingsGoalCard";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { SavingsGoal } from "@/types";
 
 interface SavingsGoalsSectionProps {
@@ -8,9 +9,9 @@ interface SavingsGoalsSectionProps {
 }
 
 export const SavingsGoalsSection = ({ goals }: SavingsGoalsSectionProps) => {
+  const { format } = useCurrency();
   const totalSaved = goals.reduce((sum, g) => sum + g.currentAmount, 0);
   const totalTarget = goals.reduce((sum, g) => sum + g.targetAmount, 0);
-  const currency = goals[0]?.currency === "USD" ? "$" : (goals[0]?.currency ?? "$");
 
   return (
     <View className="gap-3">
@@ -18,15 +19,28 @@ export const SavingsGoalsSection = ({ goals }: SavingsGoalsSectionProps) => {
         <AppText size="sm" weight="semibold">
           Savings Goals
         </AppText>
-        <AppText size="xs" color="muted">
-          {currency}{totalSaved.toLocaleString()} / {currency}{totalTarget.toLocaleString()}
-        </AppText>
+        {goals.length > 0 && (
+          <AppText size="xs" color="muted">
+            {format(totalSaved)} / {format(totalTarget)}
+          </AppText>
+        )}
       </View>
-      <View className="gap-3">
-        {goals.map((goal) => (
-          <SavingsGoalCard key={goal.id} goal={goal} />
-        ))}
-      </View>
+      {goals.length === 0 ? (
+        <View className="rounded-xl bg-surface p-6 items-center gap-2">
+          <AppText size="sm" color="muted" align="center">
+            No savings goals yet
+          </AppText>
+          <AppText size="xs" color="muted" align="center">
+            Set a goal to start tracking your progress toward something meaningful.
+          </AppText>
+        </View>
+      ) : (
+        <View className="gap-3">
+          {goals.map((goal) => (
+            <SavingsGoalCard key={goal.id} goal={goal} />
+          ))}
+        </View>
+      )}
     </View>
   );
 };

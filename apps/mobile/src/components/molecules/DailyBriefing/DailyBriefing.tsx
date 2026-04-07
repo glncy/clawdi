@@ -7,6 +7,7 @@ import { useCSSVariable } from "uniwind";
 import { useAIStore } from "@/stores/useAIStore";
 import { useLocalAI } from "@/hooks/useLocalAI";
 import { useIsAIAvailable } from "@/hooks/useIsAIAvailable";
+import { useCurrency } from "@/hooks/useCurrency";
 import {
   buildBriefingPrompt,
   BRIEFING_SYSTEM_PROMPT,
@@ -18,7 +19,6 @@ interface DailyBriefingProps {
   userName: string;
   budgetLeft: number;
   dailyBudget: number;
-  currency?: string;
   priorities: Priority[];
   habits: Habit[];
   contacts: Contact[];
@@ -34,11 +34,11 @@ export const DailyBriefing = ({
   userName,
   budgetLeft,
   dailyBudget,
-  currency = "$",
   priorities,
   habits,
   contacts,
 }: DailyBriefingProps) => {
+  const { symbol: currency } = useCurrency();
   const aiStatus = useAIStore((s) => s.status);
   const downloadProgress = useAIStore((s) => s.downloadProgress);
   const downloadedBytes = useAIStore((s) => s.downloadedBytes);

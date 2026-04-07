@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useFinanceData } from "./useFinanceData";
 import { useLocalAI } from "./useLocalAI";
 import { useIsAIAvailable } from "./useIsAIAvailable";
+import { useCurrency } from "./useCurrency";
 import {
   buildFinanceInsightPrompt,
   FINANCE_INSIGHT_SYSTEM_PROMPT,
@@ -10,6 +11,7 @@ import {
 export function useFinanceInsight() {
   const isAIAvailable = useIsAIAvailable();
   const { complete } = useLocalAI();
+  const { symbol: currency } = useCurrency();
   const {
     totalBalance,
     dailyBudget,
@@ -53,7 +55,7 @@ export function useFinanceInsight() {
       monthIncome,
       monthSpent,
       todaySpent,
-      currency: "$",
+      currency,
       thisWeekSpending,
       categoryBudgets,
       upcomingBillsCount: upcomingBills.length,

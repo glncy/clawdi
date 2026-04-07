@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import {
   BottomSheet,
   Group,
@@ -28,6 +28,7 @@ import {
   ChartLine,
 } from "phosphor-react-native";
 import { Dialog, Button } from "heroui-native";
+import { VersionTap } from "@/components/molecules/VersionTap";
 import { useCSSVariable } from "uniwind";
 import { useSettingsSheetStore } from "@/stores/useSettingsSheetStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -98,6 +99,7 @@ export const SettingsSheet = () => {
       mindScore: null,
       savingGoals: [],
       struggles: [],
+      currency: "",
       hasCompletedOnboarding: false,
     });
     useAIStore.getState().reset();
@@ -184,7 +186,7 @@ export const SettingsSheet = () => {
             ]}
           >
             <RNHostView>
-              <View style={{ flex: 1 }} className="px-5 py-6">
+              <ScrollView style={{ flex: 1 }} contentContainerClassName="px-5 py-6 pb-10">
                 <AppText size="xl" weight="bold" family="headline">
                   Settings
                 </AppText>
@@ -226,8 +228,13 @@ export const SettingsSheet = () => {
                       onPress: () => setShowDeleteDialog(true),
                     },
                   ])}
+
+                  {/* Version / Channel Surfing */}
+                  <View className="mt-2">
+                    <VersionTap />
+                  </View>
                 </View>
-              </View>
+              </ScrollView>
             </RNHostView>
           </Group>
         </BottomSheet>

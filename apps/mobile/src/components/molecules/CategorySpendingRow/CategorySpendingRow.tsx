@@ -1,6 +1,7 @@
 import { View, ScrollView } from "react-native";
 import { AppText } from "@/components/atoms/Text";
 import { ProgressRing } from "@/components/atoms/ProgressRing";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { CategoryBudget } from "@/types";
 
 interface CategorySpendingRowProps {
@@ -14,6 +15,8 @@ interface CategorySpendingRowProps {
 export const CategorySpendingRow = ({
   categories,
 }: CategorySpendingRowProps) => {
+  const { format } = useCurrency();
+
   return (
     <View className="gap-2">
       <AppText size="sm" weight="semibold">
@@ -43,7 +46,7 @@ export const CategorySpendingRow = ({
                 {cat.category}
               </AppText>
               <AppText size="xs" color="muted" family="mono">
-                ${cat.spentAmount.toFixed(0)}
+                {format(cat.spentAmount)}
               </AppText>
             </View>
           );

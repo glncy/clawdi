@@ -1,5 +1,6 @@
 import { ScrollView, View } from "react-native";
 import { AppText } from "@/components/atoms/Text";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Account } from "@/types";
 
 interface AccountsSectionProps {
@@ -15,8 +16,8 @@ const TYPE_LABELS: Record<Account["type"], string> = {
 };
 
 export const AccountsSection = ({ accounts }: AccountsSectionProps) => {
+  const { format } = useCurrency();
   const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
-  const currency = accounts[0]?.currency === "USD" ? "$" : (accounts[0]?.currency ?? "$");
 
   return (
     <View className="gap-3">
@@ -24,46 +25,59 @@ export const AccountsSection = ({ accounts }: AccountsSectionProps) => {
         <AppText size="sm" weight="semibold">
           Accounts
         </AppText>
-        <AppText size="xs" color="muted">
-          Net {currency}{totalBalance.toLocaleString()}
-        </AppText>
+        {accounts.length > 0 && (
+          <AppText size="xs" color="muted">
+            Net {format(totalBalance)}
+          </AppText>
+        )}
       </View>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerClassName="gap-3"
-      >
-        {accounts.map((account) => {
-          const isNegative = account.balance < 0;
-          return (
-            <View
-              key={account.id}
-              className="w-36 rounded-xl bg-surface p-4 gap-2"
-            >
-              <View className="flex-row items-center justify-between">
-                <AppText size="xl">{account.icon}</AppText>
-              </View>
-              <View className="gap-0.5">
-                <AppText size="xs" color="muted">
-                  {TYPE_LABELS[account.type]}
-                </AppText>
-                <AppText size="sm" weight="medium" numberOfLines={1}>
-                  {account.name}
-                </AppText>
-              </View>
-              <AppText
-                size="base"
-                weight="bold"
-                family="mono"
-                color={isNegative ? "danger" : "foreground"}
+      {accounts.length === 0 ? (
+        <View className="rounded-xl bg-surface p-6 items-center gap-2">
+          <AppText size="sm" color="muted" align="center">
+            No accounts added yet
+          </AppText>
+          <AppText size="xs" color="muted" align="center">
+            Add a checking, savings, or credit account to track your balances.
+          </AppText>
+        </View>
+      ) : (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerClassName="gap-3"
+        >
+          {accounts.map((account) => {
+            const isNegative = account.balance < 0;
+            return (
+              <View
+                key={account.id}
+                className="w-36 rounded-xl bg-surface p-4 gap-2"
               >
-                {isNegative ? "-" : ""}{currency}
-                {Math.abs(account.balance).toLocaleString()}
-              </AppText>
-            </View>
-          );
-        })}
-      </ScrollView>
+                <View className="flex-row items-center justify-between">
+                  <AppText size="xl">{account.icon}</AppText>
+                </View>
+                <View className="gap-0.5">
+                  <AppText size="xs" color="muted">
+                    {TYPE_LABELS[account.type]}
+                  </AppText>
+                  <AppText size="sm" weight="medium" numberOfLines={1}>
+                    {account.name}
+                  </AppText>
+                </View>
+                <AppText
+                  size="base"
+                  weight="bold"
+                  family="mono"
+                  color={isNegative ? "danger" : "foreground"}
+                >
+                  {isNegative ? "-" : ""}
+                  {format(Math.abs(account.balance))}
+                </AppText>
+              </View>
+            );
+          })}
+        </ScrollView>
+      )}
     </View>
   );
 };

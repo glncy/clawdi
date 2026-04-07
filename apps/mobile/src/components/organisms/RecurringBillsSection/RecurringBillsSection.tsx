@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { AppText } from "@/components/atoms/Text";
 import { RecurringBillRow } from "@/components/molecules/RecurringBillRow";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { RecurringBill } from "@/types";
 
 interface RecurringBillsSectionProps {
@@ -8,6 +9,7 @@ interface RecurringBillsSectionProps {
 }
 
 export const RecurringBillsSection = ({ bills }: RecurringBillsSectionProps) => {
+  const { format } = useCurrency();
   const unpaid = bills
     .filter((b) => !b.isPaid)
     .sort((a, b) => a.nextDueDate.localeCompare(b.nextDueDate));
@@ -15,7 +17,6 @@ export const RecurringBillsSection = ({ bills }: RecurringBillsSectionProps) => 
   const sorted = [...unpaid, ...paid];
 
   const upcomingTotal = unpaid.reduce((sum, b) => sum + b.amount, 0);
-  const currency = bills[0]?.currency === "USD" ? "$" : (bills[0]?.currency ?? "$");
 
   return (
     <View className="gap-3">
@@ -23,19 +24,32 @@ export const RecurringBillsSection = ({ bills }: RecurringBillsSectionProps) => 
         <AppText size="sm" weight="semibold">
           Upcoming Bills
         </AppText>
-        <AppText size="xs" color="muted">
-          {currency}{upcomingTotal.toFixed(2)} due
-        </AppText>
+        {bills.length > 0 && (
+          <AppText size="xs" color="muted">
+            {format(upcomingTotal)} due
+          </AppText>
+        )}
       </View>
-      <View className="overflow-hidden rounded-xl bg-surface">
-        {sorted.map((bill, i) => (
-          <RecurringBillRow
-            key={bill.id}
-            bill={bill}
-            isLast={i === sorted.length - 1}
-          />
-        ))}
-      </View>
+      {bills.length === 0 ? (
+        <View className="rounded-xl bg-surface p-6 items-center gap-2">
+          <AppText size="sm" color="muted" align="center">
+            No upcoming bills
+          </AppText>
+          <AppText size="xs" color="muted" align="center">
+            Add recurring bills to stay on top of your subscriptions and payments.
+          </AppText>
+        </View>
+      ) : (
+        <View className="overflow-hidden rounded-xl bg-surface">
+          {sorted.map((bill, i) => (
+            <RecurringBillRow
+              key={bill.id}
+              bill={bill}
+              isLast={i === sorted.length - 1}
+            />
+          ))}
+        </View>
+      )}
     </View>
   );
 };

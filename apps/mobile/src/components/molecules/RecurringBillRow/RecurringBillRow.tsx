@@ -3,6 +3,7 @@ import { AppText } from "@/components/atoms/Text";
 import { getCategoryIcon } from "@/utils/categoryIcon";
 import { CheckCircle } from "phosphor-react-native";
 import { useCSSVariable } from "uniwind";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { RecurringBill } from "@/types";
 
 interface RecurringBillRowProps {
@@ -35,9 +36,9 @@ export const RecurringBillRow = ({ bill, isLast }: RecurringBillRowProps) => {
     "--color-danger",
     "--color-muted",
   ]);
+  const { format } = useCurrency();
 
   const daysUntil = getDaysUntilDue(bill.nextDueDate);
-  const currency = bill.currency === "USD" ? "$" : bill.currency;
 
   let dueDateColor: "muted" | "warning" | "danger" = "muted";
   if (!bill.isPaid && daysUntil < 0) dueDateColor = "danger";
@@ -59,7 +60,7 @@ export const RecurringBillRow = ({ bill, isLast }: RecurringBillRowProps) => {
         </View>
         <View className="items-end gap-0.5">
           <AppText size="sm" weight="semibold" family="mono">
-            {currency}{bill.amount.toFixed(2)}
+            {format(bill.amount)}
           </AppText>
           {bill.isPaid ? (
             <View className="flex-row items-center gap-1">

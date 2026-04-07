@@ -1,18 +1,15 @@
 import { View } from "react-native";
 import { Card } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
+import { useCurrency } from "@/hooks/useCurrency";
 
 interface BudgetCardProps {
   amountLeft: number;
   dailyBudget: number;
-  currency?: string;
 }
 
-export const BudgetCard = ({
-  amountLeft,
-  dailyBudget,
-  currency = "$",
-}: BudgetCardProps) => {
+export const BudgetCard = ({ amountLeft, dailyBudget }: BudgetCardProps) => {
+  const { format } = useCurrency();
   const progress = Math.min(1 - amountLeft / dailyBudget, 1);
   const percentage = Math.round((1 - progress) * 100);
 
@@ -23,8 +20,7 @@ export const BudgetCard = ({
           Budget left today
         </AppText>
         <AppText size="2xl" weight="bold" family="mono" selectable>
-          {currency}
-          {amountLeft.toLocaleString()}
+          {format(amountLeft)}
         </AppText>
         <View className="h-2 overflow-hidden rounded-full bg-default">
           <View

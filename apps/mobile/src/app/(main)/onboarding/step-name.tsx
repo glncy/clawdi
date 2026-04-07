@@ -10,6 +10,7 @@ import { AIDownloadStatus } from "@/components/molecules/AIDownloadStatus";
 import { useCSSVariable } from "uniwind";
 import { OnboardingHeader } from "./components/OnboardingHeader";
 import { useUserStore } from "@/stores/useUserStore";
+import { getDeviceCurrency } from "@/utils/currency";
 import {
   KeyboardAvoidingView,
   useKeyboardHandler,
@@ -157,6 +158,7 @@ export default function OnboardingStepName() {
               setUserData({
                 name,
                 income,
+                currency: getDeviceCurrency().code,
                 moneyScore,
                 timeScore,
                 healthScore,

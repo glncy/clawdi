@@ -13,6 +13,7 @@ import { SavingsGoalsSection } from "@/components/organisms/SavingsGoalsSection"
 import { FinanceInsight } from "@/components/organisms/FinanceInsight";
 import { AddTransactionSheet } from "@/components/organisms/AddTransactionSheet";
 import { useFinanceData } from "@/hooks/useFinanceData";
+import { useCurrency } from "@/hooks/useCurrency";
 
 export default function MoneyScreen() {
   const {
@@ -28,6 +29,7 @@ export default function MoneyScreen() {
     categoryBudgets,
     thisWeekSpending,
   } = useFinanceData();
+  const { format } = useCurrency();
 
   const overBudget = budgetLeftToday < 0 ? Math.abs(budgetLeftToday) : 0;
 
@@ -46,11 +48,7 @@ export default function MoneyScreen() {
               Available Balance
             </AppText>
             <AppText size="4xl" weight="bold" family="mono" selectable>
-              $
-              {totalBalance.toLocaleString("en-US", {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              })}
+              {format(totalBalance)}
             </AppText>
             <View className="flex-row gap-4">
               <View className="flex-row items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
@@ -58,11 +56,7 @@ export default function MoneyScreen() {
                   ↑
                 </AppText>
                 <AppText size="xs" color="primary" weight="medium">
-                  $
-                  {monthIncome.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {format(monthIncome)}
                 </AppText>
               </View>
               <View className="flex-row items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1">
@@ -70,11 +64,7 @@ export default function MoneyScreen() {
                   ↓
                 </AppText>
                 <AppText size="xs" color="danger" weight="medium">
-                  $
-                  {monthSpent.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}
+                  {format(monthSpent)}
                 </AppText>
               </View>
             </View>

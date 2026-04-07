@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, Pressable } from "react-native";
+import { View, Pressable, ScrollView } from "react-native";
 import {
   ModalBottomSheet,
   Host,
@@ -22,6 +22,7 @@ import {
   ChartLine,
 } from "phosphor-react-native";
 import { Separator, Dialog, Button } from "heroui-native";
+import { VersionTap } from "@/components/molecules/VersionTap";
 import { useCSSVariable } from "uniwind";
 import { useSettingsSheetStore } from "@/stores/useSettingsSheetStore";
 import { useUserStore } from "@/stores/useUserStore";
@@ -66,6 +67,7 @@ export const SettingsSheet = () => {
       mindScore: null,
       savingGoals: [],
       struggles: [],
+      currency: "",
       hasCompletedOnboarding: false,
     });
     useAIStore.getState().reset();
@@ -112,7 +114,7 @@ export const SettingsSheet = () => {
       <Host style={{ position: "absolute", width: "100%", height: "100%" }}>
         <ModalBottomSheet onDismissRequest={close} showDragHandle>
           <RNHostView matchContents>
-            <View className="gap-1 px-5 py-6">
+            <ScrollView contentContainerClassName="gap-1 px-5 py-6 pb-10">
               <AppText size="xl" weight="bold" family="headline">
                 Settings
               </AppText>
@@ -213,7 +215,12 @@ export const SettingsSheet = () => {
                   </View>
                 </View>
               )}
-            </View>
+
+              {/* Version / Channel Surfing */}
+              <View className="mt-2">
+                <VersionTap />
+              </View>
+            </ScrollView>
           </RNHostView>
         </ModalBottomSheet>
       </Host>

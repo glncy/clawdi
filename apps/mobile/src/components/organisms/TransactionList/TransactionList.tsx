@@ -68,16 +68,27 @@ export const TransactionList = ({ transactions, limit }: TransactionListProps) =
           </Pressable>
         )}
       </View>
-      {grouped.map((group) => (
-        <View key={group.date} className="gap-2">
-          <AppText size="xs" color="muted" weight="medium">
-            {group.label}
+      {grouped.length === 0 ? (
+        <View className="rounded-xl bg-surface p-6 items-center gap-2">
+          <AppText size="sm" color="muted" align="center">
+            No transactions yet
           </AppText>
-          {group.items.map((tx) => (
-            <TransactionRow key={tx.id} transaction={tx} />
-          ))}
+          <AppText size="xs" color="muted" align="center">
+            Tap the + button to log your first income or expense.
+          </AppText>
         </View>
-      ))}
+      ) : (
+        grouped.map((group) => (
+          <View key={group.date} className="gap-2">
+            <AppText size="xs" color="muted" weight="medium">
+              {group.label}
+            </AppText>
+            {group.items.map((tx) => (
+              <TransactionRow key={tx.id} transaction={tx} />
+            ))}
+          </View>
+        ))
+      )}
     </View>
   );
 };

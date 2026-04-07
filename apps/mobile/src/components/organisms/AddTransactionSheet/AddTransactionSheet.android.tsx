@@ -15,6 +15,7 @@ import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStor
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useLocalAI } from "@/hooks/useLocalAI";
 import { useIsAIAvailable } from "@/hooks/useIsAIAvailable";
+import { useCurrency } from "@/hooks/useCurrency";
 import { parseTransactionText } from "@/services/transactionParserService";
 import { Lightning, ArrowUp, ArrowDown } from "phosphor-react-native";
 
@@ -49,6 +50,7 @@ type ManualForm = z.infer<typeof manualSchema>;
 export const AddTransactionSheet = () => {
   const { isOpen, close } = useAddTransactionSheetStore();
   const { addTransaction } = useFinanceData();
+  const { code: currencyCode } = useCurrency();
   const { completeJSON } = useLocalAI();
   const isAIAvailable = useIsAIAvailable();
 
@@ -136,7 +138,7 @@ export const AddTransactionSheet = () => {
       type: data.type,
       item: data.item,
       amount: parseFloat(data.amount),
-      currency: "USD",
+      currency: currencyCode,
       category: data.category,
       date: data.date,
       note: data.note || undefined,

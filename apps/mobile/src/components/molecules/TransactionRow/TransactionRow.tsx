@@ -1,6 +1,7 @@
 import { View } from "react-native";
 import { AppText } from "@/components/atoms/Text";
 import { getCategoryIcon } from "@/utils/categoryIcon";
+import { useCurrency } from "@/hooks/useCurrency";
 import type { Transaction } from "@/types";
 
 interface TransactionRowProps {
@@ -8,8 +9,7 @@ interface TransactionRowProps {
 }
 
 export const TransactionRow = ({ transaction }: TransactionRowProps) => {
-  const currencySymbol =
-    transaction.currency === "USD" ? "$" : transaction.currency;
+  const { format } = useCurrency();
   const isExpense = transaction.type === "expense";
 
   return (
@@ -33,8 +33,7 @@ export const TransactionRow = ({ transaction }: TransactionRowProps) => {
         selectable
       >
         {isExpense ? "-" : "+"}
-        {currencySymbol}
-        {transaction.amount.toFixed(2)}
+        {format(transaction.amount)}
       </AppText>
     </View>
   );
