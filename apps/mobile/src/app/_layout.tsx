@@ -28,6 +28,7 @@ import {
 } from "../providers/ActiveColorSchemeProvider";
 import React from "react";
 import { AIModelDownloadProvider } from "../providers/AIModelDownloadProvider";
+import { DatabaseProvider } from "../providers/DatabaseProvider";
 
 function AppNavigationProvider({ children }: { children: React.ReactNode }) {
   const { activeColorScheme } = useActiveColorScheme();
@@ -87,6 +88,7 @@ export default function RootLayout() {
         (props) => <GestureHandlerRootView {...props} style={{ flex: 1 }} />,
         (props) => <ActiveColorSchemeProvider {...props} />,
         (props) => <HeroUINativeProvider {...props} />,
+        (props) => <DatabaseProvider {...props} />,
         (props) => <KeyboardProvider {...props} />,
         (props) => <AppNavigationProvider {...props} />,
         (props) => <AIModelDownloadProvider {...props} />,

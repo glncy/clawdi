@@ -7,9 +7,8 @@ import { BudgetCard } from "@/components/molecules/BudgetCard";
 import { NudgeCard } from "@/components/molecules/NudgeCard";
 import { HabitList } from "@/components/organisms/HabitList";
 import { useUserStore } from "@/stores/useUserStore";
+import { useFinanceData } from "@/hooks/useFinanceData";
 import {
-  MOCK_BUDGET_LEFT,
-  MOCK_DAILY_BUDGET,
   MOCK_HABITS,
   MOCK_PRIORITIES,
   MOCK_CONTACTS,
@@ -32,6 +31,7 @@ function getFormattedDate(): string {
 
 export default function HomeScreen() {
   const userName = useUserStore((s) => s.name) || "there";
+  const { budgetLeftToday, dailyBudget } = useFinanceData();
   const nudgeContact = MOCK_CONTACTS.find((c) => c.lastTalkedDaysAgo >= 4);
 
   return (
@@ -57,8 +57,8 @@ export default function HomeScreen() {
 
         <DailyBriefing
           userName={userName}
-          budgetLeft={MOCK_BUDGET_LEFT}
-          dailyBudget={MOCK_DAILY_BUDGET}
+          budgetLeft={budgetLeftToday}
+          dailyBudget={dailyBudget}
           priorities={MOCK_PRIORITIES}
           habits={MOCK_HABITS}
           contacts={MOCK_CONTACTS}
@@ -67,8 +67,8 @@ export default function HomeScreen() {
         <TodayFocus priorities={MOCK_PRIORITIES} />
 
         <BudgetCard
-          amountLeft={MOCK_BUDGET_LEFT}
-          dailyBudget={MOCK_DAILY_BUDGET}
+          amountLeft={budgetLeftToday}
+          dailyBudget={dailyBudget}
         />
 
         <HabitList habits={MOCK_HABITS} compact />

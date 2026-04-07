@@ -7,6 +7,7 @@ export interface Transaction {
   category: string;
   date: string;
   note?: string;
+  accountId?: string;
 }
 
 export interface SavingsGoal {
@@ -95,6 +96,22 @@ export interface Account {
   balance: number;
   currency: string;
   icon: string;
+  excludeFromBudget?: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
+export interface BudgetSetting {
+  id: string;
+  category: string;
+  budgetAmount: number;
+  period: string;
 }
 
 export interface RecurringBill {

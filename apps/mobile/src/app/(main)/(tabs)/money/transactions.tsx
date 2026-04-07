@@ -3,10 +3,11 @@ import { Stack } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
 import { TransactionRow } from "@/components/molecules/TransactionRow";
 import { groupByDate } from "@/components/organisms/TransactionList/TransactionList";
-import { MOCK_TRANSACTIONS } from "@/data/mockData";
+import { useFinanceData } from "@/hooks/useFinanceData";
 
 export default function TransactionsScreen() {
-  const grouped = groupByDate(MOCK_TRANSACTIONS);
+  const { transactions } = useFinanceData();
+  const grouped = groupByDate(transactions);
 
   return (
     <>

@@ -70,7 +70,7 @@ const FINANCE_ITEMS: MenuItem[] = [
   { icon: Tag, label: "Manage Categories", description: "Add, edit, or reorder" },
   { icon: Wallet, label: "Budget Settings", description: "Monthly limits & alerts" },
   { icon: Repeat, label: "Recurring Bills", description: "Manage subscriptions" },
-  { icon: ChartLine, label: "Spending Insights", description: "Reports & trends" },
+  { icon: ChartLine, label: "Finance Insight", description: "AI-powered analysis" },
 ];
 
 export const SettingsSheet = () => {
@@ -190,10 +190,10 @@ export const SettingsSheet = () => {
                 </AppText>
 
                 <View className="mt-5 gap-4">
-                  {/* Context-specific settings */}
+                  {/* Finance settings — top on money tab */}
                   {activeTab === "money" && (
                     <View className="gap-1.5">
-                      <AppText size="xs" color="muted" weight="semibold" className="px-1 uppercase tracking-wide">
+                      <AppText size="xs" color="primary" weight="bold" className="px-1 uppercase tracking-wide">
                         Finance
                       </AppText>
                       {renderGroup(FINANCE_ITEMS)}
@@ -205,6 +205,16 @@ export const SettingsSheet = () => {
 
                   {/* Settings group */}
                   {renderGroup(SETTINGS_ITEMS)}
+
+                  {/* Finance settings — below main on other tabs */}
+                  {activeTab !== "money" && (
+                    <View className="gap-1.5">
+                      <AppText size="xs" color="primary" weight="bold" className="px-1 uppercase tracking-wide">
+                        Finance
+                      </AppText>
+                      {renderGroup(FINANCE_ITEMS)}
+                    </View>
+                  )}
 
                   {/* Danger zone */}
                   {renderGroup([

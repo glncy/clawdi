@@ -10,24 +10,26 @@ import { TransactionList } from "@/components/organisms/TransactionList";
 import { AccountsSection } from "@/components/organisms/AccountsSection";
 import { RecurringBillsSection } from "@/components/organisms/RecurringBillsSection";
 import { SavingsGoalsSection } from "@/components/organisms/SavingsGoalsSection";
-import {
-  MOCK_BALANCE,
-  MOCK_INCOME,
-  MOCK_SPENT,
-  MOCK_BUDGET_LEFT,
-  MOCK_DAILY_BUDGET,
-  MOCK_TRANSACTIONS,
-  MOCK_SAVINGS_GOALS,
-  MOCK_CATEGORY_BUDGETS,
-  MOCK_DAILY_SPENDING,
-  MOCK_ACCOUNTS,
-  MOCK_RECURRING_BILLS,
-} from "@/data/mockData";
+import { FinanceInsight } from "@/components/organisms/FinanceInsight";
+import { AddTransactionSheet } from "@/components/organisms/AddTransactionSheet";
+import { useFinanceData } from "@/hooks/useFinanceData";
 
 export default function MoneyScreen() {
-  const overBudget = MOCK_DAILY_BUDGET - MOCK_BUDGET_LEFT > MOCK_DAILY_BUDGET
-    ? MOCK_SPENT - MOCK_DAILY_BUDGET
-    : 0;
+  const {
+    totalBalance,
+    monthIncome,
+    monthSpent,
+    dailyBudget,
+    budgetLeftToday,
+    accounts,
+    transactions,
+    recurringBills,
+    savingsGoals,
+    categoryBudgets,
+    thisWeekSpending,
+  } = useFinanceData();
+
+  const overBudget = budgetLeftToday < 0 ? Math.abs(budgetLeftToday) : 0;
 
   return (
     <>
@@ -44,7 +46,11 @@ export default function MoneyScreen() {
               Available Balance
             </AppText>
             <AppText size="4xl" weight="bold" family="mono" selectable>
-              ${MOCK_BALANCE.toLocaleString()}.00
+              $
+              {totalBalance.toLocaleString("en-US", {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </AppText>
             <View className="flex-row gap-4">
               <View className="flex-row items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1">
@@ -52,7 +58,11 @@ export default function MoneyScreen() {
                   ↑
                 </AppText>
                 <AppText size="xs" color="primary" weight="medium">
-                  ${MOCK_INCOME.toLocaleString()}
+                  $
+                  {monthIncome.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </AppText>
               </View>
               <View className="flex-row items-center gap-1.5 rounded-full bg-danger/10 px-2.5 py-1">
@@ -60,41 +70,46 @@ export default function MoneyScreen() {
                   ↓
                 </AppText>
                 <AppText size="xs" color="danger" weight="medium">
-                  ${MOCK_SPENT.toLocaleString()}
+                  $
+                  {monthSpent.toLocaleString("en-US", {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </AppText>
               </View>
             </View>
           </Card.Body>
         </Card>
 
-        {/* Accounts */}
-        <AccountsSection accounts={MOCK_ACCOUNTS} />
-
-        {/* Category Spending */}
-        <CategorySpendingRow categories={MOCK_CATEGORY_BUDGETS} />
-
-        {/* Spending Trend */}
-        <SpendingTrend
-          data={MOCK_DAILY_SPENDING}
-          dailyBudget={MOCK_DAILY_BUDGET}
-        />
+        {/* Spending Trend — This Week */}
+        <SpendingTrend data={thisWeekSpending} dailyBudget={dailyBudget} />
 
         {/* Budget + Shield */}
-        <BudgetCard
-          amountLeft={MOCK_BUDGET_LEFT}
-          dailyBudget={MOCK_DAILY_BUDGET}
-        />
+        <BudgetCard amountLeft={budgetLeftToday} dailyBudget={dailyBudget} />
         <BudgetShieldBanner overAmount={overBudget} />
 
+        {/* Accounts */}
+        <AccountsSection accounts={accounts} />
+
+        {/* Category Spending */}
+        {categoryBudgets.length > 0 && (
+          <CategorySpendingRow categories={categoryBudgets} />
+        )}
+
         {/* Recurring Bills */}
-        <RecurringBillsSection bills={MOCK_RECURRING_BILLS} />
+        <RecurringBillsSection bills={recurringBills} />
 
         {/* Transactions */}
-        <TransactionList transactions={MOCK_TRANSACTIONS} limit={5} />
+        <TransactionList transactions={transactions} limit={5} />
 
         {/* Savings Goals */}
-        <SavingsGoalsSection goals={MOCK_SAVINGS_GOALS} />
+        <SavingsGoalsSection goals={savingsGoals} />
+
+        {/* Finance Insight */}
+        <FinanceInsight />
       </ScrollView>
+
+      <AddTransactionSheet />
     </>
   );
 }
