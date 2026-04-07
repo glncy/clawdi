@@ -21,27 +21,29 @@ export function formatCurrency(
   locale?: string
 ): string {
   const device = getDeviceCurrency();
-  return new Intl.NumberFormat(locale ?? device.locale, {
-    style: "currency",
-    currency: currencyCode ?? device.code,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  try {
+    return new Intl.NumberFormat(locale ?? device.locale, {
+      style: "currency",
+      currency: currencyCode ?? device.code,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch {
+    // Fallback for limited Intl support on Hermes
+    const symbol = device.symbol;
+    const formatted = Math.abs(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return amount < 0 ? `-${symbol}${formatted}` : `${symbol}${formatted}`;
+  }
 }
 
 export function getCurrencySymbol(
-  currencyCode?: string,
-  locale?: string
+  _currencyCode?: string,
+  _locale?: string
 ): string {
-  const device = getDeviceCurrency();
-  return (
-    new Intl.NumberFormat(locale ?? device.locale, {
-      style: "currency",
-      currency: currencyCode ?? device.code,
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })
-      .formatToParts(0)
-      .find((p) => p.type === "currency")?.value ?? device.symbol
-  );
+  // expo-localization provides the device's currency symbol directly.
+  // formatToParts is not available on Hermes, so we use the locale value.
+  return getDeviceCurrency().symbol;
 }
