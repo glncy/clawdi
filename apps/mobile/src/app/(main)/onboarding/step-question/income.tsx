@@ -18,7 +18,7 @@ import Animated, {
   useAnimatedStyle,
   withTiming,
 } from "react-native-reanimated";
-import { OnboardingHeader } from "../components/OnboardingHeader";
+import { OnboardingHeader } from "@/components/molecules/OnboardingHeader";
 import * as Localization from "expo-localization";
 
 // --- Schema ---

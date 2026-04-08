@@ -1,57 +1,77 @@
 import { ScrollView, View } from "react-native";
-import { Stack, router } from "expo-router";
-import { Button } from "heroui-native";
+import { Stack } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
-import { ScoreCard } from "@/components/molecules/ScoreCard";
+import { DailyBriefing } from "@/components/molecules/DailyBriefing";
+import { TodayFocus } from "@/components/molecules/TodayFocus";
 import { BudgetCard } from "@/components/molecules/BudgetCard";
-import { SparkCard } from "@/components/molecules/SparkCard";
 import { NudgeCard } from "@/components/molecules/NudgeCard";
 import { HabitList } from "@/components/organisms/HabitList";
-import { VersionTap } from "@/components/molecules/VersionTap";
+import { useUserStore } from "@/stores/useUserStore";
+import { useFinanceData } from "@/hooks/useFinanceData";
 import {
-  MOCK_CLAWDI_SCORE,
-  MOCK_DOMAIN_SCORES,
-  MOCK_BUDGET_LEFT,
-  MOCK_DAILY_BUDGET,
   MOCK_HABITS,
-  MOCK_SPARK,
+  MOCK_PRIORITIES,
   MOCK_CONTACTS,
 } from "@/data/mockData";
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getFormattedDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
 export default function HomeScreen() {
+  const userName = useUserStore((s) => s.name) || "there";
+  const { budgetLeftToday, dailyBudget } = useFinanceData();
   const nudgeContact = MOCK_CONTACTS.find((c) => c.lastTalkedDaysAgo >= 4);
 
   return (
     <>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen
+        options={{
+          title: "Home",
+        }}
+      />
       <ScrollView
         className="flex-1 bg-background"
         contentInsetAdjustmentBehavior="automatic"
-        contentContainerClassName="px-5 pt-16 pb-32 gap-5"
+        contentContainerClassName="px-5 pb-32 gap-5"
       >
-        <View className="gap-1 pt-2">
-          <AppText size="2xl" weight="bold" family="headline">
-            Good morning, Glency
+        <View className="gap-1">
+          <AppText size="lg" weight="semibold">
+            {getGreeting()}, {userName}
           </AppText>
           <AppText size="sm" color="muted">
-            Ready for a peaceful day ahead?
+            {getFormattedDate()}
           </AppText>
         </View>
 
-        <ScoreCard score={MOCK_CLAWDI_SCORE} domains={MOCK_DOMAIN_SCORES} />
+        <DailyBriefing
+          userName={userName}
+          budgetLeft={budgetLeftToday}
+          dailyBudget={dailyBudget}
+          priorities={MOCK_PRIORITIES}
+          habits={MOCK_HABITS}
+          contacts={MOCK_CONTACTS}
+        />
+
+        <TodayFocus priorities={MOCK_PRIORITIES} />
 
         <BudgetCard
-          amountLeft={MOCK_BUDGET_LEFT}
-          dailyBudget={MOCK_DAILY_BUDGET}
+          amountLeft={budgetLeftToday}
+          dailyBudget={dailyBudget}
         />
 
         <HabitList habits={MOCK_HABITS} compact />
-
-        <SparkCard
-          text={MOCK_SPARK.text}
-          domain={MOCK_SPARK.domain}
-          isCompleted={MOCK_SPARK.isCompleted}
-        />
 
         {nudgeContact && (
           <NudgeCard
@@ -59,16 +79,6 @@ export default function HomeScreen() {
             daysAgo={nudgeContact.lastTalkedDaysAgo}
           />
         )}
-
-        <Button
-          variant="outline"
-          size="sm"
-          onPress={() => router.push("/home/ai-test")}
-        >
-          <Button.Label>Test Local AI</Button.Label>
-        </Button>
-
-        <VersionTap />
       </ScrollView>
     </>
   );

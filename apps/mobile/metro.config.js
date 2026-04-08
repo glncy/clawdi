@@ -5,6 +5,9 @@ const { withUniwindConfig } = require("uniwind/metro");
 /** @type {import('expo/metro-config').MetroConfig} */
 const config = getDefaultConfig(__dirname);
 
+// Required for drizzle-orm/expo-sqlite migration files
+config.resolver.sourceExts.push('sql');
+
 module.exports = withUniwindConfig(config, {
     cssEntryFile: "./src/global.css",
     dtsFile: './src/uniwind-types.d.ts',

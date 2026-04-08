@@ -7,6 +7,7 @@ export interface Transaction {
   category: string;
   date: string;
   note?: string;
+  accountId?: string;
 }
 
 export interface SavingsGoal {
@@ -16,6 +17,7 @@ export interface SavingsGoal {
   currentAmount: number;
   currency: string;
   targetDate: string;
+  icon?: string;
 }
 
 export interface Habit {
@@ -73,4 +75,52 @@ export interface DomainScore {
   label: string;
   icon: string;
   progress: number;
+}
+
+export interface CategoryBudget {
+  category: string;
+  icon: string;
+  budgetAmount: number;
+  spentAmount: number;
+}
+
+export interface DailySpending {
+  date: string;
+  amount: number;
+}
+
+export interface Account {
+  id: string;
+  name: string;
+  type: "checking" | "savings" | "credit" | "cash" | "investment";
+  balance: number;
+  currency: string;
+  icon: string;
+  excludeFromBudget?: boolean;
+}
+
+export interface Category {
+  id: string;
+  name: string;
+  icon: string;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
+export interface BudgetSetting {
+  id: string;
+  category: string;
+  budgetAmount: number;
+  period: string;
+}
+
+export interface RecurringBill {
+  id: string;
+  name: string;
+  amount: number;
+  currency: string;
+  frequency: "weekly" | "monthly" | "yearly";
+  nextDueDate: string;
+  category: string;
+  isPaid: boolean;
 }

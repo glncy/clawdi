@@ -4,7 +4,7 @@ import { useRouter } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
 import { Button } from "heroui-native";
 import { AIDownloadStatus } from "@/components/molecules/AIDownloadStatus";
-import { OnboardingHeader } from "@/app/(main)/onboarding/components/OnboardingHeader";
+import { OnboardingHeader } from "@/components/molecules/OnboardingHeader";
 import type { IconProps } from "phosphor-react-native";
 
 /** Each choice maps to a numeric score value */

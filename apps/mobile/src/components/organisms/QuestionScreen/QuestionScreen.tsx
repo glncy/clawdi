@@ -8,7 +8,7 @@ import { CheckCircle, PencilSimple } from "phosphor-react-native";
 import { useCSSVariable } from "uniwind";
 import { AIDownloadStatus } from "@/components/molecules/AIDownloadStatus";
 import { KeyboardAvoidingView, useKeyboardHandler } from "react-native-keyboard-controller";
-import { OnboardingHeader } from "@/app/(main)/onboarding/components/OnboardingHeader";
+import { OnboardingHeader } from "@/components/molecules/OnboardingHeader";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

@@ -1,0 +1,1 @@
+export { SpendingTrend } from "./SpendingTrend";

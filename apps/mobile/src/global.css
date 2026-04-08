@@ -11,33 +11,33 @@
   :root {
     @variant light {
       /* Base Colors - Light Mode (Peaceful) */
-      --background: oklch(0.98 0.005 80); /* #FAFAF9 warm off-white */
-      --foreground: oklch(0.2 0.02 60); /* warm dark text */
-      --surface: oklch(1 0 0); /* pure white cards */
+      --background: #faf8f5; /* #FAFAF9 warm off-white */
+      --foreground: #1d140d; /* warm dark text */
+      --surface: #ffffff; /* pure white cards */
 
       /* Surface secondary and tertiary required by Uniwind */
-      --surface-secondary: oklch(0.96 0.005 80);
-      --surface-secondary-foreground: oklch(0.2 0.02 60);
-      --surface-tertiary: oklch(0.94 0.005 80);
-      --surface-tertiary-foreground: oklch(0.2 0.02 60);
+      --surface-secondary: #f3f1ee;
+      --surface-secondary-foreground: #1d140d;
+      --surface-tertiary: #edebe7;
+      --surface-tertiary-foreground: #1d140d;
 
-      --muted: oklch(0.55 0.02 250);
+      --muted: #69737d;
 
-      --default: oklch(0.94 0.005 80);
-      --default-foreground: oklch(0.2 0.02 60);
+      --default: #edebe7;
+      --default-foreground: #1d140d;
 
-      --primary: oklch(0.82 0.15 165); /* soft mint #6EE7B7 */
-      --primary-foreground: oklch(0.2 0.02 60);
+      --primary: #4ae2ac; /* soft mint #6EE7B7 */
+      --primary-foreground: #1d140d;
 
-      --secondary: oklch(0.82 0.12 165); /* slightly muted mint */
-      --secondary-foreground: oklch(0.2 0.02 60);
+      --secondary: #70ddb1; /* slightly muted mint */
+      --secondary-foreground: #1d140d;
 
       /* HeroUI Native relies on --accent for primary brand components */
-      --accent: oklch(0.82 0.15 165); /* soft mint */
-      --accent-foreground: oklch(0.2 0.02 60);
+      --accent: #4ae2ac; /* soft mint */
+      --accent-foreground: #1d140d;
 
-      --danger: oklch(0.75 0.12 20); /* soft rose #FCA5A5 */
-      --danger-foreground: oklch(1 0 0);
+      --danger: #f08e8e; /* soft rose #FCA5A5 */
+      --danger-foreground: #ffffff;
       --color-scrim: rgba(0, 0, 0, 0.6);
 
       /* Surface foreground */
@@ -47,26 +47,26 @@
       --overlay: var(--surface);
       --overlay-foreground: var(--foreground);
 
-      --segment: oklch(1 0 0);
-      --segment-foreground: oklch(0.2 0.02 60);
+      --segment: #ffffff;
+      --segment-foreground: #1d140d;
 
       /* Misc */
-      --border: oklch(0.90 0.005 80);
-      --separator: oklch(0.74 0.005 80);
+      --border: #e0deda;
+      --separator: #acaaa7;
       --focus: var(--accent);
       --link: var(--foreground);
 
       /* Form fields */
-      --field-background: oklch(1 0 0);
-      --field-foreground: oklch(0.2 0.02 60);
+      --field-background: #ffffff;
+      --field-foreground: #1d140d;
       --field-placeholder: var(--muted);
       --field-border: transparent;
 
       /* Status */
-      --success: oklch(0.82 0.15 165); /* mint = success */
-      --success-foreground: oklch(0.2 0.02 60);
-      --warning: oklch(0.85 0.14 85); /* warm sand #FCD34D */
-      --warning-foreground: oklch(0.2 0.02 60);
+      --success: #4ae2ac; /* mint = success */
+      --success-foreground: #1d140d;
+      --warning: #f8c655; /* warm sand #FCD34D */
+      --warning-foreground: #1d140d;
 
       /* Shadows */
       --surface-shadow:
@@ -82,32 +82,32 @@
 
     @variant dark {
       /* Base Colors - Dark Mode (Warm Night) */
-      --background: oklch(0.18 0.01 50); /* #1C1917 warm dark */
-      --foreground: oklch(0.95 0.005 80); /* warm white text */
-      --surface: oklch(0.22 0.01 50); /* warm dark cards */
+      --background: #15100e; /* #1C1917 warm dark */
+      --foreground: #f0eeeb; /* warm white text */
+      --surface: #1f1916; /* warm dark cards */
 
-      --surface-secondary: oklch(0.26 0.01 50);
-      --surface-secondary-foreground: oklch(0.95 0.005 80);
-      --surface-tertiary: oklch(0.30 0.01 50);
-      --surface-tertiary-foreground: oklch(0.95 0.005 80);
+      --surface-secondary: #282320;
+      --surface-secondary-foreground: #f0eeeb;
+      --surface-tertiary: #322c29;
+      --surface-tertiary-foreground: #f0eeeb;
 
-      --muted: oklch(0.6 0.02 250);
+      --muted: #77818c;
 
-      --default: oklch(0.28 0.01 50);
-      --default-foreground: oklch(0.95 0.005 80);
+      --default: #2d2825;
+      --default-foreground: #f0eeeb;
 
-      --primary: oklch(0.78 0.13 165); /* soft mint, slightly dimmed for dark */
-      --primary-foreground: oklch(0.15 0.01 50);
+      --primary: #56d1a3; /* soft mint, slightly dimmed for dark */
+      --primary-foreground: #0f0a08;
 
-      --secondary: oklch(0.75 0.10 165);
-      --secondary-foreground: oklch(0.15 0.01 50);
+      --secondary: #6cc29e;
+      --secondary-foreground: #0f0a08;
 
       /* HeroUI Native relies on --accent for primary brand components */
-      --accent: oklch(0.78 0.13 165);
-      --accent-foreground: oklch(0.15 0.01 50);
+      --accent: #56d1a3;
+      --accent-foreground: #0f0a08;
 
-      --danger: oklch(0.72 0.10 20); /* soft rose, dimmed */
-      --danger-foreground: oklch(0.95 0.005 80);
+      --danger: #dc8b8b; /* soft rose, dimmed */
+      --danger-foreground: #f0eeeb;
       --color-scrim: rgba(0, 0, 0, 0.8);
 
       /* Surface foreground */
@@ -117,26 +117,26 @@
       --overlay: var(--surface);
       --overlay-foreground: var(--foreground);
 
-      --segment: oklch(0.3 0.01 50);
-      --segment-foreground: oklch(0.95 0.005 80);
+      --segment: #322c29;
+      --segment-foreground: #f0eeeb;
 
       /* Misc */
-      --border: oklch(0.28 0.01 50);
-      --separator: oklch(0.40 0.01 50);
+      --border: #2d2825;
+      --separator: #4c4643;
       --focus: var(--accent);
       --link: var(--foreground);
 
       /* Form fields */
-      --field-background: oklch(0.28 0.01 50);
+      --field-background: #2d2825;
       --field-foreground: var(--foreground);
       --field-placeholder: var(--muted);
       --field-border: transparent;
 
       /* Status */
-      --success: oklch(0.78 0.13 165);
-      --success-foreground: oklch(0.15 0.01 50);
-      --warning: oklch(0.82 0.12 85);
-      --warning-foreground: oklch(0.2 0.02 60);
+      --success: #56d1a3;
+      --success-foreground: #0f0a08;
+      --warning: #e8be62;
+      --warning-foreground: #1d140d;
 
       /* Shadows */
       --surface-shadow: 0 0 0 0 transparent inset;
@@ -146,42 +146,43 @@
 
     @variant custom-theme {
       /* Custom Theme Light - mirrors light with same variables */
-      --background: oklch(0.98 0.005 80);
-      --foreground: oklch(0.2 0.02 60);
-      --surface: oklch(1 0 0);
+      --background: #faf8f5;
+      --foreground: #1d140d;
+      --surface: #ffffff;
       --surface-foreground: var(--foreground);
-      --surface-secondary: oklch(0.96 0.005 80);
-      --surface-secondary-foreground: oklch(0.2 0.02 60);
-      --surface-tertiary: oklch(0.94 0.005 80);
-      --surface-tertiary-foreground: oklch(0.2 0.02 60);
+      --surface-secondary: #f3f1ee;
+      --surface-secondary-foreground: #1d140d;
+      --surface-tertiary: #edebe7;
+      --surface-tertiary-foreground: #1d140d;
       --overlay: var(--surface);
       --overlay-foreground: var(--foreground);
-      --muted: oklch(0.55 0.02 250);
-      --default: oklch(0.94 0.005 80);
-      --default-foreground: oklch(0.2 0.02 60);
-      --primary: oklch(0.82 0.15 165);
-      --primary-foreground: oklch(0.2 0.02 60);
-      --secondary: oklch(0.82 0.12 165);
-      --secondary-foreground: oklch(0.2 0.02 60);
-      --accent: oklch(0.82 0.15 165);
-      --accent-foreground: oklch(0.2 0.02 60);
-      --danger: oklch(0.75 0.12 20);
-      --danger-foreground: oklch(1 0 0);
+      --backdrop: rgba(0, 0, 0, 0.2);
+      --muted: #69737d;
+      --default: #edebe7;
+      --default-foreground: #1d140d;
+      --primary: #4ae2ac;
+      --primary-foreground: #1d140d;
+      --secondary: #70ddb1;
+      --secondary-foreground: #1d140d;
+      --accent: #4ae2ac;
+      --accent-foreground: #1d140d;
+      --danger: #f08e8e;
+      --danger-foreground: #ffffff;
       --color-scrim: rgba(0, 0, 0, 0.6);
-      --segment: oklch(1 0 0);
-      --segment-foreground: oklch(0.2 0.02 60);
-      --border: oklch(0.90 0.005 80);
-      --separator: oklch(0.74 0.005 80);
+      --segment: #ffffff;
+      --segment-foreground: #1d140d;
+      --border: #e0deda;
+      --separator: #acaaa7;
       --focus: var(--accent);
       --link: var(--foreground);
-      --field-background: oklch(1 0 0);
-      --field-foreground: oklch(0.2 0.02 60);
+      --field-background: #ffffff;
+      --field-foreground: #1d140d;
       --field-placeholder: var(--muted);
       --field-border: transparent;
-      --success: oklch(0.82 0.15 165);
-      --success-foreground: oklch(0.2 0.02 60);
-      --warning: oklch(0.85 0.14 85);
-      --warning-foreground: oklch(0.2 0.02 60);
+      --success: #4ae2ac;
+      --success-foreground: #1d140d;
+      --warning: #f8c655;
+      --warning-foreground: #1d140d;
       --surface-shadow:
         0 2px 4px 0 rgba(0, 0, 0, 0.04), 0 1px 2px 0 rgba(0, 0, 0, 0.06),
         0 0 1px 0 rgba(0, 0, 0, 0.06);
@@ -195,42 +196,43 @@
 
     @variant custom-theme-dark {
       /* Custom Theme Dark - mirrors dark with same variables */
-      --background: oklch(0.18 0.01 50);
-      --foreground: oklch(0.95 0.005 80);
-      --surface: oklch(0.22 0.01 50);
+      --background: #15100e;
+      --foreground: #f0eeeb;
+      --surface: #1f1916;
       --surface-foreground: var(--foreground);
-      --surface-secondary: oklch(0.26 0.01 50);
-      --surface-secondary-foreground: oklch(0.95 0.005 80);
-      --surface-tertiary: oklch(0.30 0.01 50);
-      --surface-tertiary-foreground: oklch(0.95 0.005 80);
+      --surface-secondary: #282320;
+      --surface-secondary-foreground: #f0eeeb;
+      --surface-tertiary: #322c29;
+      --surface-tertiary-foreground: #f0eeeb;
       --overlay: var(--surface);
       --overlay-foreground: var(--foreground);
-      --muted: oklch(0.6 0.02 250);
-      --default: oklch(0.28 0.01 50);
-      --default-foreground: oklch(0.95 0.005 80);
-      --primary: oklch(0.78 0.13 165);
-      --primary-foreground: oklch(0.15 0.01 50);
-      --secondary: oklch(0.75 0.10 165);
-      --secondary-foreground: oklch(0.15 0.01 50);
-      --accent: oklch(0.78 0.13 165);
-      --accent-foreground: oklch(0.15 0.01 50);
-      --danger: oklch(0.72 0.10 20);
-      --danger-foreground: oklch(0.95 0.005 80);
+      --backdrop: rgba(0, 0, 0, 0.2);
+      --muted: #77818c;
+      --default: #2d2825;
+      --default-foreground: #f0eeeb;
+      --primary: #56d1a3;
+      --primary-foreground: #0f0a08;
+      --secondary: #6cc29e;
+      --secondary-foreground: #0f0a08;
+      --accent: #56d1a3;
+      --accent-foreground: #0f0a08;
+      --danger: #dc8b8b;
+      --danger-foreground: #f0eeeb;
       --color-scrim: rgba(0, 0, 0, 0.8);
-      --segment: oklch(0.3 0.01 50);
-      --segment-foreground: oklch(0.95 0.005 80);
-      --border: oklch(0.28 0.01 50);
-      --separator: oklch(0.40 0.01 50);
+      --segment: #322c29;
+      --segment-foreground: #f0eeeb;
+      --border: #2d2825;
+      --separator: #4c4643;
       --focus: var(--accent);
       --link: var(--foreground);
-      --field-background: oklch(0.28 0.01 50);
+      --field-background: #2d2825;
       --field-foreground: var(--foreground);
       --field-placeholder: var(--muted);
       --field-border: transparent;
-      --success: oklch(0.78 0.13 165);
-      --success-foreground: oklch(0.15 0.01 50);
-      --warning: oklch(0.82 0.12 85);
-      --warning-foreground: oklch(0.2 0.02 60);
+      --success: #56d1a3;
+      --success-foreground: #0f0a08;
+      --warning: #e8be62;
+      --warning-foreground: #1d140d;
       --surface-shadow: 0 0 0 0 transparent inset;
       --overlay-shadow: 0 0 1px 0 rgba(255, 255, 255, 0.2) inset;
       --field-shadow: 0 0 0 0 transparent inset;
@@ -238,7 +240,7 @@
   }
 }
 
-@theme inline {
+@theme inline static {
   /* Global line-height override */
   --text-xs--line-height: 1.4;
   --text-sm--line-height: 1.4;
@@ -276,16 +278,40 @@
   --radius-2xl: 32px;
   --radius-full: 9999px;
 
-  /* Map variables to Tailwind */
+  /* Color mappings — emitted as runtime CSS variables for HeroUI components */
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-surface: var(--surface);
+  --color-surface-foreground: var(--surface-foreground);
+  --color-surface-secondary: var(--surface-secondary);
+  --color-surface-secondary-foreground: var(--surface-secondary-foreground);
+  --color-surface-tertiary: var(--surface-tertiary);
+  --color-surface-tertiary-foreground: var(--surface-tertiary-foreground);
+  --color-overlay: var(--overlay);
+  --color-overlay-foreground: var(--overlay-foreground);
   --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-segment: var(--segment);
+  --color-segment-foreground: var(--segment-foreground);
+  --color-border: var(--border);
+  --color-separator: var(--separator);
+  --color-focus: var(--focus);
+  --color-link: var(--link);
+  --color-default: var(--default);
+  --color-default-foreground: var(--default-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
-  --color-danger: var(--danger);
+  --color-secondary-foreground: var(--secondary-foreground);
   --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-field: var(--field-background, var(--default));
+  --color-field-foreground: var(--field-foreground, var(--foreground));
+  --color-field-placeholder: var(--field-placeholder, var(--muted));
+  --color-field-border: var(--field-border, var(--border));
 }

@@ -1,4 +1,4 @@
-import { View } from "react-native";
+import { View, Pressable } from "react-native";
 import {
   BottomSheet,
   Group,
@@ -20,19 +20,34 @@ import {
 } from "phosphor-react-native";
 import { useCSSVariable } from "uniwind";
 import { useQuickActionStore } from "@/stores/useQuickActionStore";
+import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStore";
+import type { Icon as PhosphorIcon } from "phosphor-react-native";
 
-const ACTIONS = [
-  { icon: CurrencyDollar, label: "Log expense" },
-  { icon: Smiley, label: "Check in mood" },
-  { icon: CheckSquare, label: "Tick a habit" },
-  { icon: ListBullets, label: "Add priority" },
-  { icon: Moon, label: "Log sleep" },
-  { icon: ChatCircle, label: "Log a chat" },
-];
+interface QuickAction {
+  icon: PhosphorIcon;
+  label: string;
+  onPress?: () => void;
+}
 
 export const QuickActionSheet = () => {
   const { isOpen, close } = useQuickActionStore();
   const [primaryColor] = useCSSVariable(["--color-primary"]);
+
+  const actions: QuickAction[] = [
+    {
+      icon: CurrencyDollar,
+      label: "Log expense",
+      onPress: () => {
+        close();
+        useAddTransactionSheetStore.getState().open();
+      },
+    },
+    { icon: Smiley, label: "Check in mood" },
+    { icon: CheckSquare, label: "Tick a habit" },
+    { icon: ListBullets, label: "Add priority" },
+    { icon: Moon, label: "Log sleep" },
+    { icon: ChatCircle, label: "Log a chat" },
+  ];
 
   return (
     <Host style={{ position: "absolute", width: 0, height: 0 }}>
@@ -44,20 +59,22 @@ export const QuickActionSheet = () => {
       >
         <Group
           modifiers={[
-            presentationDetents(["medium"]),
+            presentationDetents(["medium", "large"]),
             presentationDragIndicator("visible"),
           ]}
         >
-          <RNHostView matchContents>
+          <RNHostView>
             <View className="gap-4 px-4 py-6">
               <AppText size="lg" weight="bold" family="headline">
                 Quick Actions
               </AppText>
               <View className="flex-row flex-wrap gap-3">
-                {ACTIONS.map(({ icon: Icon, label }) => (
-                  <View
+                {actions.map(({ icon: Icon, label, onPress }) => (
+                  <Pressable
                     key={label}
                     className="w-[47%] items-center gap-2 rounded-xl bg-primary/10 p-4"
+                    onPress={onPress}
+                    disabled={!onPress}
                   >
                     <Icon
                       size={28}
@@ -67,7 +84,7 @@ export const QuickActionSheet = () => {
                     <AppText size="xs" align="center" weight="medium">
                       {label}
                     </AppText>
-                  </View>
+                  </Pressable>
                 ))}
               </View>
             </View>

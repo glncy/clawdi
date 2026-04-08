@@ -19,7 +19,7 @@ import { Button } from "heroui-native";
 import { useOnboarding } from "./_layout";
 import { AIDownloadStatus } from "@/components/molecules/AIDownloadStatus";
 import { useCSSVariable } from "uniwind";
-import { OnboardingHeader } from "./components/OnboardingHeader";
+import { OnboardingHeader } from "@/components/molecules/OnboardingHeader";
 import Animated, {
   useSharedValue,
   useAnimatedStyle,

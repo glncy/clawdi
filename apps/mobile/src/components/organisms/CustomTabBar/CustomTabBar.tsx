@@ -3,10 +3,8 @@ import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
   House,
   CurrencyDollar,
-  Leaf,
   Sun,
-  UsersThree,
-  DotsThree,
+  Leaf,
   Plus,
 } from "phosphor-react-native";
 import type { ComponentType } from "react";
@@ -21,19 +19,17 @@ const TAB_CONFIG: Record<
   { label: string; icon: ComponentType<IconProps> }
 > = {
   home: { label: "Home", icon: House },
-  money: { label: "Money", icon: CurrencyDollar },
-  life: { label: "Life", icon: Leaf },
+  money: { label: "Finance", icon: CurrencyDollar },
   day: { label: "Day", icon: Sun },
-  people: { label: "People", icon: UsersThree },
-  more: { label: "More", icon: DotsThree },
+  life: { label: "Life", icon: Leaf },
 };
 
-// Tab order: Home, Money, Life, [+], Day, People, More
-const LEFT_TABS = ["home", "money", "life"];
-const RIGHT_TABS = ["day", "people", "more"];
+// Tab order: Home, Money, [+], Day, Life
+const LEFT_TABS = ["home", "money"];
+const RIGHT_TABS = ["day", "life"];
 
 /**
- * Custom Tab Bar with center add button between Life and Day
+ * Custom Tab Bar with center add button between Money and Day
  * @level Organism
  */
 export function CustomTabBar({
@@ -98,16 +94,14 @@ export function CustomTabBar({
           weight={isFocused ? "fill" : "regular"}
           color={iconColor}
         />
-        {isFocused && (
-          <AppText
-            size="xs"
-            color="primary"
-            align="center"
-            style={{ fontSize: 9 }}
-          >
-            {config.label}
-          </AppText>
-        )}
+        <AppText
+          size="xs"
+          color={isFocused ? "primary" : "muted"}
+          align="center"
+          style={{ fontSize: 9 }}
+        >
+          {config.label}
+        </AppText>
       </Pressable>
     );
   };
@@ -118,7 +112,7 @@ export function CustomTabBar({
       style={{ paddingBottom: insets.bottom }}
     >
       <View className="flex-row items-end px-1 pt-1">
-        {/* Left tabs: Home, Money, Life */}
+        {/* Left tabs: Home, Money */}
         {LEFT_TABS.map(renderTab)}
 
         {/* Center + button */}
@@ -136,7 +130,7 @@ export function CustomTabBar({
           </Pressable>
         </View>
 
-        {/* Right tabs: Day, People, More */}
+        {/* Right tabs: Day, Life */}
         {RIGHT_TABS.map(renderTab)}
       </View>
     </View>

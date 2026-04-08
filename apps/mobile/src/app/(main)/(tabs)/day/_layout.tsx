@@ -1,5 +1,6 @@
 import { Stack } from "expo-router";
 import { useTabHeaderTitleStyle } from "@/hooks/useTabHeaderTitleStyle";
+import { HeaderGearButton } from "@/components/molecules/HeaderGearButton";
 
 export default function DayStack() {
   const headerTitleStyle = useTabHeaderTitleStyle();
@@ -9,6 +10,7 @@ export default function DayStack() {
       screenOptions={{
         headerTransparent: true,
         headerTitleStyle,
+        headerRight: () => <HeaderGearButton tab="day" />,
       }}
     />
   );
