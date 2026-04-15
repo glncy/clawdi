@@ -1,7 +1,6 @@
 export const MODEL = {
   id: "bartowski/Qwen_Qwen3.5-2B-GGUF/Qwen_Qwen3.5-2B-Q4_K_M.gguf",
   name: "Qwen 3.5 2B",
-  sizeBytes: 1400 * 1024 * 1024,
 } as const;
 
 export function formatBytes(bytes: number): string {

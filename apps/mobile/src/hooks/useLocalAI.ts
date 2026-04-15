@@ -49,21 +49,18 @@ export function useLocalAI() {
     if (useAIStore.getState().status === "downloading") return;
 
     setStatus("downloading");
-    setDownloadProgress(0, 0, MODEL.sizeBytes);
+    setDownloadProgress(0, 0, 0);
     setError(null);
 
     try {
       await downloadModelResumable(MODEL.id, {
         onProgress: (downloaded, total) => {
-          const effectiveTotal = total > 0 ? total : MODEL.sizeBytes;
-          setDownloadProgress(
-            downloaded / effectiveTotal,
-            downloaded,
-            effectiveTotal
-          );
+          const progress = total > 0 ? downloaded / total : 0;
+          setDownloadProgress(progress, downloaded, total);
         },
         onComplete: () => {
-          setDownloadProgress(1, MODEL.sizeBytes, MODEL.sizeBytes);
+          const { downloadedBytes } = useAIStore.getState();
+          setDownloadProgress(1, downloadedBytes, downloadedBytes);
           setModelDownloaded(true);
           setStatus("idle");
         },

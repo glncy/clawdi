@@ -94,12 +94,14 @@ export default function AITestScreen() {
                 <AppText size="xs" color="muted">Name</AppText>
                 <AppText size="xs" family="mono">{MODEL.name}</AppText>
               </View>
-              <View className="flex-row justify-between">
-                <AppText size="xs" color="muted">Size</AppText>
-                <AppText size="xs" family="mono">
-                  {formatBytes(MODEL.sizeBytes)}
-                </AppText>
-              </View>
+              {totalBytes > 0 && (
+                <View className="flex-row justify-between">
+                  <AppText size="xs" color="muted">Size</AppText>
+                  <AppText size="xs" family="mono">
+                    {formatBytes(totalBytes)}
+                  </AppText>
+                </View>
+              )}
               <View className="flex-row justify-between">
                 <AppText size="xs" color="muted">Status</AppText>
                 <AppText
