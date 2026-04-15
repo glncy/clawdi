@@ -1,4 +1,4 @@
-# Tab Bar: Liquid Glass (iOS) / Custom FAB (Android) Design
+# Tab Bar: Liquid Glass (iOS 26+) / Custom FAB (Android + iOS < 26) Design
 
 **Date:** 2026-04-16
 **Branch:** `docs/sprint-design-specs`
@@ -8,14 +8,21 @@
 
 ## Overview
 
-Replace the current single-platform `CustomTabBar` with a platform-split implementation:
+Replace the current single-platform `CustomTabBar` with a version-aware implementation:
 
-- **iOS**: Native `NativeTabs` from `expo-router/unstable-native-tabs` with `systemUltraThinMaterial` blur — renders Apple's liquid glass material automatically on iOS 26+.
-- **Android**: Existing `CustomTabBar` component unchanged (floating FAB, Phosphor icons, Tailwind styling).
+- **iOS 26+**: Native `NativeTabs` from `expo-router/unstable-native-tabs` with `systemUltraThinMaterial` blur — renders Apple's liquid glass material.
+- **iOS < 26 + Android**: Existing `CustomTabBar` component unchanged (floating FAB, Phosphor icons, Tailwind styling).
+
+The decision is made at runtime via a `isLiquidGlass` boolean:
+
+```ts
+const isLiquidGlass =
+  Platform.OS === "ios" && parseInt(Platform.Version as string, 10) >= 26;
+```
 
 ---
 
-## iOS — NativeTabs (Liquid Glass)
+## iOS 26+ — NativeTabs (Liquid Glass)
 
 ### Tab structure
 
@@ -39,13 +46,13 @@ Replace the current single-platform `CustomTabBar` with a platform-split impleme
 >
 ```
 
-- `blurEffect="systemUltraThinMaterial"` — thinnest system material; liquid glass on iOS 26, frosted glass on earlier.
+- `blurEffect="systemUltraThinMaterial"` — thinnest system material; renders as liquid glass on iOS 26.
 - `backgroundColor="transparent"` — required for the blur to render through.
 - `minimizeBehavior="onScrollDown"` — tab bar collapses when user scrolls down (iOS 26+).
 
 ### Action tab ("+") — QuickActionSheet trigger
 
-The `+` tab uses `href: null` so Expo Router does not navigate when it is pressed. A `tabPress` event listener on the tab calls `useQuickActionStore.getState().toggle()` to open `QuickActionSheet`.
+The `+` tab uses `href: null` so Expo Router does not navigate when pressed. An `onPress` handler calls `useQuickActionStore.getState().toggle()` to open `QuickActionSheet`.
 
 ```tsx
 <NativeTabs.Trigger
@@ -61,7 +68,7 @@ The `+` tab uses `href: null` so Expo Router does not navigate when it is presse
 />
 ```
 
-A hidden `NativeTabs.Slot` for `"action"` renders nothing (empty screen, never visible).
+A `NativeTabs.Slot` for `"action"` renders an empty `<View />` — never visible to the user.
 
 ### Hidden screens
 
@@ -69,32 +76,31 @@ A hidden `NativeTabs.Slot` for `"action"` renders nothing (empty screen, never v
 
 ---
 
-## Android — CustomTabBar (unchanged)
+## iOS < 26 + Android — CustomTabBar (unchanged)
 
-The existing `CustomTabBar` component (floating FAB, Phosphor icons, Tailwind) is used on Android without modification.
+The existing `CustomTabBar` component (floating FAB, Phosphor icons, Tailwind) is used on all non-iOS-26 devices without modification. This ensures feature parity and visual consistency across the majority of devices.
 
 ---
 
-## Layout file (`_layout.tsx`)
+## Layout file (`_layout.tsx`) — platform decision
 
 ```
-Platform.OS === "ios"
-  → import NativeTabs from "expo-router/unstable-native-tabs"
+isLiquidGlass (iOS 26+)
   → render NativeTabs tree (5 triggers + hidden screens)
+  → QuickActionSheet + SettingsSheet as siblings
 
-Platform.OS !== "ios"
-  → import Tabs from "expo-router"
+!isLiquidGlass (iOS < 26 or Android)
   → render Tabs with tabBar={CustomTabBar} (current implementation)
-
-Both platforms
-  → <QuickActionSheet /> and <SettingsSheet /> rendered as siblings (unchanged)
+  → QuickActionSheet + SettingsSheet as siblings (unchanged)
 ```
+
+Both branches share the same hidden screens (`people`, `settings`, `more` with `href: null`).
 
 ---
 
 ## Out of Scope
 
-- Animated tab transitions or spring physics on tab switches
+- Animated tab transitions or spring physics
 - Custom liquid glass tint colors (use system default)
 - Badge counts on tab items
 - Android material tab bar changes
