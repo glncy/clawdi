@@ -2,9 +2,6 @@ import { useCallback } from "react";
 import { streamText } from "ai";
 import {
   llama,
-  isModelDownloaded as checkModelDownloaded,
-  removeModel as deleteModelFromDisk,
-  getModelPath,
   type LlamaLanguageModel,
 } from "@react-native-ai/llama";
 import { MODEL } from "@/services/localAI";
@@ -13,6 +10,9 @@ import {
   downloadModelResumable,
   pauseModelDownload,
   clearResumeData,
+  getLocalModelPath,
+  isLocalModelDownloaded,
+  deleteLocalModel,
 } from "@/services/modelDownloader";
 
 /**
@@ -39,7 +39,7 @@ export function useLocalAI() {
   const response = useAIStore((s) => s.response);
 
   const checkModel = useCallback(async () => {
-    const exists = await checkModelDownloaded(MODEL.id);
+    const exists = await isLocalModelDownloaded(MODEL.id);
     setModelDownloaded(exists);
     return exists;
   }, [setModelDownloaded]);
@@ -91,23 +91,45 @@ export function useLocalAI() {
     try {
       // Unload existing model to prevent memory leaks
       if (sharedModel) {
+        console.log("[AI] Unloading existing model...");
         await sharedModel.unload();
         sharedModel = null;
       }
 
-      const modelPath = getModelPath(MODEL.id);
+      const modelPath = getLocalModelPath(MODEL.id);
+      console.log("[AI] Loading model from path:", modelPath);
+
       const model = llama.languageModel(modelPath, {
         contextParams: {
-          n_gpu_layers: 99,
+          // Keep GPU layers low to avoid OOM on larger models.
+          // 0 = CPU only (safe for all devices).
+          // Increase for high-end devices once confirmed stable.
+          n_gpu_layers: 0,
         },
       });
-      await model.prepare();
+
+      console.log("[AI] Calling model.prepare()...");
+
+      // Race prepare() against a 60s timeout so we fail loudly
+      // instead of hanging forever on OOM or unsupported arch.
+      await Promise.race([
+        model.prepare(),
+        new Promise<never>((_, reject) =>
+          setTimeout(
+            () => reject(new Error("model.prepare() timed out after 60s")),
+            60_000
+          )
+        ),
+      ]);
+
+      console.log("[AI] Model ready.");
       sharedModel = model;
       setStatus("ready");
     } catch (e) {
       const msg = e instanceof Error
         ? `Load failed: ${e.message}`
         : `Load failed: ${String(e)}`;
+      console.error("[AI] Load failed:", msg);
       setStatus("idle");
       setError(msg);
     }
@@ -223,8 +245,8 @@ export function useLocalAI() {
       await sharedModel.unload();
       sharedModel = null;
     }
-    await deleteModelFromDisk(MODEL.id);
-    await clearResumeData();
+    deleteLocalModel(MODEL.id);
+    clearResumeData();
     setModelDownloaded(false);
     setStatus("idle");
     setDownloadProgress(0, 0, 0);

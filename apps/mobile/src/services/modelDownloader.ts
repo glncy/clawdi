@@ -42,11 +42,34 @@ function getModelsDir(): Directory {
 }
 
 /**
- * Gets the destination file URI matching @react-native-ai/llama's convention.
+ * Gets the destination file URI for downloading (file:// format for expo-file-system).
  */
 function getDestUri(modelId: string): string {
   const dir = getModelsDir();
   return new File(dir, getModelFilename(modelId)).uri;
+}
+
+/**
+ * Gets the plain filesystem path for loading the model.
+ * Native llama.cpp requires a plain path — NOT a file:// URI.
+ */
+export function getLocalModelPath(modelId: string): string {
+  const uri = getDestUri(modelId);
+  // Strip file:// prefix so native fopen() can resolve it
+  return uri.replace(/^file:\/\//, "");
+}
+
+/**
+ * Checks whether the model file exists on disk (using our download path).
+ */
+export async function isLocalModelDownloaded(modelId: string): Promise<boolean> {
+  try {
+    const dir = getModelsDir();
+    const file = new File(dir, getModelFilename(modelId));
+    return file.exists && file.size > 0;
+  } catch {
+    return false;
+  }
 }
 
 // --- Resume data persistence ---
@@ -184,4 +207,15 @@ export function hasSavedResumeData(): boolean {
  */
 export function clearResumeData(): void {
   deleteResumeData();
+}
+
+/**
+ * Delete the model file from disk.
+ */
+export function deleteLocalModel(modelId: string): void {
+  const dir = getModelsDir();
+  const file = new File(dir, getModelFilename(modelId));
+  if (file.exists) {
+    file.delete();
+  }
 }
