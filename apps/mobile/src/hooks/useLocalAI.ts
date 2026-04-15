@@ -136,7 +136,7 @@ export function useLocalAI() {
   }, [setStatus, setError]);
 
   const complete = useCallback(
-    async (userMessage: string, systemPrompt?: string) => {
+    async (userMessage: string, systemPrompt?: string, thinking = false) => {
       // Guard against concurrent inference
       if (useAIStore.getState().status === "inferring") return null;
 
@@ -160,6 +160,9 @@ export function useLocalAI() {
           ],
           maxTokens: 512,
           temperature: 0.3,
+          providerOptions: {
+            llama: { reasoning_format: thinking ? "auto" : "none" },
+          },
         });
 
         let fullText = "";
@@ -188,9 +191,10 @@ export function useLocalAI() {
   const completeJSON = useCallback(
     async <T>(
       userMessage: string,
-      systemPrompt: string
+      systemPrompt: string,
+      thinking = false
     ): Promise<T | null> => {
-      const result = await complete(userMessage, systemPrompt);
+      const result = await complete(userMessage, systemPrompt, thinking);
       if (!result) return null;
 
       try {

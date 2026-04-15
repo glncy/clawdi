@@ -1,0 +1,23 @@
+diff --git a/lib/module/ai-sdk.js b/lib/module/ai-sdk.js
+index c099ccae2b4a43a203c7d698498050774b3617de..c96b77c0919707347165a3bacfcdc4633364dc8b 100644
+--- a/lib/module/ai-sdk.js
++++ b/lib/module/ai-sdk.js
+@@ -302,7 +302,7 @@ export class LlamaLanguageModel {
+       penalty_freq: options.frequencyPenalty,
+       stop: options.stopSequences,
+       seed: options.seed,
+-      reasoning_format: 'auto'
++      reasoning_format: options.providerOptions?.llama?.reasoning_format ?? 'auto'
+     };
+     if (options.responseFormat?.type === 'json') {
+       completionOptions.response_format = {
+@@ -391,7 +391,8 @@ export class LlamaLanguageModel {
+       penalty_present: options.presencePenalty,
+       penalty_freq: options.frequencyPenalty,
+       stop: options.stopSequences,
+-      seed: options.seed
++      seed: options.seed,
++      reasoning_format: options.providerOptions?.llama?.reasoning_format ?? 'auto'
+     };
+     if (options.tools) {
+       completionOptions.tools = options.tools.map(({
