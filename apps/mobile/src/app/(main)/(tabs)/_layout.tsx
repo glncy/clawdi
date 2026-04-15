@@ -1,6 +1,7 @@
 import { Platform, View } from "react-native";
 import { Tabs, Stack } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
+import { useCSSVariable } from "uniwind";
 import { CustomTabBar } from "@/components/organisms/CustomTabBar";
 import { QuickActionSheet } from "@/components/organisms/QuickActionSheet";
 import { SettingsSheet } from "@/components/organisms/SettingsSheet";
@@ -16,6 +17,8 @@ const isLiquidGlass =
 
 export default function TabLayout() {
   useSystemTheme();
+  const [primaryColor] = useCSSVariable(["--color-primary"]);
+  const tintColor = (primaryColor as string | undefined) ?? "#4ae2ac";
 
   if (isLiquidGlass) {
     return (
@@ -24,7 +27,8 @@ export default function TabLayout() {
         <NativeTabs
           blurEffect="systemUltraThinMaterial"
           backgroundColor="transparent"
-          minimizeBehavior="onScrollDown"
+          minimizeBehavior="never"
+          tintColor={tintColor}
         >
           <NativeTabs.Trigger name="home">
             <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
