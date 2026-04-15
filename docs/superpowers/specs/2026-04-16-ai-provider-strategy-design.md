@@ -111,7 +111,7 @@ reasoning blocks.
 ### `hooks/useGeminiAI.ts` (new)
 
 Wrapper around `generateText` / `streamText` using `@ai-sdk/google` with model
-`"gemini-2.0-flash"`. Same interface as `useLocalAI`.
+`"gemini-3-flash-preview"`. Same interface as `useLocalAI`.
 
 | Property | Value |
 |---|---|
