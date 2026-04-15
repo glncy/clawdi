@@ -5,10 +5,7 @@ import {
   Host,
   RNHostView,
 } from "@expo/ui/swift-ui";
-import {
-  presentationDetents,
-  presentationDragIndicator,
-} from "@expo/ui/swift-ui/modifiers";
+import { presentationDragIndicator } from "@expo/ui/swift-ui/modifiers";
 import { AppText } from "@/components/atoms/Text";
 import {
   CurrencyDollar,
@@ -53,13 +50,13 @@ export const QuickActionSheet = () => {
     <Host style={{ position: "absolute", width: 0, height: 0 }}>
       <BottomSheet
         isPresented={isOpen}
+        fitToContents
         onIsPresentedChange={(presented) => {
           if (!presented) close();
         }}
       >
         <Group
           modifiers={[
-            presentationDetents(["medium", "large"]),
             presentationDragIndicator("visible"),
           ]}
         >
