@@ -15,14 +15,14 @@ export type AIProvider = "apple" | "gemma";
  */
 async function checkAppleIntelligenceAvailable(): Promise<boolean> {
   if (Platform.OS !== "ios") return false;
-  try {
-    // @react-native-ai/apple exposes an availability check
-    const { isAvailable } = await import("@react-native-ai/apple");
-    return await isAvailable();
-  } catch {
-    // Package not installed or device unsupported
-    return false;
-  }
+  // TODO: uncomment when @react-native-ai/apple is installed
+  // try {
+  //   const { isAvailable } = await import("@react-native-ai/apple");
+  //   return await isAvailable();
+  // } catch {
+  //   return false;
+  // }
+  return false;
 }
 
 /**

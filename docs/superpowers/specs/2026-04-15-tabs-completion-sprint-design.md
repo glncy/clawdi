@@ -413,7 +413,7 @@ interface ParsedVoiceAction {
 **Flow:**
 1. User taps mic button → `startRecording()`
 2. STT streams transcript in real-time (shown as caption below mic)
-3. On stop: transcript sent to local Qwen model via `streamText()`
+3. On stop: transcript sent to local AI via `streamText()` (Gemma 4 / Apple Foundation Models via `useAI()`)
 4. System prompt is context-specific (see 7.2)
 5. Model returns JSON `ParsedVoiceAction`
 6. `confidence: high` → show compact confirm card ("Save this?")

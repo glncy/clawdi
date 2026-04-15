@@ -7,14 +7,14 @@
 
 ## 1. Vision
 
-Clawdi's local AI (Qwen 3.5 2B) should feel less like a feature and more like the intelligence woven through the entire app. After the tabs completion sprint, every pillar has real data. This sprint activates that data as a unified AI brain.
+Clawdi's local AI (Gemma 4 E2B on Gemma-capable devices, Apple Foundation Models on iOS 26+) should feel less like a feature and more like the intelligence woven through the entire app. After the tabs completion sprint, every pillar has real data. This sprint activates that data as a unified AI brain.
 
 **Three AI experiences, layered:**
 - **Chat** — on-demand Q&A with your whole life as context ("How much did I spend on food when I was stressed last month?")
 - **Proactive Nudges** — AI surfaces the right insight at the right moment, without being asked
 - **Periodic Reports** — rich weekly/monthly narrative summaries generated locally
 
-**Not in scope:** cloud sync, external APIs, further model upgrades beyond Qwen 3.5 2B.
+**Not in scope:** cloud sync, external APIs, further model upgrades beyond Gemma 4 E2B / Apple Foundation Models.
 
 ---
 
@@ -435,9 +435,11 @@ Built on top of `LifeContext.money`. All are additive to existing Money tab:
 
 ## 8. Model Constraints & Prompt Engineering
 
-**Model:** Qwen 3.5 2B Q4_K_M (~1.4GB)  
-**Context window:** ~2048 tokens  
-**GPU layers:** 99 (full GPU acceleration)
+**Primary model (iOS 26+):** Apple Foundation Models — zero download, native tool calling via `@react-native-ai/apple`  
+**Fallback model:** Gemma 4 E2B UD-IQ2_M (~2.29 GB) via `@react-native-ai/llama` (llama.cpp + minja)  
+**Provider selection:** `useAIProvider()` hook detects Apple Intelligence at runtime; falls back to Gemma  
+**Context window:** ~2048 tokens (Gemma) / varies (Apple)  
+**GPU layers:** 99 (full GPU acceleration, Gemma only)
 
 **Key constraints:**
 - Serialized `LifeContext` must stay under ~400 tokens — `serializeContext()` is built to omit null fields and compress numbers
@@ -452,7 +454,7 @@ Built on top of `LifeContext.money`. All are additive to existing Money tab:
 ## 9. Out of Scope
 
 - Cloud-based AI models or API calls (local only, always)
-- Model upgrades (stays on Qwen 3.5 2B)
+- Model upgrades beyond Gemma 4 E2B / Apple Foundation Models
 - Social features / sharing AI insights
 - Onboarding AI personalization
 - Predictive ML models (all inference via LLM prompts)
