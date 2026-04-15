@@ -1,11 +1,14 @@
 diff --git a/node_modules/@react-native-ai/llama/.bun-tag-89aba412e54da3c7 b/.bun-tag-89aba412e54da3c7
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
+diff --git a/node_modules/@react-native-ai/llama/.bun-tag-a002edd3001f909c b/.bun-tag-a002edd3001f909c
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/node_modules/@react-native-ai/llama/.bun-tag-d8a624fd5e6476a0 b/.bun-tag-d8a624fd5e6476a0
 new file mode 100644
 index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/lib/module/ai-sdk.js b/lib/module/ai-sdk.js
-index c099ccae2b4a43a203c7d698498050774b3617de..939f14e6787e4c433f0d6896ef8a1fb6379801e3 100644
+index c099ccae2b4a43a203c7d698498050774b3617de..37b937714a46bce648430e103d18e4bcd74c9593 100644
 --- a/lib/module/ai-sdk.js
 +++ b/lib/module/ai-sdk.js
 @@ -169,6 +169,9 @@ function prepareMessagesWithMedia(prompt) {
@@ -23,7 +26,7 @@ index c099ccae2b4a43a203c7d698498050774b3617de..939f14e6787e4c433f0d6896ef8a1fb6
        stop: options.stopSequences,
        seed: options.seed,
 -      reasoning_format: 'auto'
-+      reasoning_format: options.providerOptions?.llama?.reasoning_format ?? 'auto'
++      reasoning_format: options.providerOptions?.llama?.reasoning_format ?? 'none'
      };
      if (options.responseFormat?.type === 'json') {
        completionOptions.response_format = {
@@ -33,7 +36,7 @@ index c099ccae2b4a43a203c7d698498050774b3617de..939f14e6787e4c433f0d6896ef8a1fb6
        stop: options.stopSequences,
 -      seed: options.seed
 +      seed: options.seed,
-+      reasoning_format: options.providerOptions?.llama?.reasoning_format ?? 'auto'
++      reasoning_format: options.providerOptions?.llama?.reasoning_format ?? 'none'
      };
      if (options.tools) {
        completionOptions.tools = options.tools.map(({

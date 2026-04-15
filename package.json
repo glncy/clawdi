@@ -34,6 +34,7 @@
   },
   "patchedDependencies": {
     "llama.rn@0.12.0-rc.8": "patches/llama.rn@0.12.0-rc.8.patch",
-    "@expo/ui@55.0.6": "patches/@expo%2Fui@55.0.6.patch"
+    "@expo/ui@55.0.6": "patches/@expo%2Fui@55.0.6.patch",
+    "@react-native-ai/llama@0.12.0": "patches/@react-native-ai%2Fllama@0.12.0.patch"
   }
 }
