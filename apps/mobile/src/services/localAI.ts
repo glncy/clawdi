@@ -1,6 +1,7 @@
+// Gemma 4 E2B — fallback model for Android + iOS devices without Apple Intelligence
 export const MODEL = {
-  id: "bartowski/Qwen_Qwen3.5-2B-GGUF/Qwen_Qwen3.5-2B-Q4_K_M.gguf",
-  name: "Qwen 3.5 2B",
+  id: "unsloth/gemma-4-E2B-it-GGUF/gemma-4-E2B-it-UD-IQ2_M.gguf",
+  name: "Gemma 4 E2B",
 } as const;
 
 export function formatBytes(bytes: number): string {
