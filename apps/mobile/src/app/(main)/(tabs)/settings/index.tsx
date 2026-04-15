@@ -39,9 +39,9 @@ const MAIN_ITEMS: MenuItem[] = [
   { icon: Crown, label: "Premium", description: "Trial & purchase" },
   {
     icon: Brain,
-    label: "Local AI",
-    description: "Model & inference",
-    onPress: () => router.push("/home/ai-test" as never),
+    label: "AI",
+    description: "Provider & model settings",
+    onPress: () => router.push("/(main)/(tabs)/settings/ai" as never),
   },
 ];
 
