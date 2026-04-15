@@ -1,61 +1,50 @@
+// apps/mobile/src/hooks/useAIProvider.ts
 import { Platform } from "react-native";
 import { useEffect, useState } from "react";
+import {
+  useAIPreferenceStore,
+  type AIPreference,
+} from "@/stores/useAIPreferenceStore";
 
 export type AIProvider = "apple" | "gemma" | "gemini";
 
-// TODO: Cloud AI (Gemini) — add Gemini 3 Flash as fallback for devices
-// without enough RAM for Gemma 4 E2B (< 5.5 GB), or as a user preference.
-// Implementation plan:
-//   1. Install expo-secure-store to persist the Gemini API key
-//   2. Add "Cloud AI" section to Settings > AI with API key input
-//   3. Extend useAIProvider to check user's cloud preference + API key
-//   4. Create useGeminiAI hook using @ai-sdk/google (already installed)
-//   5. Update useAI to route "gemini" provider to useGeminiAI
-// Notes:
-//   - @ai-sdk/google is already installed
-//   - Model: "gemini-3.0-flash" — free tier, supports full tool calling
-//   - API key obtained from aistudio.google.com
-//   - Show privacy notice: queries sent to Google servers
-
 /**
- * Checks if Apple Foundation Models are available on this device.
- * Requires iOS 26+ and Apple Intelligence support.
+ * Resolves the active AI provider:
+ *   "apple"  — Apple Foundation Models (iOS 26+, Apple Intelligence enabled)
+ *   "gemma"  — Gemma 4 E2B via llama.cpp (local, cross-platform)
+ *   "gemini" — Gemini 3 Flash cloud API (requires API key)
  *
- * Apple Intelligence is available on:
- *   - iPhone 16 series and later
- *   - iPhone 15 Pro / Pro Max
- *   - iPad with M1 chip or later
- *   - Mac with Apple Silicon
- */
-async function checkAppleIntelligenceAvailable(): Promise<boolean> {
-  if (Platform.OS !== "ios") return false;
-  // TODO: uncomment when @react-native-ai/apple is installed
-  // try {
-  //   const { isAvailable } = await import("@react-native-ai/apple");
-  //   return await isAvailable();
-  // } catch {
-  //   return false;
-  // }
-  return false;
-}
-
-/**
- * Returns which AI provider to use for this device:
- * - "apple" → Apple Foundation Models (iOS 26+, Apple Intelligence capable devices)
- * - "gemma" → Gemma 4 E2B via llama.cpp (all other devices, Android, older iOS)
- *
- * Apple provider: zero download, native tool calling, single-turn only (no maxSteps)
- * Gemma provider: ~2.3 GB download, full multi-step tool calling, cross-platform
+ * Fallback rules:
+ *   - preferred "apple" but unavailable → "gemma"
+ *   - preferred "gemini" but no API key → "gemma"
  */
 export function useAIProvider(): { provider: AIProvider; isChecking: boolean } {
-  const [provider, setProvider] = useState<AIProvider>("gemma");
+  const preferredProvider = useAIPreferenceStore((s) => s.preferredProvider);
+  const geminiApiKey = useAIPreferenceStore((s) => s.geminiApiKey);
+  const [isAppleAvailable, setIsAppleAvailable] = useState(false);
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    checkAppleIntelligenceAvailable()
-      .then((available) => setProvider(available ? "apple" : "gemma"))
+    if (Platform.OS !== "ios") {
+      setIsChecking(false);
+      return;
+    }
+    // Dynamic import keeps Android from loading the iOS-only TurboModule
+    import("@react-native-ai/apple")
+      .then(({ apple }) => setIsAppleAvailable(apple.isAvailable()))
+      .catch(() => setIsAppleAvailable(false))
       .finally(() => setIsChecking(false));
   }, []);
+
+  let provider: AIProvider = "gemma";
+  if (!isChecking) {
+    if (preferredProvider === "apple" && isAppleAvailable) {
+      provider = "apple";
+    } else if (preferredProvider === "gemini" && !!geminiApiKey) {
+      provider = "gemini";
+    }
+    // all other cases → "gemma"
+  }
 
   return { provider, isChecking };
 }
