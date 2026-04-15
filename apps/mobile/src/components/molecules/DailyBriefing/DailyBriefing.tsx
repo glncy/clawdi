@@ -5,8 +5,8 @@ import { AppText } from "@/components/atoms/Text";
 import { Lightning } from "phosphor-react-native";
 import { useCSSVariable } from "uniwind";
 import { useAIStore } from "@/stores/useAIStore";
-import { useLocalAI } from "@/hooks/useLocalAI";
-import { useIsAIAvailable } from "@/hooks/useIsAIAvailable";
+import { useAI } from "@/hooks/useAI";
+import { useAIProvider } from "@/hooks/useAIProvider";
 import { useCurrency } from "@/hooks/useCurrency";
 import {
   buildBriefingPrompt,
@@ -43,8 +43,17 @@ export const DailyBriefing = ({
   const downloadProgress = useAIStore((s) => s.downloadProgress);
   const downloadedBytes = useAIStore((s) => s.downloadedBytes);
   const totalBytes = useAIStore((s) => s.totalBytes);
-  const { complete, loadModel, isModelLoaded } = useLocalAI();
-  const isAIAvailable = useIsAIAvailable();
+  const { complete, loadModel, isModelLoaded } = useAI();
+  const { provider, isChecking: isCheckingProvider } = useAIProvider();
+
+  // AI is available when provider is resolved and model is ready
+  const isAIAvailable =
+    !isCheckingProvider &&
+    (provider === "apple" ||
+      provider === "gemini" ||
+      isModelLoaded ||
+      aiStatus === "downloading" ||
+      aiStatus === "loading");
   const [primaryColor] = useCSSVariable(["--color-primary"]);
 
   const [aiBriefing, setAiBriefing] = useState<string | null>(null);
@@ -98,19 +107,23 @@ export const DailyBriefing = ({
     complete,
   ]);
 
-  // Auto-load model if downloaded but not loaded
+  // Auto-load Gemma model if downloaded but not yet loaded into memory
   useEffect(() => {
-    if (isAIAvailable && aiStatus === "idle" && !isModelLoaded) {
+    if (provider === "gemma" && isAIAvailable && aiStatus === "idle" && !isModelLoaded) {
       loadModel();
     }
-  }, [isAIAvailable, aiStatus, isModelLoaded, loadModel]);
+  }, [provider, isAIAvailable, aiStatus, isModelLoaded, loadModel]);
 
-  // Auto-generate briefing once model is ready
+  // Auto-generate once model is ready (all providers)
   useEffect(() => {
-    if (aiStatus === "ready" && isModelLoaded && !hasGenerated) {
+    const ready =
+      provider === "apple" ||
+      provider === "gemini" ||
+      (aiStatus === "ready" && isModelLoaded);
+    if (ready && !hasGenerated && !isCheckingProvider) {
       generateBriefing();
     }
-  }, [aiStatus, isModelLoaded, hasGenerated, generateBriefing]);
+  }, [provider, aiStatus, isModelLoaded, hasGenerated, isCheckingProvider, generateBriefing]);
 
   // Not available at all — render nothing
   if (!isAIAvailable) return null;

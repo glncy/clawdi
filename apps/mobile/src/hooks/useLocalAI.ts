@@ -40,7 +40,7 @@ function makeThinkingFilter() {
   let buf = "";
   let activeEnd: string | null = null; // which end-marker are we looking for
 
-  return function filter(chunk: string): string {
+  function process(chunk: string): string {
     buf += chunk;
     let out = "";
 
@@ -86,7 +86,16 @@ function makeThinkingFilter() {
     }
 
     return out;
-  };
+  }
+
+  // Call after stream ends to flush remaining lookahead buffer
+  function flush(): string {
+    const remaining = activeEnd ? "" : buf;
+    buf = "";
+    return remaining;
+  }
+
+  return { filter: process, flush };
 }
 
 export function useLocalAI() {
@@ -231,13 +240,22 @@ export function useLocalAI() {
 
         // Strip thinking blocks (e.g. <|channel>...</channel|> for Gemma 4)
         // from the raw text stream. Enabled by default.
-        const filter = filterThinking ? makeThinkingFilter() : null;
+        const thinkingFilter = filterThinking ? makeThinkingFilter() : null;
 
         let fullText = "";
         for await (const chunk of textStream) {
-          const text = filter ? filter(chunk) : chunk;
+          const text = thinkingFilter ? thinkingFilter.filter(chunk) : chunk;
           fullText += text;
           if (text) appendResponse(text);
+        }
+
+        // Flush lookahead buffer — prevents last ~9 chars being silently dropped
+        if (thinkingFilter) {
+          const tail = thinkingFilter.flush();
+          if (tail) {
+            fullText += tail;
+            appendResponse(tail);
+          }
         }
 
         setStatus("ready");
