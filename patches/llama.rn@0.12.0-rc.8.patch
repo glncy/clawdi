@@ -1,3 +1,6 @@
+diff --git a/node_modules/llama.rn/.bun-tag-c2131b0c362070ae b/.bun-tag-c2131b0c362070ae
+new file mode 100644
+index 0000000000000000000000000000000000000000..e69de29bb2d1d6434b8b29ae775ad8c2e48c5391
 diff --git a/app.plugin.js b/app.plugin.js
 index 429345ee82f02e7cbe5cda0699b88b2f0114ceb6..38d4e268ec59d121ee9a39be20bc6dd911dcd0a5 100644
 --- a/app.plugin.js
@@ -15,3 +18,19 @@ index 429345ee82f02e7cbe5cda0699b88b2f0114ceb6..38d4e268ec59d121ee9a39be20bc6dd9
 +};
 +const plugin = require("./lib/commonjs/expo-plugin/withLlamaRN");
 +module.exports = plugin.default || plugin;
+diff --git a/llama-rn.podspec b/llama-rn.podspec
+index e1d28fd07a58b69a68905a9cf1a3421eea03e25d..744e36a5a81cd00eded655689f30a383dabedcfa 100644
+--- a/llama-rn.podspec
++++ b/llama-rn.podspec
+@@ -25,7 +25,10 @@ Pod::Spec.new do |s|
+ 
+   header_search_paths = ['$(inherited)']
+ 
+-  if ENV["RNLLAMA_BUILD_FROM_SOURCE"] == "1"
++  xcframework_path = File.join(__dir__, "ios/rnllama.xcframework")
++  build_from_source = ENV["RNLLAMA_BUILD_FROM_SOURCE"] == "1" || !File.exist?(xcframework_path)
++
++  if build_from_source
+     s.source_files = "ios/**/*.{h,m,mm}", "cpp/**/*.{h,cpp,hpp,c,m,mm}"
+     # Exclude standalone tooling sources copied from llama.cpp. The mtmd debug
+     # CLI depends on common/arg.h and should not be linked into the RN library.
