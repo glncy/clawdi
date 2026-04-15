@@ -44,3 +44,4 @@ gha-creds-*.json
 # obsidian
 docs/.obsidian/workspace.json
 docs/.obsidian/workspace-mobile.json
+.superpowers/
