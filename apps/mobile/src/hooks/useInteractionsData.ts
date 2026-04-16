@@ -14,6 +14,7 @@ export function useInteractionsData(contactId: string) {
     if (isReady && db && !contactData?.isLoaded) {
       void store.loadForContact(db, contactId);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, db, contactId, contactData?.isLoaded]);
 
   return {

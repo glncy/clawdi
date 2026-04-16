@@ -11,10 +11,7 @@ interface TopicChipProps {
 }
 
 export const TopicChip = ({ topic, onToggle, onRemove }: TopicChipProps) => {
-  const [primaryColor, mutedColor] = useCSSVariable([
-    "--color-primary",
-    "--color-muted",
-  ]);
+  const [mutedColor] = useCSSVariable(["--color-muted"]);
 
   return (
     <View

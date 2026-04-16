@@ -39,10 +39,7 @@ interface InteractionEntryProps {
 }
 
 export const InteractionEntry = ({ interaction }: InteractionEntryProps) => {
-  const [mutedColor, primaryColor] = useCSSVariable([
-    "--color-muted",
-    "--color-primary",
-  ]);
+  const [mutedColor] = useCSSVariable(["--color-muted"]);
   const Icon = TYPE_ICON[interaction.type];
 
   return (
