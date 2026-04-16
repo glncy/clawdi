@@ -2,7 +2,7 @@ import { create } from "zustand";
 import { eq } from "drizzle-orm";
 import type { Database } from "../db/client";
 import { contacts as contactsTable } from "../db/schema";
-import type { Contact } from "../types";
+import type { Contact, Interaction } from "../types";
 
 function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
@@ -39,6 +39,10 @@ interface PeopleState {
   ) => Promise<void>;
   removeContact: (db: Database, id: string) => Promise<void>;
   getContactById: (id: string) => Contact | undefined;
+  patchContactMeta: (
+    id: string,
+    meta: { lastInteractionAt: string; lastInteractionType: Interaction["type"] },
+  ) => void;
 }
 
 export const usePeopleStore = create<PeopleState>((set, get) => ({
@@ -106,4 +110,13 @@ export const usePeopleStore = create<PeopleState>((set, get) => ({
   },
 
   getContactById: (id) => get().contacts.find((c) => c.id === id),
+
+  patchContactMeta: (id, meta) =>
+    set((state) => ({
+      contacts: state.contacts.map((c) =>
+        c.id === id
+          ? { ...c, lastInteractionAt: meta.lastInteractionAt, lastInteractionType: meta.lastInteractionType }
+          : c,
+      ),
+    })),
 }));
