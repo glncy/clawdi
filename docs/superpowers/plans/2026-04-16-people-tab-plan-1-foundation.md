@@ -791,6 +791,11 @@ describe("daysSince", () => {
       daysSince("2026-04-16T08:00:00.000Z", "2026-04-16T20:00:00.000Z"),
     ).toBe(0);
   });
+
+  it("defaults nowIso to the current wall clock when omitted", () => {
+    const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString();
+    expect(daysSince(fiveDaysAgo)).toBe(5);
+  });
 });
 
 describe("warmthLevel", () => {
@@ -843,9 +848,9 @@ export type WarmthLevel = "warm" | "cooling" | "distant";
 
 const MS_PER_DAY = 1000 * 60 * 60 * 24;
 
-export function daysSince(fromIso: string, nowIso: string): number {
+export function daysSince(fromIso: string, nowIso?: string): number {
   const from = new Date(fromIso).getTime();
-  const to = new Date(nowIso).getTime();
+  const to = nowIso ? new Date(nowIso).getTime() : Date.now();
   return Math.max(0, Math.floor((to - from) / MS_PER_DAY));
 }
 
@@ -947,13 +952,18 @@ git commit -m "feat(mobile): add warmth utility + WarmthAvatar atom"
 
 ---
 
-### Task 4: Rewrite `ContactRow` + `ContactList` to use new Contact shape
+### Task 4: Rewrite `ContactRow` + `ContactList` + purge old `Contact` consumers
 
 **Files:**
 - Modify: `apps/mobile/src/components/molecules/ContactRow/ContactRow.tsx`
 - Modify: `apps/mobile/src/components/organisms/ContactList/ContactList.tsx`
+- Modify: `apps/mobile/src/components/molecules/DailyBriefing/DailyBriefing.tsx`
+- Modify: `apps/mobile/src/app/(main)/(tabs)/home/index.tsx`
+- Modify: `apps/mobile/src/data/mockData.ts`
 
 **Why:** The current `ContactRow` reads `contact.lastTalkedDaysAgo` (from the mock shape). We replaced `Contact` with a persisted shape that exposes `lastInteractionAt` instead. Rather than compute `lastTalkedDaysAgo` in the row, we compute warmth at the list level via `warmthLevel(daysSince(...))` and pass it down.
+
+Task 2 also surfaced two more files that still reach into the old shape — `DailyBriefing` (`c.lastTalkedDaysAgo`) and `home/index.tsx` (`MOCK_CONTACTS.find((c) => c.lastTalkedDaysAgo >= 4)`). We fix them in the same task so TypeScript stays green after this step. `MOCK_CONTACTS` gets deleted from `mockData.ts` since contacts now live in the store.
 
 - [ ] **Step 1: Rewrite `ContactRow`**
 
@@ -1105,18 +1115,171 @@ export const ContactList = ({
 };
 ```
 
-- [ ] **Step 3: Run type check by running the test suite**
+- [ ] **Step 3: Rewrite `DailyBriefing` contact handling**
+
+`DailyBriefing.tsx` currently does `contacts.find((c) => c.lastTalkedDaysAgo >= 4)` and `nudgeContactDays: nudgeContact?.lastTalkedDaysAgo`. Replace those with the new `lastInteractionAt` computation:
+
+In `apps/mobile/src/components/molecules/DailyBriefing/DailyBriefing.tsx`, add the import:
+
+```tsx
+import { daysSince } from "@/utils/warmth";
+```
+
+Replace the single line:
+
+```tsx
+  const nudgeContact = contacts.find((c) => c.lastTalkedDaysAgo >= 4);
+```
+
+with:
+
+```tsx
+  const nudgeContactCandidate = contacts
+    .map((c) => ({
+      contact: c,
+      days: c.lastInteractionAt ? daysSince(c.lastInteractionAt) : Infinity,
+    }))
+    .find(({ days }) => days >= 4);
+  const nudgeContact = nudgeContactCandidate?.contact;
+  const nudgeContactDays = nudgeContactCandidate?.days;
+```
+
+Then in the `buildBriefingPrompt(...)` call, replace:
+
+```tsx
+      nudgeContactName: nudgeContact?.name,
+      nudgeContactDays: nudgeContact?.lastTalkedDaysAgo,
+```
+
+with:
+
+```tsx
+      nudgeContactName: nudgeContact?.name,
+      nudgeContactDays: nudgeContactDays === Infinity ? undefined : nudgeContactDays,
+```
+
+And update the `useCallback` dependency list: replace `nudgeContact,` with `nudgeContact, nudgeContactDays,`.
+
+- [ ] **Step 4: Rewrite `home/index.tsx` nudge lookup**
+
+`home/index.tsx` today pulls contacts from `MOCK_CONTACTS`. Switch it to the live store via `usePeopleData()` and compute the nudge via `warmthLevel`.
+
+Replace the file at `apps/mobile/src/app/(main)/(tabs)/home/index.tsx`:
+
+```tsx
+import { ScrollView, View } from "react-native";
+import { Stack } from "expo-router";
+import { AppText } from "@/components/atoms/Text";
+import { DailyBriefing } from "@/components/molecules/DailyBriefing";
+import { TodayFocus } from "@/components/molecules/TodayFocus";
+import { BudgetCard } from "@/components/molecules/BudgetCard";
+import { NudgeCard } from "@/components/molecules/NudgeCard";
+import { HabitList } from "@/components/organisms/HabitList";
+import { useUserStore } from "@/stores/useUserStore";
+import { useFinanceData } from "@/hooks/useFinanceData";
+import { usePeopleData } from "@/hooks/usePeopleData";
+import { daysSince } from "@/utils/warmth";
+import { MOCK_HABITS, MOCK_PRIORITIES } from "@/data/mockData";
+
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  return "Good evening";
+}
+
+function getFormattedDate(): string {
+  return new Date().toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+}
+
+export default function HomeScreen() {
+  const userName = useUserStore((s) => s.name) || "there";
+  const { budgetLeftToday, dailyBudget } = useFinanceData();
+  const { contacts } = usePeopleData();
+
+  const nudgeCandidate = contacts
+    .map((c) => ({
+      contact: c,
+      days: c.lastInteractionAt ? daysSince(c.lastInteractionAt) : Infinity,
+    }))
+    .find(({ days }) => days >= 4 && days !== Infinity);
+
+  return (
+    <>
+      <Stack.Screen
+        options={{
+          title: "Home",
+        }}
+      />
+      <ScrollView
+        className="flex-1 bg-background"
+        contentInsetAdjustmentBehavior="automatic"
+        contentContainerClassName="px-5 pt-5 pb-32 gap-5"
+      >
+        <View className="gap-1">
+          <AppText size="lg" weight="semibold">
+            {getGreeting()}, {userName}
+          </AppText>
+          <AppText size="sm" color="muted">
+            {getFormattedDate()}
+          </AppText>
+        </View>
+
+        <DailyBriefing
+          userName={userName}
+          budgetLeft={budgetLeftToday}
+          dailyBudget={dailyBudget}
+          priorities={MOCK_PRIORITIES}
+          habits={MOCK_HABITS}
+          contacts={contacts}
+        />
+
+        <TodayFocus priorities={MOCK_PRIORITIES} />
+
+        <BudgetCard
+          amountLeft={budgetLeftToday}
+          dailyBudget={dailyBudget}
+        />
+
+        <HabitList habits={MOCK_HABITS} compact />
+
+        {nudgeCandidate && (
+          <NudgeCard
+            name={nudgeCandidate.contact.name}
+            daysAgo={nudgeCandidate.days}
+          />
+        )}
+      </ScrollView>
+    </>
+  );
+}
+```
+
+- [ ] **Step 5: Strip `MOCK_CONTACTS` from `mockData.ts`**
+
+Edit `apps/mobile/src/data/mockData.ts`:
+- Remove `Contact` from the import list at the top of the file.
+- Delete the entire `MOCK_CONTACTS` export (the `export const MOCK_CONTACTS: Contact[] = [ ... ]` block).
+
+- [ ] **Step 6: Run the test suite and verify type check**
 
 Run: `cd apps/mobile && bun run test`
-Expected: All previously-passing tests still PASS. If any unrelated test compiled through the old `Contact` shape, note the failure; fix only by updating callers to match (no `lastTalkedDaysAgo` anywhere except mock data file, which we'll purge in Task 5).
+Expected: All previously-passing tests still PASS and no TypeScript errors about `lastTalkedDaysAgo`, `giftIdea`, `thingsTheyLove`, or `birthday`.
 
-- [ ] **Step 4: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
 cd apps/mobile
 git add src/components/molecules/ContactRow/ContactRow.tsx \
-  src/components/organisms/ContactList/ContactList.tsx
-git commit -m "refactor(mobile): rewire ContactRow/ContactList to new Contact shape + warmth"
+  src/components/organisms/ContactList/ContactList.tsx \
+  src/components/molecules/DailyBriefing/DailyBriefing.tsx \
+  src/app/\(main\)/\(tabs\)/home/index.tsx \
+  src/data/mockData.ts
+git commit -m "refactor(mobile): rewire all Contact consumers to persisted shape + warmth"
 ```
 
 ---
@@ -1207,11 +1370,11 @@ export default function PeopleScreen() {
 }
 ```
 
-- [ ] **Step 2: Verify nothing else imports `MOCK_CONTACTS`**
+- [ ] **Step 2: Verify nothing imports `MOCK_CONTACTS`**
 
-Run (manually via Grep, not this literal command): search for `MOCK_CONTACTS` across `apps/mobile/src`.
+Task 4 deleted `MOCK_CONTACTS` and migrated `home/index.tsx` to `usePeopleData()`. Run a Grep across `apps/mobile/src` for `MOCK_CONTACTS`.
 
-Expected: Only `apps/mobile/src/data/mockData.ts` (its definition) remains. If `home/index.tsx` or another tab imports it, leave those alone — they can keep using mocks for now (they'll migrate in other feature work). The People dashboard no longer imports them.
+Expected: Zero matches. If any remain, update them to read from `usePeopleData()` like the People dashboard and home screen now do.
 
 - [ ] **Step 3: Commit**
 
