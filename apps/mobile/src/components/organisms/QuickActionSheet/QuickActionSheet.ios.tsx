@@ -21,6 +21,7 @@ import {
 import { useCSSVariable } from "uniwind";
 import { useQuickActionStore } from "@/stores/useQuickActionStore";
 import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStore";
+import { useLogInteractionSheetStore } from "@/stores/useLogInteractionSheetStore";
 import type { Icon as PhosphorIcon } from "phosphor-react-native";
 
 interface QuickAction {
@@ -46,7 +47,14 @@ export const QuickActionSheet = () => {
     { icon: CheckSquare, label: "Tick a habit" },
     { icon: ListBullets, label: "Add priority" },
     { icon: Moon, label: "Log sleep" },
-    { icon: ChatCircle, label: "Log a chat" },
+    {
+      icon: ChatCircle,
+      label: "Log a chat",
+      onPress: () => {
+        close();
+        useLogInteractionSheetStore.getState().open();
+      },
+    },
   ];
 
   return (

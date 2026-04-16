@@ -8,6 +8,7 @@ import { useCSSVariable } from "uniwind";
 import { AppTabBar, AppTabBarFAB } from "@/components/organisms/AppTabBar";
 import { QuickActionSheet } from "@/components/organisms/QuickActionSheet";
 import { SettingsSheet } from "@/components/organisms/SettingsSheet";
+import { LogInteractionSheet } from "@/components/organisms/LogInteractionSheet";
 import { useSystemTheme } from "@/hooks/useCustomTheme";
 import { useQuickActionStore } from "@/stores/useQuickActionStore";
 
@@ -123,6 +124,7 @@ export default function TabLayout() {
         <NativeTabsFAB />
         <QuickActionSheet />
         <SettingsSheet />
+        <LogInteractionSheet />
       </>
     );
   }
@@ -148,6 +150,7 @@ export default function TabLayout() {
         <AppTabBarFAB />
         <QuickActionSheet />
         <SettingsSheet />
+        <LogInteractionSheet />
       </View>
     </>
   );
