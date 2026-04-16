@@ -68,7 +68,7 @@ export const DailyBriefing = ({
       contact: c,
       days: c.lastInteractionAt ? daysSince(c.lastInteractionAt) : Infinity,
     }))
-    .find(({ days }) => days >= 4);
+    .find(({ days }) => days >= 4 && days !== Infinity);
   const nudgeContact = nudgeContactCandidate?.contact;
   const nudgeContactDays = nudgeContactCandidate?.days;
 
