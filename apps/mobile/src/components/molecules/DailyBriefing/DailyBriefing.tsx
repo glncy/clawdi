@@ -14,6 +14,7 @@ import {
 } from "@/services/briefingPrompt";
 import type { Priority, Habit, Contact } from "@/types";
 import { formatBytes } from "@/services/localAI";
+import { daysSince } from "@/utils/warmth";
 
 interface DailyBriefingProps {
   userName: string;
@@ -62,7 +63,14 @@ export const DailyBriefing = ({
   const completedPriorities = priorities.filter((p) => p.isCompleted).length;
   const incompletePriorities = priorities.filter((p) => !p.isCompleted);
   const completedHabits = habits.filter((h) => h.isCompleted).length;
-  const nudgeContact = contacts.find((c) => c.lastTalkedDaysAgo >= 4);
+  const nudgeContactCandidate = contacts
+    .map((c) => ({
+      contact: c,
+      days: c.lastInteractionAt ? daysSince(c.lastInteractionAt) : Infinity,
+    }))
+    .find(({ days }) => days >= 4);
+  const nudgeContact = nudgeContactCandidate?.contact;
+  const nudgeContactDays = nudgeContactCandidate?.days;
 
   const generateBriefing = useCallback(async () => {
     if (hasGenerated || !isModelLoaded) return;
@@ -84,7 +92,7 @@ export const DailyBriefing = ({
       habitsTotal: habits.length,
       habitsCompleted: completedHabits,
       nudgeContactName: nudgeContact?.name,
-      nudgeContactDays: nudgeContact?.lastTalkedDaysAgo,
+      nudgeContactDays: nudgeContactDays === Infinity ? undefined : nudgeContactDays,
     });
 
     const result = await complete(prompt, BRIEFING_SYSTEM_PROMPT);
@@ -104,6 +112,7 @@ export const DailyBriefing = ({
     habits.length,
     completedHabits,
     nudgeContact,
+    nudgeContactDays,
     complete,
   ]);
 

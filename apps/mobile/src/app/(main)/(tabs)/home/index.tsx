@@ -8,11 +8,9 @@ import { NudgeCard } from "@/components/molecules/NudgeCard";
 import { HabitList } from "@/components/organisms/HabitList";
 import { useUserStore } from "@/stores/useUserStore";
 import { useFinanceData } from "@/hooks/useFinanceData";
-import {
-  MOCK_HABITS,
-  MOCK_PRIORITIES,
-  MOCK_CONTACTS,
-} from "@/data/mockData";
+import { usePeopleData } from "@/hooks/usePeopleData";
+import { daysSince } from "@/utils/warmth";
+import { MOCK_HABITS, MOCK_PRIORITIES } from "@/data/mockData";
 
 function getGreeting(): string {
   const hour = new Date().getHours();
@@ -32,7 +30,14 @@ function getFormattedDate(): string {
 export default function HomeScreen() {
   const userName = useUserStore((s) => s.name) || "there";
   const { budgetLeftToday, dailyBudget } = useFinanceData();
-  const nudgeContact = MOCK_CONTACTS.find((c) => c.lastTalkedDaysAgo >= 4);
+  const { contacts } = usePeopleData();
+
+  const nudgeCandidate = contacts
+    .map((c) => ({
+      contact: c,
+      days: c.lastInteractionAt ? daysSince(c.lastInteractionAt) : Infinity,
+    }))
+    .find(({ days }) => days >= 4 && days !== Infinity);
 
   return (
     <>
@@ -61,7 +66,7 @@ export default function HomeScreen() {
           dailyBudget={dailyBudget}
           priorities={MOCK_PRIORITIES}
           habits={MOCK_HABITS}
-          contacts={MOCK_CONTACTS}
+          contacts={contacts}
         />
 
         <TodayFocus priorities={MOCK_PRIORITIES} />
@@ -73,10 +78,10 @@ export default function HomeScreen() {
 
         <HabitList habits={MOCK_HABITS} compact />
 
-        {nudgeContact && (
+        {nudgeCandidate && (
           <NudgeCard
-            name={nudgeContact.name}
-            daysAgo={nudgeContact.lastTalkedDaysAgo}
+            name={nudgeCandidate.contact.name}
+            daysAgo={nudgeCandidate.days}
           />
         )}
       </ScrollView>

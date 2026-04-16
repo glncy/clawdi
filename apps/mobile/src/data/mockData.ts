@@ -3,7 +3,6 @@ import type {
   SavingsGoal,
   Habit,
   Priority,
-  Contact,
   SleepLog,
   Spark,
   QuickListItem,
@@ -48,13 +47,6 @@ export const MOCK_PRIORITIES: Priority[] = [
   { id: "1", text: "Finish project proposal", type: "must", isCompleted: true },
   { id: "2", text: "Call dentist for appointment", type: "win", isCompleted: false },
   { id: "3", text: "Review budget for next month", type: "overdue", isCompleted: false },
-];
-
-export const MOCK_CONTACTS: Contact[] = [
-  { id: "1", name: "Mom", relationship: "Family", lastTalkedDaysAgo: 4, birthday: "Jun 15" },
-  { id: "2", name: "Best friend", relationship: "Friend", lastTalkedDaysAgo: 2 },
-  { id: "3", name: "Dad", relationship: "Family", lastTalkedDaysAgo: 1, birthday: "Apr 4", giftIdea: "He loves fishing gear" },
-  { id: "4", name: "Sister", relationship: "Family", lastTalkedDaysAgo: 8 },
 ];
 
 export const MOCK_SLEEP: SleepLog = {
