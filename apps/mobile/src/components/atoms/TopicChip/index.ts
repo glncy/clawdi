@@ -1,0 +1,1 @@
+export { TopicChip } from "./TopicChip";
