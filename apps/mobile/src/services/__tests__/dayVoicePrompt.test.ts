@@ -37,8 +37,7 @@ describe("dayVoicePrompt", () => {
       text: "Clean the kitchen",
     });
     const result = parseDayVoiceResult(json);
-    expect(result?.action).toBe("add_priority");
-    expect(result?.type).toBe("win");
+    expect(result).toMatchObject({ action: "add_priority", type: "win" });
   });
 
   it("parseDayVoiceResult parses add_quick_list action", () => {
@@ -47,8 +46,7 @@ describe("dayVoicePrompt", () => {
       text: "Buy milk",
     });
     const result = parseDayVoiceResult(json);
-    expect(result?.action).toBe("add_quick_list");
-    expect(result?.text).toBe("Buy milk");
+    expect(result).toMatchObject({ action: "add_quick_list", text: "Buy milk" });
   });
 
   it("parseDayVoiceResult parses tonight_planner action", () => {
@@ -57,8 +55,7 @@ describe("dayVoicePrompt", () => {
       text: "Read → Sleep by 11 PM",
     });
     const result = parseDayVoiceResult(json);
-    expect(result?.action).toBe("tonight_planner");
-    expect(result?.text).toBe("Read → Sleep by 11 PM");
+    expect(result).toMatchObject({ action: "tonight_planner", text: "Read → Sleep by 11 PM" });
   });
 
   it("parseDayVoiceResult parses complete_priority action", () => {
@@ -68,8 +65,7 @@ describe("dayVoicePrompt", () => {
       index: 0,
     });
     const result = parseDayVoiceResult(json);
-    expect(result?.action).toBe("complete_priority");
-    expect(result?.type).toBe("must");
+    expect(result).toMatchObject({ action: "complete_priority", type: "must" });
   });
 
   it("parseDayVoiceResult returns null for invalid JSON", () => {

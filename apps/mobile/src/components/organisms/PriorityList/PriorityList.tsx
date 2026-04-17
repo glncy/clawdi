@@ -42,7 +42,7 @@ const PrioritySection = ({ type, items }: SectionProps) => {
           }}
           onLongPress={() => openEdit(p)}
         >
-          <Checkbox isSelected={p.isCompleted} onChange={() => {
+          <Checkbox isSelected={p.isCompleted} onChange={(_: boolean) => {
             if (db) togglePriority(db, p.id);
           }} />
           <AppText

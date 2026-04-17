@@ -26,7 +26,7 @@ const QuickItemRow = ({ item, onToggle, onDelete }: QuickItemRowProps) => {
 
   return (
     <View className="flex-row items-center gap-3 py-2">
-      <Checkbox isSelected={item.isCompleted} onChange={onToggle} />
+      <Checkbox isSelected={item.isCompleted} onChange={(_: boolean) => onToggle()} />
       <Text
         className={`flex-1 text-sm ${item.isCompleted ? "text-muted line-through" : "text-foreground"}`}
         onPress={onToggle}
