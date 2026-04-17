@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { View, ScrollView, TextInput } from "react-native";
 import {
   BottomSheet,
@@ -56,13 +56,18 @@ export const LogInteractionSheet = () => {
   const activeContactId = prefillContactId ?? selectedContactId;
   const activeContact = contacts.find((c) => c.id === activeContactId);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setSelectedContactId(null);
+      setType("call");
+      setDateOffset(0);
+      setNote("");
+      setIsSaving(false);
+    }
+  }, [isOpen]);
+
   const handleClose = () => {
     close();
-    setSelectedContactId(null);
-    setType("call");
-    setDateOffset(0);
-    setNote("");
-    setIsSaving(false);
   };
 
   const handleSave = async () => {

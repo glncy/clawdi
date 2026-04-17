@@ -1,4 +1,4 @@
-import { Platform, Pressable, View } from "react-native";
+import { Pressable, View } from "react-native";
 import { Tabs, Stack } from "expo-router";
 import { NativeTabs } from "expo-router/unstable-native-tabs";
 import { GlassContainer, GlassView } from "expo-glass-effect";
@@ -11,13 +11,7 @@ import { SettingsSheet } from "@/components/organisms/SettingsSheet";
 import { LogInteractionSheet } from "@/components/organisms/LogInteractionSheet";
 import { useSystemTheme } from "@/hooks/useCustomTheme";
 import { useQuickActionStore } from "@/stores/useQuickActionStore";
-
-/**
- * True on iOS 26+ — renders native liquid glass tab bar.
- * False on iOS <26 and Android — renders custom floating pill tab bar.
- */
-const isLiquidGlass =
-  Platform.OS === "ios" && parseInt(Platform.Version as string, 10) >= 26;
+import { isLiquidGlass, DEFAULT_PRIMARY_COLOR } from "@/utils/platform";
 
 /**
  * Center-positioned glass "+" FAB for iOS 26+.
@@ -54,7 +48,7 @@ function NativeTabsFAB() {
             <Plus
               size={28}
               weight="bold"
-              color={(primaryColor as string) ?? "#4ae2ac"}
+              color={(primaryColor as string) ?? DEFAULT_PRIMARY_COLOR}
             />
           </GlassView>
         </Pressable>
@@ -66,7 +60,7 @@ function NativeTabsFAB() {
 export default function TabLayout() {
   useSystemTheme();
   const [primaryColor] = useCSSVariable(["--color-primary"]);
-  const tintColor = (primaryColor as string | undefined) ?? "#4ae2ac";
+  const tintColor = (primaryColor as string | undefined) ?? DEFAULT_PRIMARY_COLOR;
 
   if (isLiquidGlass) {
     return (

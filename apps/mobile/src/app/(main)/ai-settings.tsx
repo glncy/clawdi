@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Platform, View, ScrollView, TextInput } from "react-native";
+import { View, ScrollView, TextInput } from "react-native";
 import { Stack } from "expo-router";
 import { Button, ListGroup, Separator } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
@@ -12,9 +12,7 @@ import {
 } from "@/stores/useAIPreferenceStore";
 import { useLocalAI } from "@/hooks/useLocalAI";
 import { formatBytes } from "@/services/localAI";
-
-const isLiquidGlass =
-  Platform.OS === "ios" && parseInt(Platform.Version as string, 10) >= 26;
+import { isLiquidGlass } from "@/utils/platform";
 
 const PROVIDER_LABELS: Record<AIPreference, string> = {
   apple: "Apple AI",

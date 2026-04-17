@@ -5,6 +5,7 @@ import { createGoogleGenerativeAI } from "@ai-sdk/google";
 import { useAIStore } from "@/stores/useAIStore";
 import { useAIPreferenceStore } from "@/stores/useAIPreferenceStore";
 
+/** Satisfies the shared AI hook interface — cloud providers have no local model lifecycle. */
 const NOOP_ASYNC = async () => {};
 
 /**
@@ -65,8 +66,11 @@ export function useGeminiAI() {
         return { text: fullText };
       } catch (e) {
         const msg = e instanceof Error ? e.message : String(e);
+        const userMsg = msg.toLowerCase().includes("network") || msg.toLowerCase().includes("fetch")
+          ? "Unable to reach Gemini. Check your internet connection and try again."
+          : msg;
         setStatus("ready");
-        setError(msg);
+        setError(userMsg);
         return null;
       }
     },

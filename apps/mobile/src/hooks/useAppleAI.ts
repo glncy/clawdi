@@ -4,6 +4,7 @@ import { streamText } from "ai";
 import { apple } from "@react-native-ai/apple";
 import { useAIStore } from "@/stores/useAIStore";
 
+/** Satisfies the shared AI hook interface — Apple Foundation Models have no download/load lifecycle. */
 const NOOP_ASYNC = async () => {};
 
 /**

@@ -68,32 +68,42 @@ export const useInteractionsStore = create<InteractionsState>((set, get) => ({
   byContactId: {},
 
   loadForContact: async (db, contactId) => {
-    const [iRows, tRows] = await Promise.all([
-      db
-        .select()
-        .from(interactionsTable)
-        .where(eq(interactionsTable.contactId, contactId))
-        .orderBy(desc(interactionsTable.occurredAt)),
-      db
-        .select()
-        .from(nextTopicsTable)
-        .where(eq(nextTopicsTable.contactId, contactId))
-        .orderBy(nextTopicsTable.createdAt),
-    ]);
-    const interactions = iRows.map(rowToInteraction);
-    const topics = tRows.map(rowToTopic);
-    set((s) => ({
-      byContactId: {
-        ...s.byContactId,
-        [contactId]: { interactions, topics, isLoaded: true },
-      },
-    }));
-    if (interactions.length > 0) {
-      const latest = interactions[0]!;
-      usePeopleStore.getState().patchContactMeta(contactId, {
-        lastInteractionAt: latest.occurredAt,
-        lastInteractionType: latest.type,
-      });
+    try {
+      const [iRows, tRows] = await Promise.all([
+        db
+          .select()
+          .from(interactionsTable)
+          .where(eq(interactionsTable.contactId, contactId))
+          .orderBy(desc(interactionsTable.occurredAt)),
+        db
+          .select()
+          .from(nextTopicsTable)
+          .where(eq(nextTopicsTable.contactId, contactId))
+          .orderBy(nextTopicsTable.createdAt),
+      ]);
+      const interactions = iRows.map(rowToInteraction);
+      const topics = tRows.map(rowToTopic);
+      set((s) => ({
+        byContactId: {
+          ...s.byContactId,
+          [contactId]: { interactions, topics, isLoaded: true },
+        },
+      }));
+      if (interactions.length > 0) {
+        const latest = interactions[0]!;
+        usePeopleStore.getState().patchContactMeta(contactId, {
+          lastInteractionAt: latest.occurredAt,
+          lastInteractionType: latest.type,
+        });
+      }
+    } catch (e) {
+      console.error("[useInteractionsStore] loadForContact failed:", e);
+      set((s) => ({
+        byContactId: {
+          ...s.byContactId,
+          [contactId]: { interactions: [], topics: [], isLoaded: true },
+        },
+      }));
     }
   },
 
@@ -107,13 +117,18 @@ export const useInteractionsStore = create<InteractionsState>((set, get) => ({
       occurredAt: input.occurredAt ?? now,
       createdAt: now,
     };
-    await db.insert(interactionsTable).values({
-      id: interaction.id,
-      contactId: interaction.contactId,
-      type: interaction.type,
-      note: interaction.note ?? null,
-      occurredAt: interaction.occurredAt,
-    });
+    try {
+      await db.insert(interactionsTable).values({
+        id: interaction.id,
+        contactId: interaction.contactId,
+        type: interaction.type,
+        note: interaction.note ?? null,
+        occurredAt: interaction.occurredAt,
+      });
+    } catch (e) {
+      console.error("[useInteractionsStore] addInteraction failed:", e);
+      throw e;
+    }
     set((s) => {
       const prev = s.byContactId[input.contactId] ?? {
         interactions: [],
@@ -138,7 +153,12 @@ export const useInteractionsStore = create<InteractionsState>((set, get) => ({
   },
 
   removeInteraction: async (db, id, contactId) => {
-    await db.delete(interactionsTable).where(eq(interactionsTable.id, id));
+    try {
+      await db.delete(interactionsTable).where(eq(interactionsTable.id, id));
+    } catch (e) {
+      console.error("[useInteractionsStore] removeInteraction failed:", e);
+      throw e;
+    }
     set((s) => {
       const prev = s.byContactId[contactId];
       if (!prev) return s;
@@ -171,12 +191,17 @@ export const useInteractionsStore = create<InteractionsState>((set, get) => ({
       isDone: false,
       createdAt: now,
     };
-    await db.insert(nextTopicsTable).values({
-      id: topic.id,
-      contactId: topic.contactId,
-      topic: topic.topic,
-      isDone: 0,
-    });
+    try {
+      await db.insert(nextTopicsTable).values({
+        id: topic.id,
+        contactId: topic.contactId,
+        topic: topic.topic,
+        isDone: 0,
+      });
+    } catch (e) {
+      console.error("[useInteractionsStore] addTopic failed:", e);
+      throw e;
+    }
     set((s) => {
       const prev = s.byContactId[input.contactId] ?? {
         interactions: [],
@@ -194,10 +219,15 @@ export const useInteractionsStore = create<InteractionsState>((set, get) => ({
   },
 
   toggleTopicDone: async (db, id, contactId, isDone) => {
-    await db
-      .update(nextTopicsTable)
-      .set({ isDone: isDone ? 1 : 0 })
-      .where(eq(nextTopicsTable.id, id));
+    try {
+      await db
+        .update(nextTopicsTable)
+        .set({ isDone: isDone ? 1 : 0 })
+        .where(eq(nextTopicsTable.id, id));
+    } catch (e) {
+      console.error("[useInteractionsStore] toggleTopicDone failed:", e);
+      throw e;
+    }
     set((s) => {
       const prev = s.byContactId[contactId];
       if (!prev) return s;
@@ -216,7 +246,12 @@ export const useInteractionsStore = create<InteractionsState>((set, get) => ({
   },
 
   removeTopic: async (db, id, contactId) => {
-    await db.delete(nextTopicsTable).where(eq(nextTopicsTable.id, id));
+    try {
+      await db.delete(nextTopicsTable).where(eq(nextTopicsTable.id, id));
+    } catch (e) {
+      console.error("[useInteractionsStore] removeTopic failed:", e);
+      throw e;
+    }
     set((s) => {
       const prev = s.byContactId[contactId];
       if (!prev) return s;
