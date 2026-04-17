@@ -15,6 +15,13 @@
       "when": 1776331944420,
       "tag": "0001_add_people_tables",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1744934400000,
+      "tag": "0002_add_day_tables",
+      "breakpoints": true
     }
   ]
 }

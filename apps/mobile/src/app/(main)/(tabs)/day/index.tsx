@@ -1,15 +1,21 @@
 import { ScrollView, View } from "react-native";
 import { Stack } from "expo-router";
-import { Card, Checkbox } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
 import { PriorityList } from "@/components/organisms/PriorityList";
 import { PomodoroTimer } from "@/components/organisms/PomodoroTimer";
-import { MOCK_PRIORITIES, MOCK_QUICK_LIST } from "@/data/mockData";
+import { QuickList } from "@/components/organisms/QuickList";
+import { TonightCard } from "@/components/molecules/TonightCard";
+import { DayInsight } from "@/components/organisms/DayInsight";
+import { AddPrioritySheet } from "@/components/organisms/AddPrioritySheet";
+import { EditPrioritySheet } from "@/components/organisms/EditPrioritySheet";
+import { TonightPlannerSheet } from "@/components/organisms/TonightPlannerSheet";
+import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet";
 
 export default function DayScreen() {
   return (
     <>
       <Stack.Screen options={{ title: "Today" }} />
+
       <ScrollView
         className="flex-1 bg-background"
         contentInsetAdjustmentBehavior="automatic"
@@ -28,40 +34,21 @@ export default function DayScreen() {
           </AppText>
         </View>
 
-        <PriorityList priorities={MOCK_PRIORITIES} />
+        <DayInsight />
+
+        <PriorityList />
 
         <PomodoroTimer />
 
-        {/* Quick List */}
-        <View className="gap-2">
-          <AppText size="sm" weight="semibold" color="muted">
-            Quick List
-          </AppText>
-          {MOCK_QUICK_LIST.map((item) => (
-            <View key={item.id} className="flex-row items-center gap-3 py-1">
-              <Checkbox isSelected={item.isCompleted} />
-              <AppText
-                size="sm"
-                color={item.isCompleted ? "muted" : "foreground"}
-              >
-                {item.text}
-              </AppText>
-            </View>
-          ))}
-        </View>
+        <QuickList />
 
-        {/* Tonight */}
-        <Card className="bg-primary/10 p-4">
-          <Card.Body className="gap-1">
-            <AppText size="sm" weight="semibold" color="primary">
-              Tonight
-            </AppText>
-            <AppText size="sm">
-              Cook dinner → Read → Sleep by 11 PM
-            </AppText>
-          </Card.Body>
-        </Card>
+        <TonightCard />
       </ScrollView>
+
+      <RolloverPromptSheet />
+      <AddPrioritySheet />
+      <EditPrioritySheet />
+      <TonightPlannerSheet />
     </>
   );
 }
