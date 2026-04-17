@@ -53,6 +53,15 @@
     "channel": "main",
     "createdAt": "2026-03-30T16:43:30.067Z"
   },
+  "ea34d0e0544dec420d8753d0a95e0403437d3b7e": {
+    "version": "0.0.1",
+    "versionCode": 13,
+    "profile": "preview",
+    "previewChannel": "docs/sprint-design-specs",
+    "ref": "docs/sprint-design-specs",
+    "channel": "main",
+    "createdAt": "2026-04-17T06:09:12.438Z"
+  },
   "f74fa4be32bd72ef7e6d2b14002f6712a4c99475": {
     "version": "0.0.1",
     "versionCode": 7,

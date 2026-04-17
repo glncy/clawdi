@@ -35,6 +35,15 @@
     "channel": "main",
     "createdAt": "2026-04-01T08:19:44.382Z"
   },
+  "384f662a65f358cd7e4a875246967a565b8e61c9": {
+    "version": "0.0.1",
+    "buildNumber": "13",
+    "profile": "preview",
+    "previewChannel": "docs/sprint-design-specs",
+    "ref": "docs/sprint-design-specs",
+    "channel": "main",
+    "createdAt": "2026-04-17T06:09:12.438Z"
+  },
   "5f774357cad0029c5be8c12ec04b4d56c28ca31d": {
     "version": "0.0.1",
     "buildNumber": "8",
