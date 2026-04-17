@@ -1,10 +1,10 @@
-CREATE TABLE `metadata` (
+CREATE TABLE IF NOT EXISTS `metadata` (
 	`key` text PRIMARY KEY NOT NULL,
 	`value` text NOT NULL,
 	`updated_at` text DEFAULT (datetime('now')) NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `priorities` (
+CREATE TABLE IF NOT EXISTS `priorities` (
 	`id` text PRIMARY KEY NOT NULL,
 	`text` text NOT NULL,
 	`type` text NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE `priorities` (
 	`created_at` text DEFAULT (datetime('now')) NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE `quick_list` (
+CREATE TABLE IF NOT EXISTS `quick_list` (
 	`id` text PRIMARY KEY NOT NULL,
 	`text` text NOT NULL,
 	`completed` integer DEFAULT 0 NOT NULL,
