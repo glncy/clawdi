@@ -68,6 +68,8 @@ type LinkResult = "linked" | "skipped" | "missing";
 
 function linkNodeModules(src: string, dst: string): LinkResult {
   if (!existsSync(src)) return "missing";
+  // lstatSync (not existsSync) so broken symlinks at dst are detected as
+  // "already present" and left in place rather than double-linked.
   try {
     lstatSync(dst);
     return "skipped";
@@ -80,15 +82,21 @@ function linkNodeModules(src: string, dst: string): LinkResult {
 export type SetupWorktreeOptions = {
   repoRoot: string;
   target: string;
+  verbose?: boolean;
 };
 
 export type SetupWorktreeResult = {
   worktreePath: string;
   linked: string[];
   skipped: string[];
+  missing: string[];
 };
 
-export function setupWorktree({ repoRoot, target }: SetupWorktreeOptions): SetupWorktreeResult {
+export function setupWorktree({
+  repoRoot,
+  target,
+  verbose = false,
+}: SetupWorktreeOptions): SetupWorktreeResult {
   const worktreePath = resolveWorktreePath(repoRoot, target);
   if (!worktreePath) {
     throw new Error(
@@ -102,11 +110,15 @@ export function setupWorktree({ repoRoot, target }: SetupWorktreeOptions): Setup
 
   const linked: string[] = [];
   const skipped: string[] = [];
+  const missing: string[] = [];
 
   function link(relPath: string) {
     const result = linkNodeModules(join(repoRoot, relPath), join(worktreePath, relPath));
     if (result === "linked") linked.push(relPath);
     if (result === "skipped") skipped.push(relPath);
+    if (result === "missing") {
+      if (verbose) missing.push(relPath);
+    }
   }
 
   link("node_modules");
@@ -125,5 +137,5 @@ export function setupWorktree({ repoRoot, target }: SetupWorktreeOptions): Setup
     }
   }
 
-  return { worktreePath, linked, skipped };
+  return { worktreePath, linked, skipped, missing };
 }
