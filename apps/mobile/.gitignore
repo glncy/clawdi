@@ -42,4 +42,5 @@ app-example
 # generated native folders
 /android
 # expo-up code signing
+codesigning-keys
 codesigning-keys/
