@@ -82,17 +82,5 @@ export const DayInsight = () => {
     );
   }
 
-  return (
-    <Card className="bg-primary/5 p-4">
-      <Card.Body className="gap-2">
-        <View className="flex-row items-center gap-2">
-          <Sparkle size={14} weight="fill" color={primaryColor as string} />
-          <AppText size="xs" color="primary" weight="medium">
-            clawdi Day Planner
-          </AppText>
-        </View>
-        <Skeleton className="h-3 w-2/3 rounded" />
-      </Card.Body>
-    </Card>
-  );
+  return null;
 };
