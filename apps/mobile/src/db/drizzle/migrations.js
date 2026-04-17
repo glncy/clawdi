@@ -3,7 +3,7 @@
 import journal from './meta/_journal.json';
 import m0000 from './0000_tricky_chat.sql';
 import m0001 from './0001_add_people_tables.sql';
-import m0002 from './0002_add_day_tables.sql';
+import m0002 from './0002_elite_centennial.sql';
 
   export default {
     journal,
@@ -13,3 +13,4 @@ m0001,
 m0002
     }
   }
+  

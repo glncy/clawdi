@@ -1,4 +1,4 @@
-import { ScrollView, View } from "react-native";
+import { ScrollView } from "react-native";
 import { Stack } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
 import { PriorityList } from "@/components/organisms/PriorityList";
@@ -21,18 +21,13 @@ export default function DayScreen() {
         contentInsetAdjustmentBehavior="automatic"
         contentContainerClassName="px-5 pt-5 pb-32 gap-5"
       >
-        <View>
-          <AppText size="2xl" weight="bold" family="headline">
-            Today
-          </AppText>
-          <AppText size="sm" color="muted">
-            {new Intl.DateTimeFormat("en-US", {
-              weekday: "long",
-              month: "long",
-              day: "numeric",
-            }).format(new Date())}
-          </AppText>
-        </View>
+        <AppText size="sm" color="muted">
+          {new Intl.DateTimeFormat("en-US", {
+            weekday: "long",
+            month: "long",
+            day: "numeric",
+          }).format(new Date())}
+        </AppText>
 
         <DayInsight />
 
