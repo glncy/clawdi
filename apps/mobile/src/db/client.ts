@@ -9,6 +9,7 @@ import {
 import { openDatabaseSync } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { schema } from "./schema";
+import { deleteAllModels } from "../services/modelDownloader";
 
 function getDbFileName(): string {
   if (__DEV__) {
@@ -66,5 +67,6 @@ export async function deleteDatabase(): Promise<void> {
   } catch {
     // SQLite directory may not exist yet — nothing to delete
   }
+  deleteAllModels();
   await Updates.reloadAsync();
 }

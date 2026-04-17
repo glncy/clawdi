@@ -219,3 +219,14 @@ export function deleteLocalModel(modelId: string): void {
     file.delete();
   }
 }
+
+/**
+ * Delete all downloaded models and resume data (used by "Delete Everything").
+ */
+export function deleteAllModels(): void {
+  const dir = new Directory(Paths.document, MODELS_DIR_NAME);
+  if (dir.exists) {
+    dir.delete();
+  }
+  deleteResumeData();
+}
