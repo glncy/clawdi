@@ -2,6 +2,7 @@ import { useDayStore } from "../useDayStore";
 import {
   priorities as prioritiesTable,
   quickList as quickListTable,
+  reflections as reflectionsTable,
 } from "../../db/schema";
 import type { Database } from "../../db/client";
 
@@ -21,6 +22,7 @@ function makeFakeDb() {
   const pRows: Row[] = [];
   const qRows: Row[] = [];
   const mRows: Row[] = [];
+  const rRows: Row[] = [];
 
   let _selectFrom: unknown = null;
 
@@ -32,6 +34,7 @@ function makeFakeDb() {
         const doInsert = () => {
           if (table === prioritiesTable) rows.forEach((r) => pRows.push({ ...r }));
           else if (table === quickListTable) rows.forEach((r) => qRows.push({ ...r }));
+          else if (table === reflectionsTable) rows.forEach((r) => rRows.push({ ...r }));
           else rows.forEach((r) => mRows.push({ ...r }));
         };
 
@@ -47,6 +50,12 @@ function makeFakeDb() {
           onConflictDoUpdate: ({ set: patch }: { target: unknown; set: Row }) => {
             if (table === prioritiesTable || table === quickListTable) {
               doInsert();
+            } else if (table === reflectionsTable) {
+              // Reflection upsert by date PK
+              const date = rows[0]?.date;
+              const existing = rRows.find((r) => r.date === date);
+              if (existing) Object.assign(existing, patch);
+              else doInsert();
             } else {
               // Metadata upsert: update if key exists, otherwise insert
               const key = rows[0]?.key;
@@ -68,6 +77,9 @@ function makeFakeDb() {
           } else if (table === quickListTable) {
             const target = qRows.find((r) => r.id === patch.id) ?? qRows[0];
             if (target) Object.assign(target, patch);
+          } else if (table === reflectionsTable) {
+            const target = rRows.find((r) => r.date === patch.date) ?? rRows[0];
+            if (target) Object.assign(target, patch);
           } else {
             // metadata upsert by key
             const target = mRows.find((r) => r.key === patch.key);
@@ -81,6 +93,7 @@ function makeFakeDb() {
       where: async () => {
         if (table === prioritiesTable) pRows.length = 0;
         else if (table === quickListTable) qRows.length = 0;
+        else if (table === reflectionsTable) rRows.length = 0;
         else mRows.length = 0;
       },
     }),
@@ -93,7 +106,9 @@ function makeFakeDb() {
               ? pRows
               : _selectFrom === quickListTable
                 ? qRows
-                : mRows;
+                : _selectFrom === reflectionsTable
+                  ? rRows
+                  : mRows;
           return [...rows];
         };
         return {
@@ -107,7 +122,7 @@ function makeFakeDb() {
     }),
   } as unknown as Database;
 
-  return { db, pRows, qRows, mRows };
+  return { db, pRows, qRows, mRows, rRows };
 }
 
 function reset() {
@@ -118,6 +133,7 @@ function reset() {
     hasCheckedRollover: false,
     isLoaded: false,
     tomorrowPriorities: [],
+    todayReflection: null,
   });
 }
 
@@ -360,5 +376,44 @@ describe("useDayStore", () => {
     const id = useDayStore.getState().tomorrowPriorities[0]!.id;
     await useDayStore.getState().deleteTomorrowPriority(db, id);
     expect(useDayStore.getState().tomorrowPriorities).toHaveLength(0);
+  });
+
+  // --- reflection ---
+
+  it("saveReflection persists wins + improve and updates state", async () => {
+    const { db, rRows } = makeFakeDb();
+    await useDayStore.getState().saveReflection(db, {
+      wins: ["Shipped PRD", "Closed 2 bugs"],
+      improve: "Start earlier",
+    });
+
+    expect(rRows).toHaveLength(1);
+    expect(rRows[0]?.improve).toBe("Start earlier");
+    expect(JSON.parse((rRows[0]?.wins as string) ?? "[]")).toEqual([
+      "Shipped PRD",
+      "Closed 2 bugs",
+    ]);
+
+    const { todayReflection } = useDayStore.getState();
+    expect(todayReflection?.wins).toEqual(["Shipped PRD", "Closed 2 bugs"]);
+    expect(todayReflection?.improve).toBe("Start earlier");
+  });
+
+  it("saveReflection upserts — writing twice updates, doesn't duplicate", async () => {
+    const { db, rRows } = makeFakeDb();
+    await useDayStore.getState().saveReflection(db, {
+      wins: ["Draft"],
+      improve: "v1",
+    });
+    await useDayStore.getState().saveReflection(db, {
+      wins: ["Draft", "Deploy"],
+      improve: "v2",
+    });
+
+    expect(rRows).toHaveLength(1);
+    expect(rRows[0]?.improve).toBe("v2");
+
+    const { todayReflection } = useDayStore.getState();
+    expect(todayReflection?.wins).toEqual(["Draft", "Deploy"]);
   });
 });

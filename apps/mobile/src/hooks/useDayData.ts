@@ -26,6 +26,7 @@ export function useDayData() {
   const isLoaded = useDayStore((s) => s.isLoaded);
   const loadToday = useDayStore((s) => s.loadToday);
   const tomorrowPriorities = useDayStore((s) => s.tomorrowPriorities);
+  const todayReflection = useDayStore((s) => s.todayReflection);
 
   useEffect(() => {
     if (isReady && db && !isLoaded) {
@@ -90,5 +91,6 @@ export function useDayData() {
     typeOrder: TYPE_ORDER,
     tomorrowPriorities,
     tomorrowPriorityCount,
+    todayReflection,
   };
 }

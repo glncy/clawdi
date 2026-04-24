@@ -6,9 +6,10 @@ import {
   quickList as quickListTable,
   metadata as metadataTable,
   focusSessions as focusSessionsTable,
+  reflections as reflectionsTable,
 } from "../db/schema";
-import type { Priority, QuickListItem } from "../types";
-import type { PriorityRow, QuickListRow } from "../db/schema";
+import type { Priority, QuickListItem, Reflection } from "../types";
+import type { PriorityRow, QuickListRow, ReflectionRow } from "../db/schema";
 
 export class MaxMustPrioritiesError extends Error {
   constructor() {
@@ -128,6 +129,13 @@ interface DayState {
       startedAt: string;
     },
   ) => Promise<void>;
+
+  todayReflection: Reflection | null;
+  loadTodayReflection: (db: Database) => Promise<void>;
+  saveReflection: (
+    db: Database,
+    input: { wins: string[]; improve: string },
+  ) => Promise<void>;
 }
 
 export const useDayStore = create<DayState>((set, get) => ({
@@ -140,6 +148,7 @@ export const useDayStore = create<DayState>((set, get) => ({
   tomorrowPriorities: [],
   hasCheckedEveningPrompt: false,
   todayFocusMinutes: 0,
+  todayReflection: null,
 
   loadToday: async (db) => {
     const { isLoaded, isLoading } = get();
@@ -181,6 +190,7 @@ export const useDayStore = create<DayState>((set, get) => ({
       });
 
       await get().loadTodayFocusMinutes(db);
+      await get().loadTodayReflection(db);
     } finally {
       set({ isLoading: false });
     }
@@ -584,6 +594,56 @@ export const useDayStore = create<DayState>((set, get) => ({
     set({
       todayFocusMinutes:
         todayFocusMinutes + Math.floor(input.actualSec / 60),
+    });
+  },
+
+  loadTodayReflection: async (db) => {
+    const today = todayISO();
+    const rows = await db
+      .select()
+      .from(reflectionsTable)
+      .where(eq(reflectionsTable.date, today));
+    const row = rows[0] as ReflectionRow | undefined;
+    if (!row) {
+      set({ todayReflection: null });
+      return;
+    }
+    let wins: string[] = [];
+    try {
+      const parsed = JSON.parse(row.wins);
+      if (Array.isArray(parsed)) wins = parsed;
+    } catch {
+      wins = [];
+    }
+    set({
+      todayReflection: {
+        date: row.date,
+        wins,
+        improve: row.improve,
+        createdAt: row.createdAt,
+      },
+    });
+  },
+
+  saveReflection: async (db, { wins, improve }) => {
+    const today = todayISO();
+    const now = new Date().toISOString();
+    const winsJson = JSON.stringify(wins);
+
+    await db
+      .insert(reflectionsTable)
+      .values({
+        date: today,
+        wins: winsJson,
+        improve,
+      })
+      .onConflictDoUpdate({
+        target: reflectionsTable.date,
+        set: { wins: winsJson, improve },
+      });
+
+    set({
+      todayReflection: { date: today, wins, improve, createdAt: now },
     });
   },
 }));
