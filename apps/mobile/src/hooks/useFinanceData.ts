@@ -2,6 +2,7 @@ import { useEffect, useMemo } from "react";
 import { useDatabase } from "./useDatabase";
 import { useFinanceStore } from "../stores/useFinanceStore";
 import { useUserStore } from "../stores/useUserStore";
+import { useBudgetConfigStore } from "../stores/useBudgetConfigStore";
 import { calculateDailyBudget } from "../utils/budgetCalculator";
 import { CategoryBudget, DailySpending } from "../types";
 
@@ -9,6 +10,7 @@ export function useFinanceData() {
   const { db, isReady } = useDatabase();
   const income = useUserStore((s) => s.income);
   const store = useFinanceStore();
+  const includedAccountIds = useBudgetConfigStore((s) => s.includedAccountIds);
 
   useEffect(() => {
     if (isReady && db && !store.isLoaded) {
@@ -29,9 +31,41 @@ export function useFinanceData() {
       ? d
       : new Date(d).toISOString().split("T")[0];
 
+  // Per-account inclusion filter (see `useBudgetConfigStore`).
+  //
+  // Semantics:
+  //   - Empty list  → include ALL accounts (legacy behavior, unchanged).
+  //   - Non-empty   → include only accounts whose id is in the list.
+  //     Transactions with no `accountId` are EXCLUDED when a filter is
+  //     active — the user explicitly scoped the budget to specific
+  //     accounts, so unassigned rows should not inflate the numbers.
+  const filterActive = includedAccountIds.length > 0;
+  const includedAccountIdSet = useMemo(
+    () => new Set(includedAccountIds),
+    [includedAccountIds]
+  );
+
+  const includedAccounts = useMemo(
+    () =>
+      filterActive
+        ? store.accounts.filter((a) => includedAccountIdSet.has(a.id))
+        : store.accounts,
+    [store.accounts, filterActive, includedAccountIdSet]
+  );
+
+  const includedTransactions = useMemo(
+    () =>
+      filterActive
+        ? store.transactions.filter(
+            (t) => t.accountId !== undefined && includedAccountIdSet.has(t.accountId)
+          )
+        : store.transactions,
+    [store.transactions, filterActive, includedAccountIdSet]
+  );
+
   const todayTransactions = useMemo(
-    () => store.transactions.filter((t) => txDay(t.date) === today),
-    [store.transactions, today]
+    () => includedTransactions.filter((t) => txDay(t.date) === today),
+    [includedTransactions, today]
   );
 
   const todaySpent = useMemo(
@@ -43,8 +77,9 @@ export function useFinanceData() {
   );
 
   const monthTransactions = useMemo(
-    () => store.transactions.filter((t) => txDay(t.date).startsWith(currentMonth)),
-    [store.transactions, currentMonth]
+    () =>
+      includedTransactions.filter((t) => txDay(t.date).startsWith(currentMonth)),
+    [includedTransactions, currentMonth]
   );
 
   const monthIncome = useMemo(
@@ -64,18 +99,18 @@ export function useFinanceData() {
   );
 
   const totalBalance = useMemo(
-    () => store.accounts.reduce((sum, a) => sum + a.balance, 0),
-    [store.accounts]
+    () => includedAccounts.reduce((sum, a) => sum + a.balance, 0),
+    [includedAccounts]
   );
 
   const { dailyBudget, budgetLeftToday } = useMemo(
     () =>
       calculateDailyBudget({
-        accounts: store.accounts,
+        accounts: includedAccounts,
         onboardingIncome: income,
         todaySpent,
       }),
-    [store.accounts, income, todaySpent]
+    [includedAccounts, income, todaySpent]
   );
 
   const thisWeekSpending: DailySpending[] = useMemo(() => {
@@ -84,13 +119,13 @@ export function useFinanceData() {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
-      const amount = store.transactions
+      const amount = includedTransactions
         .filter((t) => txDay(t.date) === dateStr && t.type === "expense")
         .reduce((sum, t) => sum + t.amount, 0);
       days.push({ date: dateStr, amount });
     }
     return days;
-  }, [store.transactions]);
+  }, [includedTransactions]);
 
   const categoryBudgets: CategoryBudget[] = useMemo(() => {
     const categoryIconMap = Object.fromEntries(

@@ -11,6 +11,7 @@ import { seedDatabase } from "../db/seed";
 import { backfillTransactionTimestamp } from "../db/migrations/backfillTransactionTimestamp";
 import migrations from "../db/drizzle/migrations";
 import { loadString, saveString } from "../utils/storage/storage";
+import { useBudgetConfigStore } from "../stores/useBudgetConfigStore";
 
 const TX_TIMESTAMP_BACKFILL_KEY = "migration:tx-ts-v1";
 
@@ -19,6 +20,16 @@ async function runOneTimeDataMigrations(db: Database): Promise<void> {
   if (done === "1") return;
   await backfillTransactionTimestamp(db);
   await saveString(TX_TIMESTAMP_BACKFILL_KEY, "1");
+}
+
+/**
+ * Hydrate KV-backed stores (not SQLite-backed — those are loaded lazily via
+ * `useFinanceData`). Runs after schema migrations + seed + one-time data
+ * migrations so that any future KV-shape migration has access to a fully
+ * prepared database.
+ */
+async function hydrateKvStores(): Promise<void> {
+  await useBudgetConfigStore.getState().hydrate();
 }
 
 interface DatabaseContextValue {
@@ -47,6 +58,7 @@ function MigrationRunner({
     if (success) {
       seedDatabase(db)
         .then(() => runOneTimeDataMigrations(db))
+        .then(() => hydrateKvStores())
         .then(onReady)
         .catch((err) =>
           console.error("[DatabaseProvider] Seed/migration error:", err)
