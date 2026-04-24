@@ -11,7 +11,7 @@ import { z } from "zod";
 import { format as formatDate } from "date-fns";
 import DateTimePicker, {
   type DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
+} from "@expo/ui/datetimepicker";
 import { AppText } from "@/components/atoms/Text";
 import {
   Button,
