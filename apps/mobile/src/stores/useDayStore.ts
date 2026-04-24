@@ -30,6 +30,12 @@ function yesterdayISO(): string {
   return d.toLocaleDateString("en-CA");
 }
 
+function tomorrowISO(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
+  return d.toLocaleDateString("en-CA");
+}
+
 function rowToPriority(row: PriorityRow): Priority {
   return {
     id: row.id,
@@ -71,14 +77,21 @@ interface DayState {
   hasCheckedRollover: boolean;
   isLoaded: boolean;
   isLoading: boolean;
+  tomorrowPriorities: Priority[];
 
   loadToday: (db: Database) => Promise<void>;
+  loadTomorrow: (db: Database) => Promise<void>;
 
   addPriority: (
     db: Database,
     input: { text: string; type: Priority["type"] },
   ) => Promise<void>;
   togglePriority: (db: Database, id: string) => Promise<void>;
+  addTomorrowPriority: (
+    db: Database,
+    input: { text: string; type: Priority["type"] },
+  ) => Promise<void>;
+  deleteTomorrowPriority: (db: Database, id: string) => Promise<void>;
   updatePriority: (
     db: Database,
     id: string,
@@ -109,6 +122,7 @@ export const useDayStore = create<DayState>((set, get) => ({
   hasCheckedRollover: false,
   isLoaded: false,
   isLoading: false,
+  tomorrowPriorities: [],
 
   loadToday: async (db) => {
     const { isLoaded, isLoading } = get();
@@ -144,6 +158,14 @@ export const useDayStore = create<DayState>((set, get) => ({
             10,
           ) || 0,
         isLoaded: true,
+      });
+
+      const tRows = await db
+        .select()
+        .from(prioritiesTable)
+        .where(eq(prioritiesTable.date, tomorrowISO()));
+      set({
+        tomorrowPriorities: (tRows as PriorityRow[]).map(rowToPriority),
       });
     } finally {
       set({ isLoading: false });
@@ -245,6 +267,69 @@ export const useDayStore = create<DayState>((set, get) => ({
     await db.delete(prioritiesTable).where(eq(prioritiesTable.id, id));
     set((state) => ({
       priorities: state.priorities.filter((p) => p.id !== id),
+    }));
+  },
+
+  loadTomorrow: async (db) => {
+    const rows = await db
+      .select()
+      .from(prioritiesTable)
+      .where(eq(prioritiesTable.date, tomorrowISO()));
+    set({ tomorrowPriorities: (rows as PriorityRow[]).map(rowToPriority) });
+  },
+
+  addTomorrowPriority: async (db, { text, type }) => {
+    if (type === "must") {
+      const { tomorrowPriorities } = get();
+      const activeMust = tomorrowPriorities.filter(
+        (p) => p.type === "must" && !p.isCompleted,
+      );
+      if (activeMust.length >= 3) {
+        throw new MaxMustPrioritiesError();
+      }
+    }
+
+    const tomorrow = tomorrowISO();
+    const { tomorrowPriorities } = get();
+    const typePriorities = tomorrowPriorities.filter((p) => p.type === type);
+    const sortOrder =
+      typePriorities.length > 0
+        ? Math.max(...typePriorities.map((p) => p.sortOrder)) + 1
+        : 0;
+    const now = new Date().toISOString();
+
+    const newPriority: Priority = {
+      id: generateId(),
+      text,
+      type,
+      isCompleted: false,
+      date: tomorrow,
+      completedAt: null,
+      sortOrder,
+      rolledOverFrom: null,
+      createdAt: now,
+    };
+
+    await db.insert(prioritiesTable).values({
+      id: newPriority.id,
+      text: newPriority.text,
+      type: newPriority.type,
+      date: newPriority.date,
+      completed: 0,
+      completedAt: null,
+      sortOrder: newPriority.sortOrder,
+      rolledOverFrom: null,
+    });
+
+    set((state) => ({
+      tomorrowPriorities: [...state.tomorrowPriorities, newPriority],
+    }));
+  },
+
+  deleteTomorrowPriority: async (db, id) => {
+    await db.delete(prioritiesTable).where(eq(prioritiesTable.id, id));
+    set((state) => ({
+      tomorrowPriorities: state.tomorrowPriorities.filter((p) => p.id !== id),
     }));
   },
 

@@ -118,6 +118,7 @@ function reset() {
     pomodoroCount: 0,
     hasCheckedRollover: false,
     isLoaded: false,
+    tomorrowPriorities: [],
   });
 }
 
@@ -329,5 +330,45 @@ describe("useDayStore", () => {
     await useDayStore.getState().incrementPomodoro(db);
 
     expect(useDayStore.getState().pomodoroCount).toBe(2);
+  });
+
+  // --- tomorrow priorities ---
+
+  it("addTomorrowPriority inserts with date = tomorrow", async () => {
+    const { db, pRows } = makeFakeDb();
+
+    await useDayStore
+      .getState()
+      .addTomorrowPriority(db, { text: "Deploy", type: "must" });
+
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toLocaleDateString("en-CA");
+
+    expect(pRows).toHaveLength(1);
+    expect(pRows[0]?.date).toBe(tomorrowStr);
+
+    const { tomorrowPriorities } = useDayStore.getState();
+    expect(tomorrowPriorities).toHaveLength(1);
+    expect(tomorrowPriorities[0]?.text).toBe("Deploy");
+  });
+
+  it("addTomorrowPriority enforces 3 must-do cap on the tomorrow set", async () => {
+    const { db } = makeFakeDb();
+    await useDayStore.getState().addTomorrowPriority(db, { text: "A", type: "must" });
+    await useDayStore.getState().addTomorrowPriority(db, { text: "B", type: "must" });
+    await useDayStore.getState().addTomorrowPriority(db, { text: "C", type: "must" });
+
+    await expect(
+      useDayStore.getState().addTomorrowPriority(db, { text: "D", type: "must" }),
+    ).rejects.toThrow();
+  });
+
+  it("deleteTomorrowPriority removes it from tomorrowPriorities", async () => {
+    const { db } = makeFakeDb();
+    await useDayStore.getState().addTomorrowPriority(db, { text: "X", type: "win" });
+    const id = useDayStore.getState().tomorrowPriorities[0]!.id;
+    await useDayStore.getState().deleteTomorrowPriority(db, id);
+    expect(useDayStore.getState().tomorrowPriorities).toHaveLength(0);
   });
 });
