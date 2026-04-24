@@ -10,6 +10,7 @@ import { AddQuickItemSheet } from "@/components/organisms/AddQuickItemSheet";
 import { EditPrioritySheet } from "@/components/organisms/EditPrioritySheet";
 import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet";
 import { PlanTomorrowCard } from "@/components/molecules/PlanTomorrowCard";
+import { PlanTomorrowSheet } from "@/components/organisms/PlanTomorrowSheet";
 
 export default function DayScreen() {
   return (
@@ -44,6 +45,7 @@ export default function DayScreen() {
       <AddPrioritySheet />
       <AddQuickItemSheet />
       <EditPrioritySheet />
+      <PlanTomorrowSheet />
     </>
   );
 }
