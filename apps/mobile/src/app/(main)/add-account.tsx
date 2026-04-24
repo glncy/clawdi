@@ -1,5 +1,5 @@
-import { useEffect } from "react";
-import { View } from "react-native";
+import { useEffect, useState } from "react";
+import { View, Pressable } from "react-native";
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -14,8 +14,11 @@ import {
   Label,
   TextField,
   FieldError,
-  Chip,
+  Dialog,
 } from "heroui-native";
+import { useCSSVariable } from "uniwind";
+import { Plus } from "phosphor-react-native";
+import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
 import { useAddAccountSheetStore } from "@/stores/useAddAccountSheetStore";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useCurrency } from "@/hooks/useCurrency";
@@ -27,17 +30,13 @@ function generateId(): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-const ACCOUNT_TYPES = [
-  { value: "checking", label: "Checking" },
-  { value: "savings", label: "Savings" },
-  { value: "credit", label: "Credit" },
-  { value: "cash", label: "Cash" },
-  { value: "investment", label: "Investment" },
-] as const;
-
+// NOTE (Task 5.1): `type` is now a free-form string matched against the
+// user-managed `accountTypes` list (seeded with 5 built-ins in Task 1.1).
+// We keep validation loose (min 1) because the tiles themselves constrain
+// the user to picking a valid entry or creating a new one via the dialog.
 const accountSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  type: z.enum(["checking", "savings", "credit", "cash", "investment"]),
+  type: z.string().min(1, "Type is required"),
   balance: z
     .string()
     .refine((v) => !isNaN(parseFloat(v)), "Enter a valid amount"),
@@ -47,8 +46,16 @@ type AccountForm = z.infer<typeof accountSchema>;
 
 export default function AddAccountScreen() {
   const { prefillData, clearPrefill } = useAddAccountSheetStore();
-  const { addAccount, accountTypes } = useFinanceData();
+  const { addAccount, accountTypes, addAccountType } = useFinanceData();
   const { code: currencyCode } = useCurrency();
+
+  const [primaryColor] = useCSSVariable(["--color-primary"]);
+
+  // "New Type" dialog state — mirrors the "New Category" dialog shape in
+  // add-transaction.tsx.
+  const [showNewTypeDialog, setShowNewTypeDialog] = useState(false);
+  const [newTypeName, setNewTypeName] = useState("");
+  const [newTypeIcon, setNewTypeIcon] = useState("");
 
   const {
     control,
@@ -69,29 +76,19 @@ export default function AddAccountScreen() {
 
   // Consume AI prefill from the sheet once on mount.
   //
-  // NOTE (Task 3.5 scope): the form's `type` field is still a z.enum of the 5
-  // built-in chips (Checking / Savings / Credit / Cash / Investment). Phase 5
-  // will overhaul this screen to use the DB-loaded `accountTypes` list with a
-  // "+ New Type" creator. For now, we:
-  //   1) Try to match the parsed type case-insensitively against the loaded
-  //      `accountTypes.name` list (source of truth post-Task 1.1).
-  //   2) If the matched name (lowercased) is also one of the static chip
-  //      enum values, set it on the form.
-  //   3) Otherwise we leave the form's default `type` untouched so the user
-  //      can pick one from the chips — we do NOT auto-create a new type here
-  //      (that's Phase 5).
+  // If `prefillData.type` matches an existing accountType (case-insensitive),
+  // we set the form's `type` to the stored lowercase name. Otherwise we leave
+  // the default untouched — the user can pick a tile or create a new type.
   useEffect(() => {
     if (prefillData) {
       if (prefillData.name) setValue("name", prefillData.name);
       if (prefillData.type) {
         const raw = prefillData.type.toLowerCase();
         const matched = accountTypes.find(
-          (t) => t.name.toLowerCase() === raw
+          (t) => t.name.toLowerCase() === raw,
         );
-        const normalized = matched?.name.toLowerCase() ?? raw;
-        const chipValues = ACCOUNT_TYPES.map((o) => o.value);
-        if ((chipValues as readonly string[]).includes(normalized)) {
-          setValue("type", normalized as AccountForm["type"]);
+        if (matched) {
+          setValue("type", matched.name.toLowerCase());
         }
       }
       if (prefillData.balance) setValue("balance", String(prefillData.balance));
@@ -106,15 +103,40 @@ export default function AddAccountScreen() {
   };
 
   const onSubmit = async (data: AccountForm) => {
+    // Look up the selected account type to reuse its emoji as the account
+    // icon. Fallback to a neutral briefcase emoji if no match (shouldn't
+    // happen post-validation, but guards against stale state).
+    const selectedTypeEntry = accountTypes.find(
+      (t) => t.name.toLowerCase() === data.type.toLowerCase(),
+    );
+    const icon = selectedTypeEntry?.icon ?? "💼";
+
     await addAccount({
       id: generateId(),
       name: data.name,
       type: data.type,
       balance: parseFloat(data.balance),
       currency: currencyCode,
-      icon: data.type === "credit" ? "💳" : data.type === "cash" ? "💵" : "🏦",
+      icon,
     });
     handleClose();
+  };
+
+  const handleCreateType = async () => {
+    if (!newTypeName.trim() || !newTypeIcon.trim()) return;
+    const id = `type-${Date.now()}`;
+    const trimmedName = newTypeName.trim();
+    await addAccountType({
+      id,
+      name: trimmedName,
+      icon: newTypeIcon.trim(),
+      isDefault: false,
+      sortOrder: accountTypes.length,
+    });
+    setValue("type", trimmedName.toLowerCase());
+    setNewTypeName("");
+    setNewTypeIcon("");
+    setShowNewTypeDialog(false);
   };
 
   const headerHeight = useHeaderHeight();
@@ -148,23 +170,59 @@ export default function AddAccountScreen() {
           <FieldError>{errors.name?.message}</FieldError>
         </TextField>
 
-        {/* Account Type */}
+        {/* Account Type tiles */}
         <View className="gap-1">
           <AppText size="xs" color="muted">
             Type
           </AppText>
-          <View className="flex-row flex-wrap gap-2">
-            {ACCOUNT_TYPES.map(({ value, label }) => (
-              <Chip
-                key={value}
-                variant={selectedType === value ? "primary" : "secondary"}
-                color={selectedType === value ? "accent" : "default"}
-                onPress={() => setValue("type", value)}
-              >
-                <Chip.Label>{label}</Chip.Label>
-              </Chip>
-            ))}
+          <View className="flex-row flex-wrap gap-3">
+            {accountTypes
+              .slice()
+              .sort((a, b) => a.sortOrder - b.sortOrder)
+              .map(({ id, name, icon }) => {
+                const valueKey = name.toLowerCase();
+                const isSelected = selectedType === valueKey;
+                return (
+                  <Pressable
+                    key={id}
+                    onPress={() => setValue("type", valueKey)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Account type ${name}`}
+                    accessibilityState={{ selected: isSelected }}
+                    className={`flex-row items-center gap-2 px-4 py-3 rounded-xl border ${
+                      isSelected
+                        ? "bg-primary/10 border-primary"
+                        : "bg-surface border-border"
+                    }`}
+                  >
+                    <AppText size="xl">{icon}</AppText>
+                    <AppText size="sm" weight="medium">
+                      {name}
+                    </AppText>
+                  </Pressable>
+                );
+              })}
+            <Pressable
+              onPress={() => setShowNewTypeDialog(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Create a new account type"
+              className="flex-row items-center gap-2 px-4 py-3 rounded-xl border border-dashed border-border"
+            >
+              <PhosphorIcon
+                icon={Plus}
+                size={16}
+                color={primaryColor as string}
+              />
+              <AppText size="sm" weight="medium" className="text-primary">
+                New Type
+              </AppText>
+            </Pressable>
           </View>
+          {errors.type && (
+            <AppText size="xs" color="danger" className="mt-1">
+              {errors.type.message}
+            </AppText>
+          )}
         </View>
 
         <TextField isInvalid={!!errors.balance}>
@@ -197,6 +255,55 @@ export default function AddAccountScreen() {
           <Button.Label>Save</Button.Label>
         </Button>
       </KeyboardAvoidingView>
+
+      {/* New Type Dialog */}
+      <Dialog isOpen={showNewTypeDialog} onOpenChange={setShowNewTypeDialog}>
+        <Dialog.Portal>
+          <Dialog.Overlay />
+          <KeyboardAvoidingView behavior="padding">
+            <Dialog.Content>
+              <Dialog.Title>New Account Type</Dialog.Title>
+              <View className="gap-4 mt-3">
+                <TextField>
+                  <Label>Icon (emoji)</Label>
+                  <Input
+                    value={newTypeIcon}
+                    onChangeText={setNewTypeIcon}
+                    placeholder="e.g. 💰"
+                    className="text-center text-lg"
+                  />
+                </TextField>
+                <TextField>
+                  <Label>Name</Label>
+                  <Input
+                    value={newTypeName}
+                    onChangeText={setNewTypeName}
+                    placeholder="e.g. Crypto"
+                    autoCapitalize="words"
+                  />
+                </TextField>
+              </View>
+              <View className="flex-row gap-3 mt-5">
+                <Button
+                  variant="tertiary"
+                  className="flex-1"
+                  onPress={() => setShowNewTypeDialog(false)}
+                >
+                  <Button.Label>Cancel</Button.Label>
+                </Button>
+                <Button
+                  variant="primary"
+                  className="flex-1"
+                  onPress={handleCreateType}
+                  isDisabled={!newTypeName.trim() || !newTypeIcon.trim()}
+                >
+                  <Button.Label>Create</Button.Label>
+                </Button>
+              </View>
+            </Dialog.Content>
+          </KeyboardAvoidingView>
+        </Dialog.Portal>
+      </Dialog>
     </>
   );
 }
