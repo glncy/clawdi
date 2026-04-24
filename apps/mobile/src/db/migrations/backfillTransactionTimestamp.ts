@@ -23,17 +23,23 @@ export async function backfillTransactionTimestamp(
     if (date.length !== 10) continue;
     if (date.includes("T")) continue;
 
-    const createdAt = row.createdAt;
-    const time =
-      typeof createdAt === "string" && createdAt.includes(" ")
-        ? createdAt.split(" ")[1]
-        : "12:00:00";
+    try {
+      const createdAt = row.createdAt;
+      const time =
+        typeof createdAt === "string" && createdAt.includes(" ")
+          ? createdAt.split(" ")[1]
+          : "12:00:00";
 
-    const iso = new Date(`${date}T${time}Z`).toISOString();
+      const parsed = new Date(`${date}T${time}Z`);
+      if (Number.isNaN(parsed.getTime())) continue;
 
-    await db
-      .update(transactions)
-      .set({ date: iso })
-      .where(eq(transactions.id, row.id));
+      await db
+        .update(transactions)
+        .set({ date: parsed.toISOString() })
+        .where(eq(transactions.id, row.id));
+    } catch (err) {
+      // Skip corrupted rows so one bad record doesn't block the one-time migration forever.
+      console.warn(`[backfillTransactionTimestamp] skipped row ${row.id}:`, err);
+    }
   }
 }
