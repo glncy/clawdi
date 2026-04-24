@@ -158,6 +158,14 @@ export interface Category {
   sortOrder: number;
 }
 
+export interface AccountType {
+  id: string;
+  name: string;
+  icon: string;
+  isDefault: boolean;
+  sortOrder: number;
+}
+
 export interface BudgetSetting {
   id: string;
   category: string;

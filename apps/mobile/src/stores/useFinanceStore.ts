@@ -8,6 +8,7 @@ import {
   recurringBills as recurringBillsTable,
   savingsGoals as savingsGoalsTable,
   budgetSettings as budgetSettingsTable,
+  accountTypes as accountTypesTable,
 } from "../db/schema";
 import {
   Account,
@@ -16,6 +17,7 @@ import {
   RecurringBill,
   SavingsGoal,
   BudgetSetting,
+  AccountType,
 } from "../types";
 
 function rowToAccount(row: typeof accountsTable.$inferSelect): Account {
@@ -47,6 +49,18 @@ function rowToTransaction(
 }
 
 function rowToCategory(row: typeof categoriesTable.$inferSelect): Category {
+  return {
+    id: row.id,
+    name: row.name,
+    icon: row.icon,
+    isDefault: row.isDefault === 1,
+    sortOrder: row.sortOrder,
+  };
+}
+
+function rowToAccountType(
+  row: typeof accountTypesTable.$inferSelect
+): AccountType {
   return {
     id: row.id,
     name: row.name,
@@ -104,8 +118,10 @@ interface FinanceState {
   recurringBills: RecurringBill[];
   savingsGoals: SavingsGoal[];
   budgetSettings: BudgetSetting[];
+  accountTypes: AccountType[];
 
   loadAll: (db: Database) => Promise<void>;
+  loadAccountTypes: (db: Database) => Promise<void>;
   addAccount: (db: Database, account: Account) => Promise<void>;
   updateAccount: (
     db: Database,
@@ -141,6 +157,13 @@ interface FinanceState {
   ) => Promise<void>;
   deleteCategory: (db: Database, id: string) => Promise<void>;
   reorderCategories: (db: Database, orderedIds: string[]) => Promise<void>;
+  addAccountType: (db: Database, accountType: AccountType) => Promise<void>;
+  updateAccountType: (
+    db: Database,
+    id: string,
+    updates: Partial<Pick<AccountType, "name" | "icon" | "sortOrder">>
+  ) => Promise<void>;
+  deleteAccountType: (db: Database, id: string) => Promise<void>;
 }
 
 export const useFinanceStore = create<FinanceState>((set, get) => ({
@@ -151,6 +174,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
   recurringBills: [],
   savingsGoals: [],
   budgetSettings: [],
+  accountTypes: [],
 
   loadAll: async (db) => {
     const [
@@ -160,6 +184,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       recurringBillRows,
       savingsGoalRows,
       budgetSettingRows,
+      accountTypeRows,
     ] = await Promise.all([
       db.select().from(accountsTable),
       db.select().from(transactionsTable),
@@ -167,6 +192,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       db.select().from(recurringBillsTable),
       db.select().from(savingsGoalsTable),
       db.select().from(budgetSettingsTable),
+      db.select().from(accountTypesTable),
     ]);
 
     set({
@@ -177,7 +203,13 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       recurringBills: recurringBillRows.map(rowToRecurringBill),
       savingsGoals: savingsGoalRows.map(rowToSavingsGoal),
       budgetSettings: budgetSettingRows.map(rowToBudgetSetting),
+      accountTypes: accountTypeRows.map(rowToAccountType),
     });
+  },
+
+  loadAccountTypes: async (db) => {
+    const rows = await db.select().from(accountTypesTable);
+    set({ accountTypes: rows.map(rowToAccountType) });
   },
 
   addAccount: async (db, account) => {
@@ -419,6 +451,42 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
           return newOrder >= 0 ? { ...c, sortOrder: newOrder } : c;
         })
         .sort((a, b) => a.sortOrder - b.sortOrder),
+    }));
+  },
+
+  addAccountType: async (db, accountType) => {
+    await db.insert(accountTypesTable).values({
+      id: accountType.id,
+      name: accountType.name,
+      icon: accountType.icon,
+      isDefault: accountType.isDefault ? 1 : 0,
+      sortOrder: accountType.sortOrder,
+    });
+    set((state) => ({
+      accountTypes: [...state.accountTypes, accountType],
+    }));
+  },
+
+  updateAccountType: async (db, id, updates) => {
+    const dbUpdates: Partial<typeof accountTypesTable.$inferInsert> = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.icon !== undefined) dbUpdates.icon = updates.icon;
+    if (updates.sortOrder !== undefined) dbUpdates.sortOrder = updates.sortOrder;
+    await db
+      .update(accountTypesTable)
+      .set(dbUpdates)
+      .where(eq(accountTypesTable.id, id));
+    set((state) => ({
+      accountTypes: state.accountTypes.map((t) =>
+        t.id === id ? { ...t, ...updates } : t
+      ),
+    }));
+  },
+
+  deleteAccountType: async (db, id) => {
+    await db.delete(accountTypesTable).where(eq(accountTypesTable.id, id));
+    set((state) => ({
+      accountTypes: state.accountTypes.filter((t) => t.id !== id),
     }));
   },
 }));

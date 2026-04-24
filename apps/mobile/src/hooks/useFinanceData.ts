@@ -110,6 +110,7 @@ export function useFinanceData() {
     recurringBills: store.recurringBills,
     savingsGoals: store.savingsGoals,
     budgetSettings: store.budgetSettings,
+    accountTypes: store.accountTypes,
 
     // computed
     totalBalance,
@@ -160,5 +161,13 @@ export function useFinanceData() {
       db ? store.deleteCategory(db, id) : Promise.resolve(),
     reorderCategories: (orderedIds: string[]) =>
       db ? store.reorderCategories(db, orderedIds) : Promise.resolve(),
+    addAccountType: (accountType: Parameters<typeof store.addAccountType>[1]) =>
+      db ? store.addAccountType(db, accountType) : Promise.resolve(),
+    updateAccountType: (
+      id: string,
+      updates: Parameters<typeof store.updateAccountType>[2]
+    ) => (db ? store.updateAccountType(db, id, updates) : Promise.resolve()),
+    deleteAccountType: (id: string) =>
+      db ? store.deleteAccountType(db, id) : Promise.resolve(),
   };
 }
