@@ -7,6 +7,7 @@ import { QuickList } from "@/components/organisms/QuickList";
 import { TonightCard } from "@/components/molecules/TonightCard";
 import { DayInsight } from "@/components/organisms/DayInsight";
 import { AddPrioritySheet } from "@/components/organisms/AddPrioritySheet";
+import { AddQuickItemSheet } from "@/components/organisms/AddQuickItemSheet";
 import { EditPrioritySheet } from "@/components/organisms/EditPrioritySheet";
 import { TonightPlannerSheet } from "@/components/organisms/TonightPlannerSheet";
 import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet";
@@ -42,6 +43,7 @@ export default function DayScreen() {
 
       <RolloverPromptSheet />
       <AddPrioritySheet />
+      <AddQuickItemSheet />
       <EditPrioritySheet />
       <TonightPlannerSheet />
     </>

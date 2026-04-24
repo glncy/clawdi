@@ -23,6 +23,7 @@ import { useQuickActionStore } from "@/stores/useQuickActionStore";
 import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStore";
 import { useLogInteractionSheetStore } from "@/stores/useLogInteractionSheetStore";
 import { useAddPrioritySheetStore } from "@/stores/useAddPrioritySheetStore";
+import { useAddQuickItemSheetStore } from "@/stores/useAddQuickItemSheetStore";
 import type { Icon as PhosphorIcon } from "phosphor-react-native";
 
 interface QuickAction {
@@ -45,7 +46,14 @@ export const QuickActionSheet = () => {
       },
     },
     { icon: Smiley, label: "Check in mood" },
-    { icon: CheckSquare, label: "Tick a habit" },
+    {
+      icon: CheckSquare,
+      label: "Add to Quick List",
+      onPress: () => {
+        close();
+        useAddQuickItemSheetStore.getState().open();
+      },
+    },
     {
       icon: ListBullets,
       label: "Add priority",
