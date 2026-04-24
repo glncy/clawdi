@@ -21,7 +21,8 @@ export interface UserState {
   savingGoals: string[];
   struggles: string[];
   hasCompletedOnboarding: boolean;
-  setUserData: (data: Partial<Omit<UserState, "setUserData">>) => void;
+  setUserData: (data: Partial<Omit<UserState, "setUserData" | "setIncome">>) => void;
+  setIncome: (value: string) => void;
 }
 
 export const useUserStore = create<UserState>()(
@@ -39,6 +40,7 @@ export const useUserStore = create<UserState>()(
       struggles: [],
       hasCompletedOnboarding: false,
       setUserData: (data) => set((state) => ({ ...state, ...data })),
+      setIncome: (value) => set({ income: value }),
     }),
     {
       name: "user-storage",

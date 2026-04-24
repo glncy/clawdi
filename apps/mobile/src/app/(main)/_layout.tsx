@@ -33,6 +33,10 @@ export default function MainLayout() {
         name="manage-categories"
         options={{ presentation: "modal", headerShown: true, title: "Manage Categories" }}
       />
+      <Stack.Screen
+        name="budget-settings"
+        options={{ headerShown: true, title: "Budget Settings" }}
+      />
     </Stack>
   );
 }

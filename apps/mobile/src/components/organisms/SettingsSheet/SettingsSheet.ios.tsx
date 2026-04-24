@@ -75,7 +75,12 @@ const FINANCE_ITEMS: MenuItem[] = [
     description: "Add, edit, or reorder",
     onPress: () => router.push("/(main)/manage-categories"),
   },
-  { icon: Wallet, label: "Budget Settings", description: "Monthly limits & alerts" },
+  {
+    icon: Wallet,
+    label: "Budget Settings",
+    description: "Monthly limits & alerts",
+    onPress: () => router.push("/(main)/budget-settings"),
+  },
   { icon: Repeat, label: "Recurring Bills", description: "Manage subscriptions" },
   { icon: ChartLine, label: "Finance Insight", description: "AI-powered analysis" },
 ];
