@@ -8,13 +8,13 @@ import type { Database } from "../../db/client";
 type Row = Record<string, unknown>;
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function yesterdayISO() {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("en-CA");
 }
 
 function makeFakeDb() {
@@ -26,11 +26,37 @@ function makeFakeDb() {
 
   const db = {
     insert: (table: unknown) => ({
-      values: async (v: Row | Row[]) => {
+      values: (v: Row | Row[]) => {
         const rows = Array.isArray(v) ? v : [v];
-        if (table === prioritiesTable) rows.forEach((r) => pRows.push({ ...r }));
-        else if (table === quickListTable) rows.forEach((r) => qRows.push({ ...r }));
-        else rows.forEach((r) => mRows.push({ ...r }));
+
+        const doInsert = () => {
+          if (table === prioritiesTable) rows.forEach((r) => pRows.push({ ...r }));
+          else if (table === quickListTable) rows.forEach((r) => qRows.push({ ...r }));
+          else rows.forEach((r) => mRows.push({ ...r }));
+        };
+
+        return {
+          // Thenable so `await db.insert(t).values(v)` works without chaining
+          then: (
+            resolve: (v: void) => unknown,
+            reject: (e: unknown) => unknown,
+          ) => {
+            try { doInsert(); return Promise.resolve().then(resolve, reject); }
+            catch (e) { return Promise.reject(e).then(resolve, reject); }
+          },
+          onConflictDoUpdate: ({ set: patch }: { target: unknown; set: Row }) => {
+            if (table === prioritiesTable || table === quickListTable) {
+              doInsert();
+            } else {
+              // Metadata upsert: update if key exists, otherwise insert
+              const key = rows[0]?.key;
+              const existing = mRows.find((r) => r.key === key);
+              if (existing) Object.assign(existing, patch);
+              else doInsert();
+            }
+            return Promise.resolve();
+          },
+        };
       },
     }),
     update: (table: unknown) => ({
@@ -227,6 +253,31 @@ describe("useDayStore", () => {
     expect(todayRow?.rolledOverFrom).toBe(yesterdayISO());
     expect(todayRow?.text).toBe("Carry forward");
     expect(todayRow?.completed).toBe(0);
+  });
+
+  it("checkRollover returns 0 after rollover() runs (prevents duplicate prompts on restart)", async () => {
+    const { db, pRows } = makeFakeDb();
+
+    pRows.push({
+      id: "y1",
+      text: "Carry forward",
+      type: "must",
+      date: yesterdayISO(),
+      completed: 0,
+      completedAt: null,
+      sortOrder: 0,
+      rolledOverFrom: null,
+      createdAt: new Date().toISOString(),
+    });
+
+    // First checkRollover returns 1 (one incomplete yesterday row)
+    const before = await useDayStore.getState().checkRollover(db);
+    expect(before).toBe(1);
+
+    // After rolling over, checkRollover returns 0 even on simulated app restart
+    await useDayStore.getState().rollover(db);
+    const after = await useDayStore.getState().checkRollover(db);
+    expect(after).toBe(0);
   });
 
   // --- quickList ---

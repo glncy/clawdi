@@ -21,13 +21,13 @@ function generateId(): string {
 }
 
 function todayISO(): string {
-  return new Date().toISOString().slice(0, 10);
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function yesterdayISO(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
-  return d.toISOString().slice(0, 10);
+  return d.toLocaleDateString("en-CA");
 }
 
 function rowToPriority(row: PriorityRow): Priority {
@@ -218,6 +218,16 @@ export const useDayStore = create<DayState>((set, get) => ({
   },
 
   updatePriority: async (db, id, patch) => {
+    if (patch.type === "must") {
+      const { priorities } = get();
+      const activeMust = priorities.filter(
+        (p) => p.type === "must" && !p.isCompleted && p.id !== id,
+      );
+      if (activeMust.length >= 3) {
+        throw new MaxMustPrioritiesError();
+      }
+    }
+
     await db
       .update(prioritiesTable)
       .set(patch as Parameters<ReturnType<typeof db.update>["set"]>[0])
@@ -239,6 +249,17 @@ export const useDayStore = create<DayState>((set, get) => ({
 
   checkRollover: async (db) => {
     const yesterday = yesterdayISO();
+    const today = todayISO();
+    const rolloverKey = `rollover_done_${today}`;
+
+    // Check metadata to prevent re-prompting on same-day app restart.
+    // hasCheckedRollover is in-memory and resets on every restart, so we persist
+    // the done state in the metadata table instead.
+    const allMeta = await db.select().from(metadataTable);
+    if ((allMeta as { key?: string }[]).some((r) => r.key === rolloverKey)) {
+      return 0;
+    }
+
     const rows = await db
       .select()
       .from(prioritiesTable)
@@ -281,6 +302,15 @@ export const useDayStore = create<DayState>((set, get) => ({
       await db.insert(prioritiesTable).values(newRows);
     }
 
+    const rolloverKey = `rollover_done_${today}`;
+    await db
+      .insert(metadataTable)
+      .values({ key: rolloverKey, value: "true", updatedAt: now })
+      .onConflictDoUpdate({
+        target: metadataTable.key,
+        set: { value: "true", updatedAt: now },
+      });
+
     const newPriorities: Priority[] = newRows.map((row) => ({
       id: row.id,
       text: row.text,
@@ -303,13 +333,17 @@ export const useDayStore = create<DayState>((set, get) => ({
   addQuickItem: async (db, text) => {
     const { quickList } = get();
     const now = new Date().toISOString();
+    const sortOrder =
+      quickList.length > 0
+        ? Math.max(...quickList.map((q) => q.sortOrder)) + 1
+        : 0;
 
     const newItem: QuickListItem = {
       id: generateId(),
       text,
       isCompleted: false,
       completedAt: null,
-      sortOrder: quickList.length,
+      sortOrder,
       createdAt: now,
     };
 
@@ -358,21 +392,13 @@ export const useDayStore = create<DayState>((set, get) => ({
     const key = tonightKey(today);
     const now = new Date().toISOString();
 
-    const existing = await db
-      .select()
-      .from(metadataTable)
-      .where(eq(metadataTable.key, key));
-
-    if (existing.length > 0) {
-      await db
-        .update(metadataTable)
-        .set({ value: text, updatedAt: now } as Parameters<
-          ReturnType<typeof db.update>["set"]
-        >[0])
-        .where(eq(metadataTable.key, key));
-    } else {
-      await db.insert(metadataTable).values({ key, value: text });
-    }
+    await db
+      .insert(metadataTable)
+      .values({ key, value: text, updatedAt: now })
+      .onConflictDoUpdate({
+        target: metadataTable.key,
+        set: { value: text, updatedAt: now },
+      });
 
     set({ tonight: text });
   },
@@ -395,24 +421,13 @@ export const useDayStore = create<DayState>((set, get) => ({
     const { pomodoroCount } = get();
     const newCount = pomodoroCount + 1;
 
-    const existing = await db
-      .select()
-      .from(metadataTable)
-      .where(eq(metadataTable.key, key));
-
-    if (existing.length > 0) {
-      await db
-        .update(metadataTable)
-        .set({
-          value: String(newCount),
-          updatedAt: now,
-        } as Parameters<ReturnType<typeof db.update>["set"]>[0])
-        .where(eq(metadataTable.key, key));
-    } else {
-      await db
-        .insert(metadataTable)
-        .values({ key, value: String(newCount) });
-    }
+    await db
+      .insert(metadataTable)
+      .values({ key, value: String(newCount), updatedAt: now })
+      .onConflictDoUpdate({
+        target: metadataTable.key,
+        set: { value: String(newCount), updatedAt: now },
+      });
 
     set({ pomodoroCount: newCount });
   },
