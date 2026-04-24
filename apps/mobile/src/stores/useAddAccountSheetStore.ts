@@ -2,7 +2,12 @@ import { create } from "zustand";
 
 interface AccountPrefill {
   name?: string;
-  type?: "checking" | "savings" | "credit" | "cash" | "investment";
+  /**
+   * Free-form string — `accounts.type` is no longer a fixed enum after
+   * Task 1.1 (user-managed account types). The `/add-account` screen does a
+   * case-insensitive match against the loaded `accountTypes.name` list.
+   */
+  type?: string;
   balance?: number;
 }
 
@@ -12,6 +17,7 @@ interface AddAccountSheetState {
   open: () => void;
   close: () => void;
   setPrefill: (data: AccountPrefill) => void;
+  clearPrefill: () => void;
   clearModalData: () => void;
 }
 
@@ -22,6 +28,7 @@ export const useAddAccountSheetStore = create<AddAccountSheetState>(
     open: () => set({ isOpen: true, prefillData: null }),
     close: () => set({ isOpen: false }),
     setPrefill: (data) => set({ prefillData: data }),
+    clearPrefill: () => set({ prefillData: null }),
     clearModalData: () => set({ prefillData: null }),
   })
 );

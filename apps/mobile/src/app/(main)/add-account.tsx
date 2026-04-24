@@ -46,8 +46,8 @@ const accountSchema = z.object({
 type AccountForm = z.infer<typeof accountSchema>;
 
 export default function AddAccountScreen() {
-  const { prefillData, clearModalData } = useAddAccountSheetStore();
-  const { addAccount } = useFinanceData();
+  const { prefillData, clearPrefill } = useAddAccountSheetStore();
+  const { addAccount, accountTypes } = useFinanceData();
   const { code: currencyCode } = useCurrency();
 
   const {
@@ -67,17 +67,41 @@ export default function AddAccountScreen() {
 
   const selectedType = watch("type");
 
+  // Consume AI prefill from the sheet once on mount.
+  //
+  // NOTE (Task 3.5 scope): the form's `type` field is still a z.enum of the 5
+  // built-in chips (Checking / Savings / Credit / Cash / Investment). Phase 5
+  // will overhaul this screen to use the DB-loaded `accountTypes` list with a
+  // "+ New Type" creator. For now, we:
+  //   1) Try to match the parsed type case-insensitively against the loaded
+  //      `accountTypes.name` list (source of truth post-Task 1.1).
+  //   2) If the matched name (lowercased) is also one of the static chip
+  //      enum values, set it on the form.
+  //   3) Otherwise we leave the form's default `type` untouched so the user
+  //      can pick one from the chips — we do NOT auto-create a new type here
+  //      (that's Phase 5).
   useEffect(() => {
     if (prefillData) {
       if (prefillData.name) setValue("name", prefillData.name);
-      if (prefillData.type) setValue("type", prefillData.type);
+      if (prefillData.type) {
+        const raw = prefillData.type.toLowerCase();
+        const matched = accountTypes.find(
+          (t) => t.name.toLowerCase() === raw
+        );
+        const normalized = matched?.name.toLowerCase() ?? raw;
+        const chipValues = ACCOUNT_TYPES.map((o) => o.value);
+        if ((chipValues as readonly string[]).includes(normalized)) {
+          setValue("type", normalized as AccountForm["type"]);
+        }
+      }
       if (prefillData.balance) setValue("balance", String(prefillData.balance));
+      clearPrefill();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {
-    clearModalData();
+    clearPrefill();
     router.back();
   };
 
