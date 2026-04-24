@@ -45,7 +45,7 @@ const billSchema = z.object({
 type BillForm = z.infer<typeof billSchema>;
 
 export default function AddBillScreen() {
-  const { prefillData, clearModalData } = useAddBillSheetStore();
+  const { prefillData, clearPrefill } = useAddBillSheetStore();
   const { addRecurringBill, categories } = useFinanceData();
   const { code: currencyCode } = useCurrency();
   const [foregroundColor] = useCSSVariable(["--color-foreground"]);
@@ -77,18 +77,29 @@ export default function AddBillScreen() {
     [selectedCategory]
   );
 
+  // Consume AI prefill from the sheet once on mount.
+  //
+  // NOTE (Task 3.6 scope): `prefillData.frequency` may be `"once"` after
+  // Task 1.3 widened the underlying `RecurringBill.frequency` type — but this
+  // form's local `billSchema` is still `z.enum(["weekly","monthly","yearly"])`.
+  // Task 6.1 will widen the form's own zod enum (and the UI) to include
+  // `"once"`. Until then, skip setting frequency when it's `"once"` so the
+  // form default (`"monthly"`) stands — don't break zod validation.
   useEffect(() => {
     if (prefillData) {
       if (prefillData.name) setValue("name", prefillData.name);
       if (prefillData.amount) setValue("amount", String(prefillData.amount));
-      if (prefillData.frequency) setValue("frequency", prefillData.frequency);
+      if (prefillData.frequency && prefillData.frequency !== "once") {
+        setValue("frequency", prefillData.frequency);
+      }
       if (prefillData.category) setValue("category", prefillData.category);
+      clearPrefill();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {
-    clearModalData();
+    clearPrefill();
     router.back();
   };
 
