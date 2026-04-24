@@ -444,7 +444,6 @@ export default function AddTransactionScreen() {
                 mode="datetime"
                 display="inline"
                 onChange={handleDateChange}
-                maximumDate={new Date()}
               />
               <View className="flex-row justify-end px-3 pb-2">
                 <Button
@@ -464,7 +463,6 @@ export default function AddTransactionScreen() {
               is24Hour={false}
               display="default"
               onChange={handleDateChange}
-              maximumDate={androidPickerMode === "date" ? new Date() : undefined}
             />
           )}
         </View>
