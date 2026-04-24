@@ -1,85 +1,78 @@
-import { useState, useEffect } from "react";
-import { View, TextInput } from "react-native";
+import { useEffect, useRef, useState } from "react";
+import {
+  View,
+  TextInput,
+  Pressable,
+  type TextInput as TextInputType,
+} from "react-native";
 import {
   ModalBottomSheet,
   Host,
   RNHostView,
 } from "@expo/ui/jetpack-compose";
 import { AppText } from "@/components/atoms/Text";
-import { Button } from "heroui-native";
+import { Button, Checkbox } from "heroui-native";
 import { useCSSVariable } from "uniwind";
+import { Trash } from "phosphor-react-native";
 import { usePlanTomorrowSheetStore } from "@/stores/usePlanTomorrowSheetStore";
 import { useDayStore } from "@/stores/useDayStore";
+import { useDayData } from "@/hooks/useDayData";
 import { useDatabase } from "@/hooks/useDatabase";
 import type { Priority } from "@/types";
 
-type Step = "must" | "win" | "overdue";
-
-const STEPS: { key: Step; question: string; label: string }[] = [
-  { key: "must", question: "What must happen tomorrow?", label: "Must-do" },
-  { key: "win", question: "What would feel like a win?", label: "Win" },
-  { key: "overdue", question: "What's long overdue?", label: "Overdue" },
+const TYPE_OPTIONS: { key: Priority["type"]; label: string }[] = [
+  { key: "must", label: "Must" },
+  { key: "win", label: "Win" },
+  { key: "overdue", label: "Overdue" },
 ];
 
 export const PlanTomorrowSheet = () => {
   const { isOpen, close } = usePlanTomorrowSheetStore();
-  const tomorrowPriorities = useDayStore((s) => s.tomorrowPriorities);
+  const { tomorrowPriorities } = useDayData();
   const addTomorrowPriority = useDayStore((s) => s.addTomorrowPriority);
+  const deleteTomorrowPriority = useDayStore((s) => s.deleteTomorrowPriority);
   const { db } = useDatabase();
 
-  const [stepIndex, setStepIndex] = useState(0);
   const [text, setText] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const [type, setType] = useState<Priority["type"]>("must");
   const [error, setError] = useState<string | null>(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const inputRef = useRef<TextInputType>(null);
 
-  const [mutedColor] = useCSSVariable(["--color-muted"]);
-
-  const currentStep = STEPS[stepIndex]!;
-  const isLastStep = stepIndex === STEPS.length - 1;
-  const tomorrowMustCount = tomorrowPriorities.filter(
-    (p) => p.type === "must" && !p.isCompleted,
-  ).length;
-  const isMustAtMax = currentStep.key === "must" && tomorrowMustCount >= 3;
+  const [mutedColor, dangersColor] = useCSSVariable([
+    "--color-muted",
+    "--color-danger",
+  ]);
 
   useEffect(() => {
     if (!isOpen) {
-      setStepIndex(0);
       setText("");
+      setType("must");
       setError(null);
-      setIsSaving(false);
     }
   }, [isOpen]);
 
   const handleAdd = async () => {
-    if (!text.trim() || !db || isMustAtMax) return;
-    setIsSaving(true);
+    const trimmed = text.trim();
+    if (!trimmed || !db) return;
+    setIsAdding(true);
     setError(null);
     try {
-      await addTomorrowPriority(db, {
-        text: text.trim(),
-        type: currentStep.key as Priority["type"],
-      });
+      await addTomorrowPriority(db, { text: trimmed, type });
       setText("");
-      if (isLastStep) {
-        close();
-      } else {
-        setStepIndex((i) => i + 1);
-      }
-    } catch {
-      setError("Couldn't save. Please try again.");
+      inputRef.current?.focus();
+    } catch (e) {
+      setError(
+        e instanceof Error ? e.message : "Couldn't save. Please try again.",
+      );
     } finally {
-      setIsSaving(false);
+      setIsAdding(false);
     }
   };
 
-  const handleSkip = () => {
-    setText("");
-    setError(null);
-    if (isLastStep) {
-      close();
-    } else {
-      setStepIndex((i) => i + 1);
-    }
+  const handleDelete = async (id: string) => {
+    if (!db) return;
+    await deleteTomorrowPriority(db, id);
   };
 
   if (!isOpen) return null;
@@ -89,42 +82,44 @@ export const PlanTomorrowSheet = () => {
       <ModalBottomSheet onDismissRequest={close} showDragHandle>
         <RNHostView matchContents>
           <View className="px-5 py-6 gap-5">
-            <View className="flex-row items-center justify-between">
-              <AppText size="xl" weight="bold" family="headline">
-                Plan Tomorrow
-              </AppText>
-              <AppText size="xs" color="muted">
-                {stepIndex + 1} / {STEPS.length}
-              </AppText>
+            <AppText size="xl" weight="bold" family="headline">
+              Plan Tomorrow
+            </AppText>
+            <AppText size="sm" color="muted">
+              Seed up to 3 must-dos plus wins and overdue items. They become
+              tomorrow&apos;s Top Priorities automatically.
+            </AppText>
+
+            <View className="flex-row gap-2">
+              {TYPE_OPTIONS.map((opt) => (
+                <Pressable
+                  key={opt.key}
+                  onPress={() => setType(opt.key)}
+                  className={`rounded-full px-3 py-1.5 ${type === opt.key ? "bg-primary" : "bg-surface"}`}
+                >
+                  <AppText
+                    size="xs"
+                    weight="semibold"
+                    color={type === opt.key ? "primary-foreground" : "muted"}
+                  >
+                    {opt.label}
+                  </AppText>
+                </Pressable>
+              ))}
             </View>
 
-            <View className="gap-2">
-              <AppText size="sm" weight="semibold" color="muted">
-                {currentStep.label}
-              </AppText>
-              <AppText size="base">{currentStep.question}</AppText>
-            </View>
-
-            {isMustAtMax ? (
-              <View className="rounded-xl bg-primary/10 px-4 py-3">
-                <AppText size="sm" color="primary-foreground">
-                  {"Tomorrow already has 3 must-dos. That's the daily limit."}
-                </AppText>
-              </View>
-            ) : (
-              <TextInput
-                value={text}
-                onChangeText={setText}
-                placeholder={`Type your ${currentStep.label.toLowerCase()}…`}
-                multiline
-                numberOfLines={2}
-                className="rounded-xl bg-surface px-4 py-3 text-sm text-foreground"
-                placeholderTextColor={mutedColor as string}
-                style={{ minHeight: 60, textAlignVertical: "top" }}
-                autoFocus
-                onSubmitEditing={handleAdd}
-              />
-            )}
+            <TextInput
+              ref={inputRef}
+              value={text}
+              onChangeText={setText}
+              placeholder="What will matter tomorrow?"
+              className="rounded-xl bg-surface px-4 py-3 text-sm text-foreground"
+              placeholderTextColor={mutedColor as string}
+              autoFocus
+              returnKeyType="done"
+              onSubmitEditing={handleAdd}
+              blurOnSubmit={false}
+            />
 
             {error && (
               <AppText size="xs" color="danger">
@@ -132,24 +127,43 @@ export const PlanTomorrowSheet = () => {
               </AppText>
             )}
 
-            <View className="flex-row gap-3">
-              <Button
-                variant="tertiary"
-                className="flex-1"
-                onPress={handleSkip}
+            <Button onPress={handleAdd} isDisabled={!text.trim() || isAdding}>
+              <Button.Label>{isAdding ? "Adding…" : "Add"}</Button.Label>
+            </Button>
+
+            <View className="gap-1">
+              <AppText
+                size="xs"
+                weight="semibold"
+                color="muted"
+                className="uppercase tracking-wide"
               >
-                <Button.Label>Skip</Button.Label>
-              </Button>
-              <Button
-                className="flex-1"
-                onPress={handleAdd}
-                isDisabled={!text.trim() || isSaving || isMustAtMax}
-              >
-                <Button.Label>
-                  {isSaving ? "Saving…" : isLastStep ? "Done" : "Add"}
-                </Button.Label>
-              </Button>
+                Queued for Tomorrow ({tomorrowPriorities.length})
+              </AppText>
+              {tomorrowPriorities.length === 0 && (
+                <AppText size="sm" color="muted">
+                  Nothing queued yet.
+                </AppText>
+              )}
+              {tomorrowPriorities.map((p) => (
+                <View key={p.id} className="flex-row items-center gap-3 py-2">
+                  <Checkbox isSelected={false} isDisabled />
+                  <AppText size="sm" className="flex-1">
+                    {p.text}
+                  </AppText>
+                  <AppText size="xs" color="muted">
+                    {p.type}
+                  </AppText>
+                  <Pressable onPress={() => handleDelete(p.id)} hitSlop={8}>
+                    <Trash size={14} color={dangersColor as string} />
+                  </Pressable>
+                </View>
+              ))}
             </View>
+
+            <Button variant="tertiary" onPress={close}>
+              <Button.Label>Done</Button.Label>
+            </Button>
           </View>
         </RNHostView>
       </ModalBottomSheet>
