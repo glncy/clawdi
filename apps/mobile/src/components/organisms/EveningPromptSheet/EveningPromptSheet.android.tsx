@@ -11,14 +11,14 @@ import { useCSSVariable } from "uniwind";
 import { MoonStarsIcon } from "phosphor-react-native";
 import { useDayStore } from "@/stores/useDayStore";
 import { useDatabase } from "@/hooks/useDatabase";
-import { usePlanTomorrowSheetStore } from "@/stores/usePlanTomorrowSheetStore";
+import { useReflectionSheetStore } from "@/stores/useReflectionSheetStore";
 
 export const EveningPromptSheet = () => {
   const hasChecked = useDayStore((s) => s.hasCheckedEveningPrompt);
   const check = useDayStore((s) => s.checkEveningPromptShouldShow);
   const dismiss = useDayStore((s) => s.dismissEveningPrompt);
   const markChecked = useDayStore((s) => s.markEveningPromptChecked);
-  const openPlanner = usePlanTomorrowSheetStore((s) => s.open);
+  const openReflection = useReflectionSheetStore((s) => s.open);
   const { db } = useDatabase();
 
   const [isOpen, setIsOpen] = useState(false);
@@ -32,10 +32,10 @@ export const EveningPromptSheet = () => {
     });
   }, [hasChecked, db, check, markChecked]);
 
-  const handlePlan = () => {
+  const handleReflect = () => {
     setIsOpen(false);
     markChecked();
-    openPlanner();
+    openReflection();
   };
 
   const handleSkip = async () => {
@@ -73,8 +73,8 @@ export const EveningPromptSheet = () => {
               >
                 <Button.Label>Not tonight</Button.Label>
               </Button>
-              <Button className="flex-1" onPress={handlePlan}>
-                <Button.Label>Plan Tomorrow</Button.Label>
+              <Button className="flex-1" onPress={handleReflect}>
+                <Button.Label>Reflect &amp; Plan</Button.Label>
               </Button>
             </View>
           </View>
