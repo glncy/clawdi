@@ -20,7 +20,6 @@ export function useDayData() {
   const { db, isReady } = useDatabase();
   const priorities = useDayStore((s) => s.priorities);
   const quickList = useDayStore((s) => s.quickList);
-  const tonight = useDayStore((s) => s.tonight);
   const pomodoroCount = useDayStore((s) => s.pomodoroCount);
   const hasCheckedRollover = useDayStore((s) => s.hasCheckedRollover);
   const isLoaded = useDayStore((s) => s.isLoaded);
@@ -76,7 +75,6 @@ export function useDayData() {
     grouped,
     priorities,
     quickList: sortedQuickList,
-    tonight,
     pomodoroCount,
     pomodoroSessionsToday: pomodoroCount,
     completedToday,

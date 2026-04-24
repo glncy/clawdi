@@ -65,14 +65,9 @@ function pomodoroKey(date: string) {
   return `pomodoro_count_${date}`;
 }
 
-function tonightKey(date: string) {
-  return `tonight_${date}`;
-}
-
 interface DayState {
   priorities: Priority[];
   quickList: QuickListItem[];
-  tonight: string;
   pomodoroCount: number;
   hasCheckedRollover: boolean;
   isLoaded: boolean;
@@ -108,16 +103,12 @@ interface DayState {
   toggleQuickItem: (db: Database, id: string) => Promise<void>;
   deleteQuickItem: (db: Database, id: string) => Promise<void>;
 
-  setTonight: (db: Database, text: string) => Promise<void>;
-  getYesterdayTonight: (db: Database) => Promise<string | null>;
-
   incrementPomodoro: (db: Database) => Promise<void>;
 }
 
 export const useDayStore = create<DayState>((set, get) => ({
   priorities: [],
   quickList: [],
-  tonight: "",
   pomodoroCount: 0,
   hasCheckedRollover: false,
   isLoaded: false,
@@ -132,16 +123,12 @@ export const useDayStore = create<DayState>((set, get) => ({
     try {
       const today = todayISO();
 
-      const [pRows, qRows, tonightRow, pomodoroRow] = await Promise.all([
+      const [pRows, qRows, pomodoroRow] = await Promise.all([
         db
           .select()
           .from(prioritiesTable)
           .where(eq(prioritiesTable.date, today)),
         db.select().from(quickListTable),
-        db
-          .select()
-          .from(metadataTable)
-          .where(eq(metadataTable.key, tonightKey(today))),
         db
           .select()
           .from(metadataTable)
@@ -151,7 +138,6 @@ export const useDayStore = create<DayState>((set, get) => ({
       set({
         priorities: (pRows as PriorityRow[]).map(rowToPriority),
         quickList: (qRows as QuickListRow[]).map(rowToQuickItem),
-        tonight: (tonightRow[0] as { value?: string } | undefined)?.value ?? "",
         pomodoroCount:
           parseInt(
             (pomodoroRow[0] as { value?: string } | undefined)?.value ?? "0",
@@ -486,32 +472,6 @@ export const useDayStore = create<DayState>((set, get) => ({
     set((state) => ({
       quickList: state.quickList.filter((q) => q.id !== id),
     }));
-  },
-
-  setTonight: async (db, text) => {
-    const today = todayISO();
-    const key = tonightKey(today);
-    const now = new Date().toISOString();
-
-    await db
-      .insert(metadataTable)
-      .values({ key, value: text, updatedAt: now })
-      .onConflictDoUpdate({
-        target: metadataTable.key,
-        set: { value: text, updatedAt: now },
-      });
-
-    set({ tonight: text });
-  },
-
-  getYesterdayTonight: async (db) => {
-    const yesterday = yesterdayISO();
-    const key = tonightKey(yesterday);
-    const rows = await db
-      .select()
-      .from(metadataTable)
-      .where(eq(metadataTable.key, key));
-    return (rows[0] as { value?: string } | undefined)?.value ?? null;
   },
 
   incrementPomodoro: async (db) => {

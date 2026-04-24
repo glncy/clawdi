@@ -4,12 +4,10 @@ import { AppText } from "@/components/atoms/Text";
 import { PriorityList } from "@/components/organisms/PriorityList";
 import { PomodoroTimer } from "@/components/organisms/PomodoroTimer";
 import { QuickList } from "@/components/organisms/QuickList";
-import { TonightCard } from "@/components/molecules/TonightCard";
 import { DayInsight } from "@/components/organisms/DayInsight";
 import { AddPrioritySheet } from "@/components/organisms/AddPrioritySheet";
 import { AddQuickItemSheet } from "@/components/organisms/AddQuickItemSheet";
 import { EditPrioritySheet } from "@/components/organisms/EditPrioritySheet";
-import { TonightPlannerSheet } from "@/components/organisms/TonightPlannerSheet";
 import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet";
 
 export default function DayScreen() {
@@ -37,15 +35,12 @@ export default function DayScreen() {
         <PomodoroTimer />
 
         <QuickList />
-
-        <TonightCard />
       </ScrollView>
 
       <RolloverPromptSheet />
       <AddPrioritySheet />
       <AddQuickItemSheet />
       <EditPrioritySheet />
-      <TonightPlannerSheet />
     </>
   );
 }

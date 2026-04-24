@@ -114,7 +114,6 @@ function reset() {
   useDayStore.setState({
     priorities: [],
     quickList: [],
-    tonight: "",
     pomodoroCount: 0,
     hasCheckedRollover: false,
     isLoaded: false,
@@ -311,15 +310,6 @@ describe("useDayStore", () => {
     await useDayStore.getState().deleteQuickItem(db, id);
 
     expect(useDayStore.getState().quickList).toHaveLength(0);
-  });
-
-  // --- tonight ---
-
-  it("setTonight updates tonight in state", async () => {
-    const { db } = makeFakeDb();
-    await useDayStore.getState().setTonight(db, "Read → Sleep by 11");
-
-    expect(useDayStore.getState().tonight).toBe("Read → Sleep by 11");
   });
 
   // --- pomodoroCount ---
