@@ -22,7 +22,7 @@ jest.mock("@/hooks/useIsAIAvailable", () => ({
   useIsAIAvailable: () => true,
 }));
 
-const stubData = {
+let mockStubData = {
   totalBalance: 1000,
   dailyBudget: 50,
   budgetLeftToday: 30,
@@ -48,8 +48,10 @@ const stubData = {
   ],
 };
 
+const mockInitialStubData = { ...mockStubData };
+
 jest.mock("@/hooks/useFinanceData", () => ({
-  useFinanceData: () => stubData,
+  useFinanceData: () => mockStubData,
 }));
 
 jest.mock("@/hooks/useCurrency", () => ({
@@ -77,7 +79,10 @@ function HookHost({
 
 describe("useFinanceInsight", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
+    // resetAllMocks clears both call history AND queued .mockResolvedValueOnce
+    // implementations so tests are fully isolated.
+    jest.resetAllMocks();
+    mockStubData = { ...mockInitialStubData };
   });
 
   it("cache hit: returns cached insight without calling complete", async () => {
@@ -137,5 +142,37 @@ describe("useFinanceInsight", () => {
 
     // complete should still have been called only once
     expect(mockComplete).toHaveBeenCalledTimes(1);
+  });
+
+  it("different snapshot key regenerates", async () => {
+    // First mount: cache miss, generates insight "A".
+    mockedLoad.mockResolvedValueOnce(null);
+    mockComplete.mockResolvedValueOnce({ text: "A" });
+
+    const { rerender } = render(<HookHost onState={() => {}} />);
+
+    await waitFor(() => {
+      expect(mockComplete).toHaveBeenCalledTimes(1);
+    });
+
+    // Mutate the snapshot so the next cache key differs.
+    mockStubData = { ...mockStubData, todaySpent: 9999 };
+
+    // Second render: cache miss for the new key, generates insight "B".
+    mockedLoad.mockResolvedValueOnce(null);
+    mockComplete.mockResolvedValueOnce({ text: "B" });
+
+    await act(async () => {
+      rerender(<HookHost onState={() => {}} />);
+    });
+
+    await waitFor(() => {
+      expect(mockComplete).toHaveBeenCalledTimes(2);
+    });
+
+    // Two different cache keys should have been queried.
+    const firstKey = mockedLoad.mock.calls[0]?.[0];
+    const secondKey = mockedLoad.mock.calls[1]?.[0];
+    expect(firstKey).not.toBe(secondKey);
   });
 });

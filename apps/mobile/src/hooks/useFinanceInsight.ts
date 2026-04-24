@@ -140,6 +140,10 @@ export function useFinanceInsight() {
         console.warn("[useFinanceInsight] Generation failed:", err);
       } finally {
         if (!cancelled) setIsGenerating(false);
+        // Clear the guard so a subsequent re-render with the same (or any) key
+        // can legitimately re-run. Without this, the ref stays pinned and a
+        // genuine refresh would be silently blocked.
+        if (inFlightKey.current === key) inFlightKey.current = null;
       }
     })();
 
