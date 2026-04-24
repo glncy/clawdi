@@ -65,6 +65,10 @@ function pomodoroKey(date: string) {
   return `pomodoro_count_${date}`;
 }
 
+function eveningPromptKey(date: string) {
+  return `evening_prompt_dismissed_${date}`;
+}
+
 interface DayState {
   priorities: Priority[];
   quickList: QuickListItem[];
@@ -99,6 +103,11 @@ interface DayState {
   dismissRollover: (db: Database) => Promise<void>;
   markRolloverChecked: () => void;
 
+  hasCheckedEveningPrompt: boolean;
+  checkEveningPromptShouldShow: (db: Database) => Promise<boolean>;
+  dismissEveningPrompt: (db: Database) => Promise<void>;
+  markEveningPromptChecked: () => void;
+
   addQuickItem: (db: Database, text: string) => Promise<void>;
   toggleQuickItem: (db: Database, id: string) => Promise<void>;
   deleteQuickItem: (db: Database, id: string) => Promise<void>;
@@ -114,6 +123,7 @@ export const useDayStore = create<DayState>((set, get) => ({
   isLoaded: false,
   isLoading: false,
   tomorrowPriorities: [],
+  hasCheckedEveningPrompt: false,
 
   loadToday: async (db) => {
     const { isLoaded, isLoading } = get();
@@ -402,6 +412,40 @@ export const useDayStore = create<DayState>((set, get) => ({
   },
 
   markRolloverChecked: () => set({ hasCheckedRollover: true }),
+
+  checkEveningPromptShouldShow: async (db) => {
+    const now = new Date();
+    if (now.getHours() < 20) return false;
+
+    const { tomorrowPriorities } = get();
+    if (tomorrowPriorities.length > 0) return false;
+
+    const today = todayISO();
+    const rows = await db
+      .select()
+      .from(metadataTable)
+      .where(eq(metadataTable.key, eveningPromptKey(today)));
+    return (rows as { key?: string }[]).length === 0;
+  },
+
+  dismissEveningPrompt: async (db) => {
+    const today = todayISO();
+    const now = new Date().toISOString();
+    await db
+      .insert(metadataTable)
+      .values({
+        key: eveningPromptKey(today),
+        value: "dismissed",
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: metadataTable.key,
+        set: { value: "dismissed", updatedAt: now },
+      });
+    set({ hasCheckedEveningPrompt: true });
+  },
+
+  markEveningPromptChecked: () => set({ hasCheckedEveningPrompt: true }),
 
   dismissRollover: async (db) => {
     const today = todayISO();
