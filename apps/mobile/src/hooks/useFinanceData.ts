@@ -101,13 +101,21 @@ export function useFinanceData() {
     });
   }, [store.budgetSettings, monthTransactions, store.categories]);
 
+  // Archived bills (e.g. "once" bills that have been marked paid) should not
+  // appear in active lists or insight/dashboard computations. The raw rows
+  // remain in the store so the user can un-archive via toggle-unpay.
+  const activeRecurringBills = useMemo(
+    () => store.recurringBills.filter((b) => !b.isArchived),
+    [store.recurringBills]
+  );
+
   return {
     // state
     isLoaded: store.isLoaded,
     accounts: store.accounts,
     transactions: store.transactions,
     categories: store.categories,
-    recurringBills: store.recurringBills,
+    recurringBills: activeRecurringBills,
     savingsGoals: store.savingsGoals,
     budgetSettings: store.budgetSettings,
     accountTypes: store.accountTypes,

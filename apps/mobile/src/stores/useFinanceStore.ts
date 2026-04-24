@@ -82,6 +82,7 @@ function rowToRecurringBill(
     nextDueDate: row.nextDueDate,
     category: row.category,
     isPaid: row.isPaid === 1,
+    isArchived: row.isArchived === 1,
   };
 }
 
@@ -308,25 +309,33 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
       nextDueDate: bill.nextDueDate,
       category: bill.category,
       isPaid: bill.isPaid ? 1 : 0,
+      isArchived: bill.isArchived ? 1 : 0,
     });
     set((state) => ({
       recurringBills: [...state.recurringBills, bill],
     }));
   },
 
+  // Toggling a "once" bill to paid auto-archives it so it disappears from the
+  // active list (there is no next occurrence). Toggling it back to unpaid
+  // un-archives it, so users can recover from an accidental tap.
   toggleBillPaid: async (db, id) => {
     const { recurringBills } = get();
     const bill = recurringBills.find((b) => b.id === id);
     if (!bill) return;
 
     const newIsPaid = !bill.isPaid;
+    const newIsArchived = bill.frequency === "once" ? newIsPaid : bill.isArchived;
     await db
       .update(recurringBillsTable)
-      .set({ isPaid: newIsPaid ? 1 : 0 })
+      .set({
+        isPaid: newIsPaid ? 1 : 0,
+        isArchived: newIsArchived ? 1 : 0,
+      })
       .where(eq(recurringBillsTable.id, id));
     set((state) => ({
       recurringBills: state.recurringBills.map((b) =>
-        b.id === id ? { ...b, isPaid: newIsPaid } : b
+        b.id === id ? { ...b, isPaid: newIsPaid, isArchived: newIsArchived } : b
       ),
     }));
   },

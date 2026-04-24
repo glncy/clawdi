@@ -113,6 +113,7 @@ export default function AddBillScreen() {
       nextDueDate: getNextDueDate(data.frequency),
       category: data.category,
       isPaid: false,
+      isArchived: false,
     });
     handleClose();
   };

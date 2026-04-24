@@ -29,6 +29,13 @@
       "when": 1777022496584,
       "tag": "0003_misty_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "6",
+      "when": 1777023512306,
+      "tag": "0004_redundant_silver_sable",
+      "breakpoints": true
     }
   ]
 }

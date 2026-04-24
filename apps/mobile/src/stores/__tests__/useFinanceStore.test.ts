@@ -1,7 +1,7 @@
 import { useFinanceStore } from "../useFinanceStore";
 import { accountTypes as accountTypesTable } from "../../db/schema";
 import type { Database } from "../../db/client";
-import type { AccountType } from "../../types";
+import type { AccountType, RecurringBill } from "../../types";
 
 type Row = Record<string, unknown>;
 
@@ -177,5 +177,133 @@ describe("useFinanceStore — accountTypes CRUD", () => {
       sortOrder: 0,
     });
     expect(state.accountTypes[1]?.isDefault).toBe(true);
+  });
+});
+
+// -- Bills: "once" frequency + auto-archive on mark-paid --
+
+function makeFakeBillsDb(seedBillRows: Row[] = []) {
+  const billRows: Row[] = [...seedBillRows];
+
+  const db = {
+    insert: (_table: unknown) => ({
+      values: async (v: Row) => {
+        billRows.push({ ...v });
+      },
+    }),
+    update: (_table: unknown) => ({
+      set: (patch: Row) => ({
+        // The fake ignores the where clause; tests below only keep one bill
+        // in the table at a time so there's no ambiguity.
+        where: async () => {
+          if (billRows[0]) Object.assign(billRows[0], patch);
+        },
+      }),
+    }),
+    delete: (_table: unknown) => ({
+      where: async () => {
+        billRows.length = 0;
+      },
+    }),
+    select: () => ({
+      from: (_table: unknown) => billRows,
+    }),
+  } as unknown as Database;
+
+  return { db, billRows };
+}
+
+describe("useFinanceStore — recurring bills archival", () => {
+  beforeEach(resetStore);
+
+  it("toggleBillPaid on a 'once' bill marks it paid AND archived", async () => {
+    const { db, billRows } = makeFakeBillsDb();
+
+    const bill: RecurringBill = {
+      id: "bill-once-1",
+      name: "Dentist",
+      amount: 200,
+      currency: "USD",
+      frequency: "once",
+      nextDueDate: "2026-05-01",
+      category: "Health",
+      isPaid: false,
+      isArchived: false,
+    };
+
+    await useFinanceStore.getState().addRecurringBill(db, bill);
+    expect(billRows).toHaveLength(1);
+    expect(billRows[0]).toMatchObject({ isPaid: 0, isArchived: 0 });
+
+    await useFinanceStore.getState().toggleBillPaid(db, bill.id);
+
+    // DB row is both paid and archived
+    expect(billRows[0]).toMatchObject({ isPaid: 1, isArchived: 1 });
+
+    // In-memory state mirrors the DB row
+    const stateBill = useFinanceStore
+      .getState()
+      .recurringBills.find((b) => b.id === bill.id);
+    expect(stateBill?.isPaid).toBe(true);
+    expect(stateBill?.isArchived).toBe(true);
+  });
+
+  it("toggleBillPaid on a 'monthly' bill marks paid but does NOT archive", async () => {
+    const { db, billRows } = makeFakeBillsDb();
+
+    const bill: RecurringBill = {
+      id: "bill-monthly-1",
+      name: "Netflix",
+      amount: 15,
+      currency: "USD",
+      frequency: "monthly",
+      nextDueDate: "2026-05-15",
+      category: "Subscriptions",
+      isPaid: false,
+      isArchived: false,
+    };
+
+    await useFinanceStore.getState().addRecurringBill(db, bill);
+    await useFinanceStore.getState().toggleBillPaid(db, bill.id);
+
+    expect(billRows[0]).toMatchObject({ isPaid: 1, isArchived: 0 });
+
+    const stateBill = useFinanceStore
+      .getState()
+      .recurringBills.find((b) => b.id === bill.id);
+    expect(stateBill?.isPaid).toBe(true);
+    expect(stateBill?.isArchived).toBe(false);
+  });
+
+  it("toggling a paid-and-archived 'once' bill back to unpaid clears isArchived", async () => {
+    const { db, billRows } = makeFakeBillsDb();
+
+    const bill: RecurringBill = {
+      id: "bill-once-2",
+      name: "Plumber",
+      amount: 150,
+      currency: "USD",
+      frequency: "once",
+      nextDueDate: "2026-05-20",
+      category: "Home",
+      isPaid: false,
+      isArchived: false,
+    };
+
+    await useFinanceStore.getState().addRecurringBill(db, bill);
+
+    // First toggle: paid + archived
+    await useFinanceStore.getState().toggleBillPaid(db, bill.id);
+    expect(billRows[0]).toMatchObject({ isPaid: 1, isArchived: 1 });
+
+    // Second toggle: unpaid + unarchived (so the once bill reappears)
+    await useFinanceStore.getState().toggleBillPaid(db, bill.id);
+    expect(billRows[0]).toMatchObject({ isPaid: 0, isArchived: 0 });
+
+    const stateBill = useFinanceStore
+      .getState()
+      .recurringBills.find((b) => b.id === bill.id);
+    expect(stateBill?.isPaid).toBe(false);
+    expect(stateBill?.isArchived).toBe(false);
   });
 });

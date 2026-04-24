@@ -178,8 +178,9 @@ export interface RecurringBill {
   name: string;
   amount: number;
   currency: string;
-  frequency: "weekly" | "monthly" | "yearly";
+  frequency: "once" | "weekly" | "monthly" | "yearly";
   nextDueDate: string;
   category: string;
   isPaid: boolean;
+  isArchived: boolean;
 }

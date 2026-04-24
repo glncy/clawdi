@@ -25,6 +25,7 @@ function formatDueDate(nextDueDate: string): string {
 }
 
 const FREQUENCY_LABELS: Record<RecurringBill["frequency"], string> = {
+  once: "Once",
   weekly: "Weekly",
   monthly: "Monthly",
   yearly: "Yearly",
