@@ -21,8 +21,16 @@ export function useFinanceData() {
   const now = new Date();
   const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
 
+  // `tx.date` may be either a legacy `YYYY-MM-DD` string (pre-backfill)
+  // or an ISO 8601 timestamp. Normalize to the UTC calendar day for
+  // bucketing/comparisons — `new Date(...)` accepts both forms.
+  const txDay = (d: string): string =>
+    d.length === 10 && !d.includes("T")
+      ? d
+      : new Date(d).toISOString().split("T")[0];
+
   const todayTransactions = useMemo(
-    () => store.transactions.filter((t) => t.date === today),
+    () => store.transactions.filter((t) => txDay(t.date) === today),
     [store.transactions, today]
   );
 
@@ -35,7 +43,7 @@ export function useFinanceData() {
   );
 
   const monthTransactions = useMemo(
-    () => store.transactions.filter((t) => t.date.startsWith(currentMonth)),
+    () => store.transactions.filter((t) => txDay(t.date).startsWith(currentMonth)),
     [store.transactions, currentMonth]
   );
 
@@ -77,7 +85,7 @@ export function useFinanceData() {
       d.setDate(d.getDate() - i);
       const dateStr = d.toISOString().split("T")[0];
       const amount = store.transactions
-        .filter((t) => t.date === dateStr && t.type === "expense")
+        .filter((t) => txDay(t.date) === dateStr && t.type === "expense")
         .reduce((sum, t) => sum + t.amount, 0);
       days.push({ date: dateStr, amount });
     }

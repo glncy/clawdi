@@ -8,7 +8,7 @@ export const transactions = sqliteTable("transactions", {
   currency: text("currency").notNull().default("USD"),
   item: text("item").notNull(),
   category: text("category").notNull(),
-  date: text("date").notNull(), // YYYY-MM-DD
+  date: text("date").notNull(), // ISO 8601 timestamp, e.g. 2026-04-24T14:30:00.000Z
   note: text("note"),
   accountId: text("account_id"),
   createdAt: text("created_at")
