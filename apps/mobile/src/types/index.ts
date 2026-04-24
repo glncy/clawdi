@@ -175,3 +175,22 @@ export interface RecurringBill {
   category: string;
   isPaid: boolean;
 }
+
+export interface FocusSession {
+  id: string;
+  priorityId: string | null;
+  goal: string | null;
+  startedAt: string;
+  endedAt: string | null;
+  plannedSec: number;
+  actualSec: number;
+  completedNaturally: boolean;
+  createdAt: string;
+}
+
+export interface Reflection {
+  date: string;
+  wins: string[];
+  improve: string;
+  createdAt: string;
+}
