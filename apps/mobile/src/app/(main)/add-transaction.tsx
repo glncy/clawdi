@@ -41,6 +41,7 @@ const manualSchema = z.object({
   category: z.string().min(1, "Category required"),
   date: z.string().min(1, "Date is required"),
   note: z.string().optional(),
+  accountId: z.string().optional(),
 });
 
 type ManualForm = z.infer<typeof manualSchema>;
@@ -55,6 +56,7 @@ export default function AddTransactionScreen() {
     deleteTransaction,
     categories,
     addCategory,
+    accounts,
   } = useFinanceData();
   const { code: currencyCode } = useCurrency();
 
@@ -86,11 +88,13 @@ export default function AddTransactionScreen() {
       category: "Other",
       date: today,
       note: "",
+      accountId: "",
     },
   });
 
   const selectedType = watch("type");
   const selectedCategory = watch("category");
+  const selectedAccountId = watch("accountId");
 
   const categorySelectValue = useMemo(
     () =>
@@ -99,6 +103,14 @@ export default function AddTransactionScreen() {
         : undefined,
     [selectedCategory],
   );
+
+  const accountSelectValue = useMemo(() => {
+    if (!selectedAccountId) return { value: "", label: "None" };
+    const acc = accounts.find((a) => a.id === selectedAccountId);
+    return acc
+      ? { value: acc.id, label: acc.name }
+      : { value: "", label: "None" };
+  }, [selectedAccountId, accounts]);
 
   useEffect(() => {
     if (editingTransaction) {
@@ -109,15 +121,27 @@ export default function AddTransactionScreen() {
         category: editingTransaction.category,
         date: editingTransaction.date,
         note: editingTransaction.note || "",
+        accountId: editingTransaction.accountId ?? "",
       });
     } else if (prefillData) {
       if (prefillData.type) setValue("type", prefillData.type);
       if (prefillData.item) setValue("item", prefillData.item);
       if (prefillData.amount) setValue("amount", String(prefillData.amount));
       if (prefillData.category) setValue("category", prefillData.category);
+      if (prefillData.accountId) setValue("accountId", prefillData.accountId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-select the only account when exactly one exists and nothing is set.
+  useEffect(() => {
+    if (editingTransaction) return;
+    if (prefillData?.accountId) return;
+    if (accounts.length !== 1) return;
+    if (watch("accountId")) return;
+    setValue("accountId", accounts[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts.length, editingTransaction, prefillData]);
 
   const handleClose = () => {
     clearModalData();
@@ -133,6 +157,7 @@ export default function AddTransactionScreen() {
         category: data.category,
         date: data.date,
         note: data.note || undefined,
+        accountId: data.accountId || undefined,
       });
     } else {
       await addTransaction({
@@ -144,6 +169,7 @@ export default function AddTransactionScreen() {
         category: data.category,
         date: data.date,
         note: data.note || undefined,
+        accountId: data.accountId || undefined,
       });
     }
     handleClose();
@@ -276,6 +302,53 @@ export default function AddTransactionScreen() {
           />
           <FieldError>{errors.item?.message}</FieldError>
         </TextField>
+
+        {/* Account Select */}
+        <View className="gap-1">
+          <AppText size="xs" color="muted">
+            Account
+          </AppText>
+          <Select
+            presentation="bottom-sheet"
+            value={accountSelectValue}
+            onOpenChange={(open) => {
+              if (open) Keyboard.dismiss();
+            }}
+            onValueChange={(opt) => {
+              const selected = opt as { value: string; label: string };
+              setValue("accountId", selected.value);
+            }}
+          >
+            <Select.Trigger>
+              <Select.Value placeholder="Select account" />
+              <Select.TriggerIndicator />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Overlay />
+              <Select.Content presentation="bottom-sheet" snapPoints={["50%"]}>
+                <Select.ListLabel>Account</Select.ListLabel>
+                <Select.Item value="" label="None">
+                  <View className="flex-row items-center gap-3 flex-1">
+                    <Select.ItemLabel />
+                  </View>
+                  <Select.ItemIndicator />
+                </Select.Item>
+                {accounts.map((acc) => (
+                  <React.Fragment key={acc.id}>
+                    <Separator />
+                    <Select.Item value={acc.id} label={acc.name}>
+                      <View className="flex-row items-center gap-3 flex-1">
+                        <AppText className="text-xl">{acc.icon}</AppText>
+                        <Select.ItemLabel />
+                      </View>
+                      <Select.ItemIndicator />
+                    </Select.Item>
+                  </React.Fragment>
+                ))}
+              </Select.Content>
+            </Select.Portal>
+          </Select>
+        </View>
 
         {/* Category Select */}
         <View className="gap-1">

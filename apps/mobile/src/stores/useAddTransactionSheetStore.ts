@@ -6,6 +6,7 @@ interface TransactionPrefill {
   item?: string;
   amount?: number;
   category?: string;
+  accountId?: string;
 }
 
 interface AddTransactionSheetState {
