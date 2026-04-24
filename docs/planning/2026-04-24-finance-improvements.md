@@ -1182,7 +1182,7 @@ Commit message: `chore(finance): resolve typecheck/test issues from finance impr
 
 ### Task 8.2: Device QA via `agent-device` skill
 
-**Prereq:** the Expo dev client must be running on either an iOS Simulator or a physical/emulated Android device. Use `mobile_list_available_devices` first; if the app isn't installed/running, launch it with `mobile_launch_app` (bundle id from `app.json`).
+**Prereq:** the Expo dev client must be running on the **iOS Simulator**, pointed at the Metro bundler on **`http://localhost:8082`** (user-specified). Use `mobile_list_available_devices` first; if the app isn't running, launch it with `mobile_launch_app` (bundle id from `app.json`). If the app is loaded but shows a connection error, open the URL `http://localhost:8082` via `mobile_open_url` or reload via the dev-menu shake.
 
 **Invoke the `agent-device` skill** (per CLAUDE.md §7) and use its `mobile-ui-tester` flow. The flow for each scenario below is: `mobile_take_screenshot` → `mobile_list_elements_on_screen` → interact (tap/type) → re-screenshot → assert visual state.
 
