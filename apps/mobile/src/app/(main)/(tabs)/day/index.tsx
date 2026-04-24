@@ -10,11 +10,8 @@ import { AddQuickItemSheet } from "@/components/organisms/AddQuickItemSheet";
 import { EditPrioritySheet } from "@/components/organisms/EditPrioritySheet";
 import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet";
 import { PlanTomorrowCard } from "@/components/molecules/PlanTomorrowCard";
-import { useDayData } from "@/hooks/useDayData";
 
 export default function DayScreen() {
-  const { tomorrowPriorityCount } = useDayData();
-
   return (
     <>
       <Stack.Screen options={{ title: "Day" }} />
@@ -40,7 +37,7 @@ export default function DayScreen() {
 
         <QuickList />
 
-        <PlanTomorrowCard priorityCount={tomorrowPriorityCount} />
+        <PlanTomorrowCard />
       </ScrollView>
 
       <RolloverPromptSheet />
