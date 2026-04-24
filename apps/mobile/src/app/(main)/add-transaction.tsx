@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Pressable, Keyboard } from "react-native";
+import { View, Pressable, Keyboard, Platform } from "react-native";
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -8,6 +8,10 @@ import { Stack, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format as formatDate } from "date-fns";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
 import { AppText } from "@/components/atoms/Text";
 import {
   Button,
@@ -23,7 +27,7 @@ import { useCSSVariable } from "uniwind";
 import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStore";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useCurrency } from "@/hooks/useCurrency";
-import { ArrowUp, ArrowDown, Plus } from "phosphor-react-native";
+import { ArrowUp, ArrowDown, Plus, CalendarBlank } from "phosphor-react-native";
 import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,7 +43,7 @@ const manualSchema = z.object({
     .string()
     .refine((v) => parseFloat(v) > 0, "Amount must be positive"),
   category: z.string().min(1, "Category required"),
-  date: z.string().min(1, "Date is required"),
+  date: z.string().min(1, "Date is required"), // ISO timestamp
   note: z.string().optional(),
   accountId: z.string().optional(),
 });
@@ -64,13 +68,17 @@ export default function AddTransactionScreen() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [androidPickerMode, setAndroidPickerMode] = useState<"date" | "time">(
+    "date",
+  );
 
   const [primaryColor, mutedColor] = useCSSVariable([
     "--color-primary",
     "--color-muted",
   ]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const nowIso = new Date().toISOString();
 
   const {
     control,
@@ -86,7 +94,7 @@ export default function AddTransactionScreen() {
       item: "",
       amount: "",
       category: "Other",
-      date: today,
+      date: nowIso,
       note: "",
       accountId: "",
     },
@@ -95,6 +103,60 @@ export default function AddTransactionScreen() {
   const selectedType = watch("type");
   const selectedCategory = watch("category");
   const selectedAccountId = watch("accountId");
+  const selectedDate = watch("date");
+
+  const selectedDateObj = useMemo(() => {
+    const d = selectedDate ? new Date(selectedDate) : new Date();
+    return isNaN(d.getTime()) ? new Date() : d;
+  }, [selectedDate]);
+
+  const formattedDateTime = useMemo(
+    () => formatDate(selectedDateObj, "MMM d, yyyy · h:mm a"),
+    [selectedDateObj],
+  );
+
+  const openDatePicker = () => {
+    Keyboard.dismiss();
+    setAndroidPickerMode("date");
+    setShowDatePicker(true);
+  };
+
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    nextDate?: Date,
+  ) => {
+    if (Platform.OS === "android") {
+      // Android fires `set` / `dismissed`; hide picker after each step.
+      if (event.type === "dismissed" || !nextDate) {
+        setShowDatePicker(false);
+        return;
+      }
+      if (androidPickerMode === "date") {
+        // Preserve existing time-of-day from selectedDateObj.
+        const merged = new Date(nextDate);
+        merged.setHours(
+          selectedDateObj.getHours(),
+          selectedDateObj.getMinutes(),
+          0,
+          0,
+        );
+        setValue("date", merged.toISOString(), { shouldDirty: true });
+        // Chain into time picker.
+        setAndroidPickerMode("time");
+        setShowDatePicker(true);
+      } else {
+        const merged = new Date(selectedDateObj);
+        merged.setHours(nextDate.getHours(), nextDate.getMinutes(), 0, 0);
+        setValue("date", merged.toISOString(), { shouldDirty: true });
+        setShowDatePicker(false);
+      }
+      return;
+    }
+    // iOS (inline / spinner): update live as user scrolls.
+    if (nextDate) {
+      setValue("date", nextDate.toISOString(), { shouldDirty: true });
+    }
+  };
 
   const categorySelectValue = useMemo(
     () =>
@@ -348,6 +410,63 @@ export default function AddTransactionScreen() {
               </Select.Content>
             </Select.Portal>
           </Select>
+        </View>
+
+        {/* Date + Time */}
+        <View className="gap-1">
+          <AppText size="xs" color="muted">
+            Date & time
+          </AppText>
+          <Pressable
+            onPress={openDatePicker}
+            accessibilityRole="button"
+            accessibilityLabel={`Change date and time, currently ${formattedDateTime}`}
+            className="flex-row items-center gap-3 rounded-xl bg-surface px-4 py-3.5"
+          >
+            <PhosphorIcon
+              icon={CalendarBlank}
+              size={18}
+              color={mutedColor as string}
+            />
+            <AppText size="sm" weight="medium" className="flex-1">
+              {formattedDateTime}
+            </AppText>
+          </Pressable>
+          {errors.date && (
+            <AppText size="xs" color="danger" className="mt-1">
+              {errors.date.message}
+            </AppText>
+          )}
+          {showDatePicker && Platform.OS === "ios" && (
+            <View className="mt-1 rounded-xl bg-surface overflow-hidden">
+              <DateTimePicker
+                value={selectedDateObj}
+                mode="datetime"
+                display="inline"
+                onChange={handleDateChange}
+                maximumDate={new Date()}
+              />
+              <View className="flex-row justify-end px-3 pb-2">
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Button.Label>Done</Button.Label>
+                </Button>
+              </View>
+            </View>
+          )}
+          {showDatePicker && Platform.OS === "android" && (
+            <DateTimePicker
+              value={selectedDateObj}
+              mode={androidPickerMode}
+              is24Hour={false}
+              display="default"
+              onChange={handleDateChange}
+              maximumDate={androidPickerMode === "date" ? new Date() : undefined}
+            />
+          )}
         </View>
 
         {/* Category Select */}
