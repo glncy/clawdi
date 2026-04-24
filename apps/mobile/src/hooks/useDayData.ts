@@ -20,11 +20,13 @@ export function useDayData() {
   const { db, isReady } = useDatabase();
   const priorities = useDayStore((s) => s.priorities);
   const quickList = useDayStore((s) => s.quickList);
-  const tonight = useDayStore((s) => s.tonight);
   const pomodoroCount = useDayStore((s) => s.pomodoroCount);
+  const todayFocusMinutes = useDayStore((s) => s.todayFocusMinutes);
   const hasCheckedRollover = useDayStore((s) => s.hasCheckedRollover);
   const isLoaded = useDayStore((s) => s.isLoaded);
   const loadToday = useDayStore((s) => s.loadToday);
+  const tomorrowPriorities = useDayStore((s) => s.tomorrowPriorities);
+  const todayReflection = useDayStore((s) => s.todayReflection);
 
   useEffect(() => {
     if (isReady && db && !isLoaded) {
@@ -72,18 +74,23 @@ export function useDayData() {
     return [...active, ...done];
   }, [quickList]);
 
+  const tomorrowPriorityCount = tomorrowPriorities.length;
+
   return {
     grouped,
     priorities,
     quickList: sortedQuickList,
-    tonight,
     pomodoroCount,
     pomodoroSessionsToday: pomodoroCount,
+    todayFocusMinutes,
     completedToday,
     totalToday,
     activeMustCount,
     hasCheckedRollover,
     isLoaded,
     typeOrder: TYPE_ORDER,
+    tomorrowPriorities,
+    tomorrowPriorityCount,
+    todayReflection,
   };
 }

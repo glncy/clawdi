@@ -4,10 +4,7 @@ import { AppText } from "@/components/atoms/Text";
 import { useDayData } from "@/hooks/useDayData";
 import { useDayStore } from "@/stores/useDayStore";
 import { useEditPrioritySheetStore } from "@/stores/useEditPrioritySheetStore";
-import { useAddPrioritySheetStore } from "@/stores/useAddPrioritySheetStore";
 import { useDatabase } from "@/hooks/useDatabase";
-import { Plus } from "phosphor-react-native";
-import { useCSSVariable } from "uniwind";
 import type { Priority } from "@/types";
 
 const SECTION_LABELS: Record<Priority["type"], string> = {
@@ -60,9 +57,6 @@ const PrioritySection = ({ type, items }: SectionProps) => {
 
 export const PriorityList = () => {
   const { grouped, completedToday, totalToday } = useDayData();
-  const { open: openAdd } = useAddPrioritySheetStore();
-
-  const [primaryColor] = useCSSVariable(["--color-primary"]);
 
   return (
     <View className="gap-3">
@@ -81,19 +75,9 @@ export const PriorityList = () => {
 
       {totalToday === 0 && (
         <AppText size="sm" color="muted">
-          No priorities yet. Start your day!
+          No priorities yet. Tap + to start your day.
         </AppText>
       )}
-
-      <Pressable
-        className="flex-row items-center gap-2 py-1"
-        onPress={openAdd}
-      >
-        <Plus size={14} color={primaryColor as string} />
-        <AppText size="sm" color="primary">
-          Add priority
-        </AppText>
-      </Pressable>
     </View>
   );
 };

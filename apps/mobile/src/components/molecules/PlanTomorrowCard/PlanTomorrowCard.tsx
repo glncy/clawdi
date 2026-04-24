@@ -2,14 +2,13 @@ import { Pressable, View } from "react-native";
 import { Card } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
 import { useDayData } from "@/hooks/useDayData";
-import { useTonightPlannerSheetStore } from "@/stores/useTonightPlannerSheetStore";
-import { Moon } from "phosphor-react-native";
+import { usePlanTomorrowSheetStore } from "@/stores/usePlanTomorrowSheetStore";
+import { SunHorizon } from "phosphor-react-native";
 import { useCSSVariable } from "uniwind";
 
-export const TonightCard = () => {
-  const { tonight } = useDayData();
-  const { open } = useTonightPlannerSheetStore();
-
+export const PlanTomorrowCard = () => {
+  const { tomorrowPriorityCount } = useDayData();
+  const { open } = usePlanTomorrowSheetStore();
   const [primaryColor] = useCSSVariable(["--color-primary"]);
 
   return (
@@ -17,16 +16,19 @@ export const TonightCard = () => {
       <Card className="bg-primary/10 p-4">
         <Card.Body className="gap-1">
           <View className="flex-row items-center gap-2">
-            <Moon size={14} color={primaryColor as string} weight="fill" />
+            <SunHorizon size={14} color={primaryColor as string} weight="fill" />
             <AppText size="sm" weight="semibold" color="primary">
-              Tonight
+              Plan Tomorrow
             </AppText>
           </View>
-          {tonight ? (
-            <AppText size="sm">{tonight}</AppText>
+          {tomorrowPriorityCount > 0 ? (
+            <AppText size="sm">
+              {tomorrowPriorityCount}{" "}
+              {tomorrowPriorityCount === 1 ? "priority" : "priorities"} queued for tomorrow
+            </AppText>
           ) : (
             <AppText size="sm" color="muted">
-              Tap to plan your evening…
+              Tap to seed tomorrow&apos;s priorities
             </AppText>
           )}
         </Card.Body>

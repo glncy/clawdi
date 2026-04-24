@@ -1,13 +1,15 @@
 import { create } from "zustand";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   priorities as prioritiesTable,
   quickList as quickListTable,
   metadata as metadataTable,
+  focusSessions as focusSessionsTable,
+  reflections as reflectionsTable,
 } from "../db/schema";
-import type { Priority, QuickListItem } from "../types";
-import type { PriorityRow, QuickListRow } from "../db/schema";
+import type { Priority, QuickListItem, Reflection } from "../types";
+import type { PriorityRow, QuickListRow, ReflectionRow } from "../db/schema";
 
 export class MaxMustPrioritiesError extends Error {
   constructor() {
@@ -27,6 +29,12 @@ function todayISO(): string {
 function yesterdayISO(): string {
   const d = new Date();
   d.setDate(d.getDate() - 1);
+  return d.toLocaleDateString("en-CA");
+}
+
+function tomorrowISO(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 1);
   return d.toLocaleDateString("en-CA");
 }
 
@@ -59,26 +67,32 @@ function pomodoroKey(date: string) {
   return `pomodoro_count_${date}`;
 }
 
-function tonightKey(date: string) {
-  return `tonight_${date}`;
+function eveningPromptKey(date: string) {
+  return `evening_prompt_dismissed_${date}`;
 }
 
 interface DayState {
   priorities: Priority[];
   quickList: QuickListItem[];
-  tonight: string;
   pomodoroCount: number;
   hasCheckedRollover: boolean;
   isLoaded: boolean;
   isLoading: boolean;
+  tomorrowPriorities: Priority[];
 
   loadToday: (db: Database) => Promise<void>;
+  loadTomorrow: (db: Database) => Promise<void>;
 
   addPriority: (
     db: Database,
     input: { text: string; type: Priority["type"] },
   ) => Promise<void>;
   togglePriority: (db: Database, id: string) => Promise<void>;
+  addTomorrowPriority: (
+    db: Database,
+    input: { text: string; type: Priority["type"] },
+  ) => Promise<void>;
+  deleteTomorrowPriority: (db: Database, id: string) => Promise<void>;
   updatePriority: (
     db: Database,
     id: string,
@@ -91,24 +105,50 @@ interface DayState {
   dismissRollover: (db: Database) => Promise<void>;
   markRolloverChecked: () => void;
 
+  hasCheckedEveningPrompt: boolean;
+  checkEveningPromptShouldShow: (db: Database) => Promise<boolean>;
+  dismissEveningPrompt: (db: Database) => Promise<void>;
+  markEveningPromptChecked: () => void;
+
   addQuickItem: (db: Database, text: string) => Promise<void>;
   toggleQuickItem: (db: Database, id: string) => Promise<void>;
   deleteQuickItem: (db: Database, id: string) => Promise<void>;
 
-  setTonight: (db: Database, text: string) => Promise<void>;
-  getYesterdayTonight: (db: Database) => Promise<string | null>;
-
   incrementPomodoro: (db: Database) => Promise<void>;
+
+  todayFocusMinutes: number;
+  loadTodayFocusMinutes: (db: Database) => Promise<void>;
+  logFocusSession: (
+    db: Database,
+    input: {
+      priorityId: string | null;
+      goal: string | null;
+      plannedSec: number;
+      actualSec: number;
+      completedNaturally: boolean;
+      startedAt: string;
+    },
+  ) => Promise<void>;
+
+  todayReflection: Reflection | null;
+  loadTodayReflection: (db: Database) => Promise<void>;
+  saveReflection: (
+    db: Database,
+    input: { wins: string[]; improve: string },
+  ) => Promise<void>;
 }
 
 export const useDayStore = create<DayState>((set, get) => ({
   priorities: [],
   quickList: [],
-  tonight: "",
   pomodoroCount: 0,
   hasCheckedRollover: false,
   isLoaded: false,
   isLoading: false,
+  tomorrowPriorities: [],
+  hasCheckedEveningPrompt: false,
+  todayFocusMinutes: 0,
+  todayReflection: null,
 
   loadToday: async (db) => {
     const { isLoaded, isLoading } = get();
@@ -118,16 +158,12 @@ export const useDayStore = create<DayState>((set, get) => ({
     try {
       const today = todayISO();
 
-      const [pRows, qRows, tonightRow, pomodoroRow] = await Promise.all([
+      const [pRows, qRows, pomodoroRow] = await Promise.all([
         db
           .select()
           .from(prioritiesTable)
           .where(eq(prioritiesTable.date, today)),
         db.select().from(quickListTable),
-        db
-          .select()
-          .from(metadataTable)
-          .where(eq(metadataTable.key, tonightKey(today))),
         db
           .select()
           .from(metadataTable)
@@ -137,7 +173,6 @@ export const useDayStore = create<DayState>((set, get) => ({
       set({
         priorities: (pRows as PriorityRow[]).map(rowToPriority),
         quickList: (qRows as QuickListRow[]).map(rowToQuickItem),
-        tonight: (tonightRow[0] as { value?: string } | undefined)?.value ?? "",
         pomodoroCount:
           parseInt(
             (pomodoroRow[0] as { value?: string } | undefined)?.value ?? "0",
@@ -145,6 +180,17 @@ export const useDayStore = create<DayState>((set, get) => ({
           ) || 0,
         isLoaded: true,
       });
+
+      const tRows = await db
+        .select()
+        .from(prioritiesTable)
+        .where(eq(prioritiesTable.date, tomorrowISO()));
+      set({
+        tomorrowPriorities: (tRows as PriorityRow[]).map(rowToPriority),
+      });
+
+      await get().loadTodayFocusMinutes(db);
+      await get().loadTodayReflection(db);
     } finally {
       set({ isLoading: false });
     }
@@ -248,6 +294,69 @@ export const useDayStore = create<DayState>((set, get) => ({
     }));
   },
 
+  loadTomorrow: async (db) => {
+    const rows = await db
+      .select()
+      .from(prioritiesTable)
+      .where(eq(prioritiesTable.date, tomorrowISO()));
+    set({ tomorrowPriorities: (rows as PriorityRow[]).map(rowToPriority) });
+  },
+
+  addTomorrowPriority: async (db, { text, type }) => {
+    if (type === "must") {
+      const { tomorrowPriorities } = get();
+      const activeMust = tomorrowPriorities.filter(
+        (p) => p.type === "must" && !p.isCompleted,
+      );
+      if (activeMust.length >= 3) {
+        throw new MaxMustPrioritiesError();
+      }
+    }
+
+    const tomorrow = tomorrowISO();
+    const { tomorrowPriorities } = get();
+    const typePriorities = tomorrowPriorities.filter((p) => p.type === type);
+    const sortOrder =
+      typePriorities.length > 0
+        ? Math.max(...typePriorities.map((p) => p.sortOrder)) + 1
+        : 0;
+    const now = new Date().toISOString();
+
+    const newPriority: Priority = {
+      id: generateId(),
+      text,
+      type,
+      isCompleted: false,
+      date: tomorrow,
+      completedAt: null,
+      sortOrder,
+      rolledOverFrom: null,
+      createdAt: now,
+    };
+
+    await db.insert(prioritiesTable).values({
+      id: newPriority.id,
+      text: newPriority.text,
+      type: newPriority.type,
+      date: newPriority.date,
+      completed: 0,
+      completedAt: null,
+      sortOrder: newPriority.sortOrder,
+      rolledOverFrom: null,
+    });
+
+    set((state) => ({
+      tomorrowPriorities: [...state.tomorrowPriorities, newPriority],
+    }));
+  },
+
+  deleteTomorrowPriority: async (db, id) => {
+    await db.delete(prioritiesTable).where(eq(prioritiesTable.id, id));
+    set((state) => ({
+      tomorrowPriorities: state.tomorrowPriorities.filter((p) => p.id !== id),
+    }));
+  },
+
   checkRollover: async (db) => {
     const yesterday = yesterdayISO();
     const today = todayISO();
@@ -332,6 +441,40 @@ export const useDayStore = create<DayState>((set, get) => ({
 
   markRolloverChecked: () => set({ hasCheckedRollover: true }),
 
+  checkEveningPromptShouldShow: async (db) => {
+    const now = new Date();
+    if (now.getHours() < 20) return false;
+
+    const { tomorrowPriorities } = get();
+    if (tomorrowPriorities.length > 0) return false;
+
+    const today = todayISO();
+    const rows = await db
+      .select()
+      .from(metadataTable)
+      .where(eq(metadataTable.key, eveningPromptKey(today)));
+    return (rows as { key?: string }[]).length === 0;
+  },
+
+  dismissEveningPrompt: async (db) => {
+    const today = todayISO();
+    const now = new Date().toISOString();
+    await db
+      .insert(metadataTable)
+      .values({
+        key: eveningPromptKey(today),
+        value: "dismissed",
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: metadataTable.key,
+        set: { value: "dismissed", updatedAt: now },
+      });
+    set({ hasCheckedEveningPrompt: true });
+  },
+
+  markEveningPromptChecked: () => set({ hasCheckedEveningPrompt: true }),
+
   dismissRollover: async (db) => {
     const today = todayISO();
     const rolloverKey = `rollover_done_${today}`;
@@ -403,32 +546,6 @@ export const useDayStore = create<DayState>((set, get) => ({
     }));
   },
 
-  setTonight: async (db, text) => {
-    const today = todayISO();
-    const key = tonightKey(today);
-    const now = new Date().toISOString();
-
-    await db
-      .insert(metadataTable)
-      .values({ key, value: text, updatedAt: now })
-      .onConflictDoUpdate({
-        target: metadataTable.key,
-        set: { value: text, updatedAt: now },
-      });
-
-    set({ tonight: text });
-  },
-
-  getYesterdayTonight: async (db) => {
-    const yesterday = yesterdayISO();
-    const key = tonightKey(yesterday);
-    const rows = await db
-      .select()
-      .from(metadataTable)
-      .where(eq(metadataTable.key, key));
-    return (rows[0] as { value?: string } | undefined)?.value ?? null;
-  },
-
   incrementPomodoro: async (db) => {
     const today = todayISO();
     const key = pomodoroKey(today);
@@ -446,5 +563,87 @@ export const useDayStore = create<DayState>((set, get) => ({
       });
 
     set({ pomodoroCount: newCount });
+  },
+
+  loadTodayFocusMinutes: async (db) => {
+    const today = todayISO();
+    const rows = await db
+      .select()
+      .from(focusSessionsTable)
+      .where(sql`date(${focusSessionsTable.startedAt}) = ${today}`);
+    const total = (rows as { actualSec: number }[]).reduce(
+      (acc, r) => acc + (r.actualSec ?? 0),
+      0,
+    );
+    set({ todayFocusMinutes: Math.floor(total / 60) });
+  },
+
+  logFocusSession: async (db, input) => {
+    const now = new Date().toISOString();
+    await db.insert(focusSessionsTable).values({
+      id: generateId(),
+      priorityId: input.priorityId,
+      goal: input.goal,
+      startedAt: input.startedAt,
+      endedAt: now,
+      plannedSec: input.plannedSec,
+      actualSec: input.actualSec,
+      completedNaturally: input.completedNaturally ? 1 : 0,
+    });
+    const { todayFocusMinutes } = get();
+    set({
+      todayFocusMinutes:
+        todayFocusMinutes + Math.floor(input.actualSec / 60),
+    });
+  },
+
+  loadTodayReflection: async (db) => {
+    const today = todayISO();
+    const rows = await db
+      .select()
+      .from(reflectionsTable)
+      .where(eq(reflectionsTable.date, today));
+    const row = rows[0] as ReflectionRow | undefined;
+    if (!row) {
+      set({ todayReflection: null });
+      return;
+    }
+    let wins: string[] = [];
+    try {
+      const parsed = JSON.parse(row.wins);
+      if (Array.isArray(parsed)) wins = parsed;
+    } catch {
+      wins = [];
+    }
+    set({
+      todayReflection: {
+        date: row.date,
+        wins,
+        improve: row.improve,
+        createdAt: row.createdAt,
+      },
+    });
+  },
+
+  saveReflection: async (db, { wins, improve }) => {
+    const today = todayISO();
+    const now = new Date().toISOString();
+    const winsJson = JSON.stringify(wins);
+
+    await db
+      .insert(reflectionsTable)
+      .values({
+        date: today,
+        wins: winsJson,
+        improve,
+      })
+      .onConflictDoUpdate({
+        target: reflectionsTable.date,
+        set: { wins: winsJson, improve },
+      });
+
+    set({
+      todayReflection: { date: today, wins, improve, createdAt: now },
+    });
   },
 }));

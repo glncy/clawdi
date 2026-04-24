@@ -12,6 +12,8 @@ import { gifts } from "./gifts";
 import { priorities } from "./priorities";
 import { quickList } from "./quickList";
 import { metadata } from "./metadata";
+import { focusSessions } from "./focusSessions";
+import { reflections } from "./reflections";
 
 export { accounts } from "./accounts";
 export { transactions } from "./transactions";
@@ -27,6 +29,8 @@ export { gifts } from "./gifts";
 export { priorities } from "./priorities";
 export { quickList } from "./quickList";
 export { metadata } from "./metadata";
+export { focusSessions } from "./focusSessions";
+export { reflections } from "./reflections";
 
 export type { AccountRow, NewAccount } from "./accounts";
 export type { TransactionRow, NewTransaction } from "./transactions";
@@ -42,6 +46,8 @@ export type { GiftRow, NewGift } from "./gifts";
 export type { PriorityRow, NewPriority } from "./priorities";
 export type { QuickListRow, NewQuickListItem } from "./quickList";
 export type { MetadataRow, NewMetadata } from "./metadata";
+export type { FocusSessionRow, NewFocusSession } from "./focusSessions";
+export type { ReflectionRow, NewReflection } from "./reflections";
 
 export const schema = {
   accounts,
@@ -58,4 +64,6 @@ export const schema = {
   priorities,
   quickList,
   metadata,
+  focusSessions,
+  reflections,
 };

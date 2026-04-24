@@ -4,17 +4,21 @@ import { AppText } from "@/components/atoms/Text";
 import { PriorityList } from "@/components/organisms/PriorityList";
 import { PomodoroTimer } from "@/components/organisms/PomodoroTimer";
 import { QuickList } from "@/components/organisms/QuickList";
-import { TonightCard } from "@/components/molecules/TonightCard";
 import { DayInsight } from "@/components/organisms/DayInsight";
 import { AddPrioritySheet } from "@/components/organisms/AddPrioritySheet";
+import { AddQuickItemSheet } from "@/components/organisms/AddQuickItemSheet";
 import { EditPrioritySheet } from "@/components/organisms/EditPrioritySheet";
-import { TonightPlannerSheet } from "@/components/organisms/TonightPlannerSheet";
 import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet";
+import { PlanTomorrowCard } from "@/components/molecules/PlanTomorrowCard";
+import { PlanTomorrowSheet } from "@/components/organisms/PlanTomorrowSheet";
+import { EveningPromptSheet } from "@/components/organisms/EveningPromptSheet";
+import { ReflectionSheet } from "@/components/organisms/ReflectionSheet";
+import { FocusSessionSettingsSheet } from "@/components/organisms/FocusSessionSettingsSheet";
 
 export default function DayScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: "" }} />
+      <Stack.Screen options={{ title: "Day" }} />
 
       <ScrollView
         className="flex-1 bg-background"
@@ -37,13 +41,17 @@ export default function DayScreen() {
 
         <QuickList />
 
-        <TonightCard />
+        <PlanTomorrowCard />
       </ScrollView>
 
       <RolloverPromptSheet />
       <AddPrioritySheet />
+      <AddQuickItemSheet />
       <EditPrioritySheet />
-      <TonightPlannerSheet />
+      <PlanTomorrowSheet />
+      <EveningPromptSheet />
+      <ReflectionSheet />
+      <FocusSessionSettingsSheet />
     </>
   );
 }

@@ -49,15 +49,6 @@ describe("dayVoicePrompt", () => {
     expect(result).toMatchObject({ action: "add_quick_list", text: "Buy milk" });
   });
 
-  it("parseDayVoiceResult parses tonight_planner action", () => {
-    const json = JSON.stringify({
-      action: "tonight_planner",
-      text: "Read → Sleep by 11 PM",
-    });
-    const result = parseDayVoiceResult(json);
-    expect(result).toMatchObject({ action: "tonight_planner", text: "Read → Sleep by 11 PM" });
-  });
-
   it("parseDayVoiceResult parses complete_priority action", () => {
     const json = JSON.stringify({
       action: "complete_priority",
