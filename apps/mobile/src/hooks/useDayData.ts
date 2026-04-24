@@ -24,6 +24,7 @@ export function useDayData() {
   const hasCheckedRollover = useDayStore((s) => s.hasCheckedRollover);
   const isLoaded = useDayStore((s) => s.isLoaded);
   const loadToday = useDayStore((s) => s.loadToday);
+  const tomorrowPriorities = useDayStore((s) => s.tomorrowPriorities);
 
   useEffect(() => {
     if (isReady && db && !isLoaded) {
@@ -71,6 +72,8 @@ export function useDayData() {
     return [...active, ...done];
   }, [quickList]);
 
+  const tomorrowPriorityCount = tomorrowPriorities.length;
+
   return {
     grouped,
     priorities,
@@ -83,5 +86,7 @@ export function useDayData() {
     hasCheckedRollover,
     isLoaded,
     typeOrder: TYPE_ORDER,
+    tomorrowPriorities,
+    tomorrowPriorityCount,
   };
 }
