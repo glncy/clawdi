@@ -483,6 +483,7 @@ export const useFinanceStore = create<FinanceState>((set, get) => ({
     }));
   },
 
+  // Unlike deleteCategory, no isDefault guard: users can curate built-in types.
   deleteAccountType: async (db, id) => {
     await db.delete(accountTypesTable).where(eq(accountTypesTable.id, id));
     set((state) => ({
