@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ScrollView, View, Pressable } from "react-native";
 import { Stack, router } from "expo-router";
-import { Card, Dialog, Button } from "heroui-native";
+import { Dialog, Button } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
 import { VersionTap } from "@/components/molecules/VersionTap";
 import {

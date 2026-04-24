@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState } from "react";
 import { View, Pressable } from "react-native";
 import { Card, Input } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";

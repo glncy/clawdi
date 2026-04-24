@@ -3,10 +3,13 @@ import {
   documentDirectory,
   getInfoAsync,
   copyAsync,
+  deleteAsync,
+  readDirectoryAsync,
 } from "expo-file-system/legacy";
 import { openDatabaseSync } from "expo-sqlite";
 import { drizzle } from "drizzle-orm/expo-sqlite";
 import { schema } from "./schema";
+import { deleteAllModels } from "../services/modelDownloader";
 
 function getDbFileName(): string {
   if (__DEV__) {
@@ -50,3 +53,20 @@ export async function createDatabase() {
 }
 
 export type Database = Awaited<ReturnType<typeof createDatabase>>;
+
+export async function deleteDatabase(): Promise<void> {
+  if (!documentDirectory) return;
+  const sqliteDir = `${documentDirectory}SQLite`;
+  try {
+    const files = await readDirectoryAsync(sqliteDir);
+    await Promise.all(
+      files
+        .filter((f) => f.endsWith(".db") || f.endsWith(".db-shm") || f.endsWith(".db-wal"))
+        .map((f) => deleteAsync(`${sqliteDir}/${f}`, { idempotent: true })),
+    );
+  } catch {
+    // SQLite directory may not exist yet — nothing to delete
+  }
+  deleteAllModels();
+  await Updates.reloadAsync();
+}

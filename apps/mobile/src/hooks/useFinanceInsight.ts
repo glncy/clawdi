@@ -76,25 +76,14 @@ export function useFinanceInsight() {
     } finally {
       setIsGenerating(false);
     }
-  }, [
-    isAIAvailable,
-    isGenerating,
-    totalBalance,
-    dailyBudget,
-    budgetLeftToday,
-    monthIncome,
-    monthSpent,
-    todaySpent,
-    thisWeekSpending,
-    categoryBudgets,
-    recurringBills,
-    savingsGoals,
-  ]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAIAvailable, isGenerating, totalBalance, dailyBudget, budgetLeftToday, monthIncome, monthSpent, todaySpent, thisWeekSpending, categoryBudgets, recurringBills, savingsGoals]);
 
   useEffect(() => {
     if (isAIAvailable && !generatedRef.current) {
       generate();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAIAvailable]);
 
   return { insight, isGenerating, refresh: generate };

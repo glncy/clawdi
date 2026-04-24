@@ -13,6 +13,7 @@ export function usePeopleData() {
     if (isReady && db && !store.isLoaded) {
       void store.loadAll(db);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, db, store.isLoaded]);
 
   return {

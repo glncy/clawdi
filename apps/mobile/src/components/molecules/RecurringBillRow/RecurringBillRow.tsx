@@ -31,11 +31,8 @@ const FREQUENCY_LABELS: Record<RecurringBill["frequency"], string> = {
 };
 
 export const RecurringBillRow = ({ bill, isLast }: RecurringBillRowProps) => {
-  const [successColor, warningColor, dangerColor, mutedColor] = useCSSVariable([
+  const [successColor] = useCSSVariable([
     "--color-success",
-    "--color-warning",
-    "--color-danger",
-    "--color-muted",
   ]);
   const { format } = useCurrency();
 

@@ -44,9 +44,9 @@ export const MOCK_HABITS: Habit[] = [
 ];
 
 export const MOCK_PRIORITIES: Priority[] = [
-  { id: "1", text: "Finish project proposal", type: "must", isCompleted: true },
-  { id: "2", text: "Call dentist for appointment", type: "win", isCompleted: false },
-  { id: "3", text: "Review budget for next month", type: "overdue", isCompleted: false },
+  { id: "1", text: "Finish project proposal", type: "must", isCompleted: true, date: "2026-04-17", completedAt: "2026-04-17T09:00:00.000Z", sortOrder: 0, rolledOverFrom: null, createdAt: "2026-04-17T08:00:00.000Z" },
+  { id: "2", text: "Call dentist for appointment", type: "win", isCompleted: false, date: "2026-04-17", completedAt: null, sortOrder: 0, rolledOverFrom: null, createdAt: "2026-04-17T08:00:00.000Z" },
+  { id: "3", text: "Review budget for next month", type: "overdue", isCompleted: false, date: "2026-04-17", completedAt: null, sortOrder: 0, rolledOverFrom: null, createdAt: "2026-04-17T08:00:00.000Z" },
 ];
 
 export const MOCK_SLEEP: SleepLog = {
@@ -64,9 +64,9 @@ export const MOCK_SPARK: Spark = {
 };
 
 export const MOCK_QUICK_LIST: QuickListItem[] = [
-  { id: "1", text: "Buy groceries: eggs, bread, milk", isCompleted: false },
-  { id: "2", text: "Return library books", isCompleted: false },
-  { id: "3", text: "Look into gym membership", isCompleted: false },
+  { id: "1", text: "Buy groceries: eggs, bread, milk", isCompleted: false, completedAt: null, sortOrder: 0, createdAt: "2026-04-17T08:00:00.000Z" },
+  { id: "2", text: "Return library books", isCompleted: false, completedAt: null, sortOrder: 1, createdAt: "2026-04-17T08:00:00.000Z" },
+  { id: "3", text: "Look into gym membership", isCompleted: false, completedAt: null, sortOrder: 2, createdAt: "2026-04-17T08:00:00.000Z" },
 ];
 
 export const MOCK_CLAWDI_SCORE = 74;

@@ -1,6 +1,6 @@
 import { useInteractionsStore } from "../useInteractionsStore";
 import { usePeopleStore } from "../usePeopleStore";
-import { interactions as interactionsTable, nextTopics as nextTopicsTable } from "../../db/schema";
+import { interactions as interactionsTable } from "../../db/schema";
 import type { Database } from "../../db/client";
 
 type Row = Record<string, unknown>;

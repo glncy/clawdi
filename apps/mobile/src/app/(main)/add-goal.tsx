@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import { View } from "react-native";
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -38,7 +37,6 @@ export default function AddGoalScreen() {
   const {
     control,
     handleSubmit,
-    reset,
     setValue,
     formState: { errors },
   } = useForm<GoalForm>({
@@ -58,6 +56,7 @@ export default function AddGoalScreen() {
       if (prefillData.currentAmount)
         setValue("currentAmount", String(prefillData.currentAmount));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {

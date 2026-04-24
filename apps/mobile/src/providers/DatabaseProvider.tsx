@@ -40,6 +40,7 @@ function MigrationRunner({
           console.error("[DatabaseProvider] Seed error:", err)
         );
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [success, error]);
 
   return null;

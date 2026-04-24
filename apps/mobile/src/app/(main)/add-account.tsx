@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { View, ScrollView } from "react-native";
+import { View } from "react-native";
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -53,7 +53,6 @@ export default function AddAccountScreen() {
   const {
     control,
     handleSubmit,
-    reset,
     watch,
     setValue,
     formState: { errors },
@@ -74,6 +73,7 @@ export default function AddAccountScreen() {
       if (prefillData.type) setValue("type", prefillData.type);
       if (prefillData.balance) setValue("balance", String(prefillData.balance));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {

@@ -53,7 +53,6 @@ export default function AddBillScreen() {
   const {
     control,
     handleSubmit,
-    reset,
     watch,
     setValue,
     formState: { errors },
@@ -85,6 +84,7 @@ export default function AddBillScreen() {
       if (prefillData.frequency) setValue("frequency", prefillData.frequency);
       if (prefillData.category) setValue("category", prefillData.category);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {

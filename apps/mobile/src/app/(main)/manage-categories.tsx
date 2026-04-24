@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, ScrollView, Pressable, KeyboardAvoidingView } from "react-native";
-import { Stack, router } from "expo-router";
+import { Stack } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
 import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
 import {

@@ -23,8 +23,7 @@ const DOMAINS = [
   { icon: Brain, label: "Mind" },
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const splashIcon = require("@/assets/images/splash-icon.png");
+const splashIcon = require("@/assets/images/splash-icon.png") as number;
 
 function useFadeInUp(delay: number) {
   const opacity = useSharedValue(0);

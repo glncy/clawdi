@@ -39,6 +39,11 @@ export interface Priority {
   text: string;
   type: "must" | "win" | "overdue";
   isCompleted: boolean;
+  date: string;
+  completedAt: string | null;
+  sortOrder: number;
+  rolledOverFrom: string | null;
+  createdAt: string;
 }
 
 export interface Contact {
@@ -112,6 +117,9 @@ export interface QuickListItem {
   id: string;
   text: string;
   isCompleted: boolean;
+  completedAt: string | null;
+  sortOrder: number;
+  createdAt: string;
 }
 
 export interface DomainScore {

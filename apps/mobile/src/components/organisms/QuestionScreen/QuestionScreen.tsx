@@ -156,7 +156,6 @@ export function QuestionScreen(props: QuestionScreenProps) {
 
   const router = useRouter();
   const scrollViewRef = useRef<ScrollView>(null);
-  const [primaryColor] = useCSSVariable(["--color-primary"]);
   const [otherText, setOtherText] = useState("");
   const [isOtherSelected, setIsOtherSelected] = useState(false);
 

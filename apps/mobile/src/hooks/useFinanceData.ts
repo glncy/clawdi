@@ -14,6 +14,7 @@ export function useFinanceData() {
     if (isReady && db && !store.isLoaded) {
       store.loadAll(db);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isReady, db, store.isLoaded]);
 
   const today = new Date().toISOString().split("T")[0];

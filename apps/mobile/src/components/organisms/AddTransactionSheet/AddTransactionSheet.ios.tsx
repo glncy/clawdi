@@ -12,7 +12,7 @@ import {
 } from "@expo/ui/swift-ui/modifiers";
 import { router } from "expo-router";
 import { AppText } from "@/components/atoms/Text";
-import { Button, Input } from "heroui-native";
+import { Input } from "heroui-native";
 import { useCSSVariable } from "uniwind";
 import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStore";
 import { useFinanceData } from "@/hooks/useFinanceData";

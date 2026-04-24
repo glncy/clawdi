@@ -116,6 +116,7 @@ export default function AddTransactionScreen() {
       if (prefillData.amount) setValue("amount", String(prefillData.amount));
       if (prefillData.category) setValue("category", prefillData.category);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleClose = () => {

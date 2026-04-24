@@ -28,6 +28,7 @@ import { useSettingsSheetStore } from "@/stores/useSettingsSheetStore";
 
 import { useUserStore } from "@/stores/useUserStore";
 import { useAIStore } from "@/stores/useAIStore";
+import { deleteDatabase } from "@/db/client";
 import type { ComponentType } from "react";
 import type { IconProps } from "phosphor-react-native";
 
@@ -142,7 +143,7 @@ export const SettingsSheet = () => {
   const setUserData = useUserStore((s) => s.setUserData);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
-  const handleDeleteAndReset = () => {
+  const handleDeleteAndReset = async () => {
     setShowDeleteDialog(false);
     close();
     setUserData({
@@ -159,7 +160,7 @@ export const SettingsSheet = () => {
       hasCompletedOnboarding: false,
     });
     useAIStore.getState().reset();
-    router.replace("/(main)/onboarding");
+    await deleteDatabase();
   };
 
   if (!isOpen) return null;

@@ -1,7 +1,8 @@
-import { Glob } from "bun";
 import { execFileSync, spawnSync } from "node:child_process";
-import { existsSync, lstatSync, symlinkSync } from "node:fs";
+import { existsSync, lstatSync, readdirSync, statSync, symlinkSync } from "node:fs";
 import { basename, join, resolve } from "node:path";
+
+import { minimatch } from "minimatch";
 
 import { loadProjectConfig } from "./project-config.js";
 
@@ -80,13 +81,38 @@ function resolveWorktreePath(
 }
 
 function resolveGlobPatterns(mainRoot: string, patterns: string[]): string[] {
+  if (patterns.length === 0) return [];
   const results: string[] = [];
-  for (const pattern of patterns) {
-    const glob = new Glob(pattern);
-    for (const match of glob.scanSync({ cwd: mainRoot, onlyFiles: false })) {
-      results.push(match);
+  const seen = new Set<string>();
+
+  function scan(relDir: string) {
+    const absDir = join(mainRoot, relDir);
+    let entries: string[];
+    try {
+      entries = readdirSync(absDir);
+    } catch {
+      return;
+    }
+    for (const name of entries) {
+      const relPath = relDir ? `${relDir}/${name}` : name;
+      for (const pattern of patterns) {
+        if (!seen.has(relPath) && minimatch(relPath, pattern, { dot: true })) {
+          seen.add(relPath);
+          results.push(relPath);
+          break;
+        }
+      }
+      try {
+        if (statSync(join(mainRoot, relPath)).isDirectory()) {
+          scan(relPath);
+        }
+      } catch {
+        // skip unreadable entries
+      }
     }
   }
+
+  scan("");
   return results;
 }
 
@@ -150,7 +176,7 @@ export async function setupWorktree({
   const missing: string[] = [];
 
   function link(relPath: string) {
-    const result = linkPath(join(mainRoot, relPath), join(worktreePath, relPath));
+    const result = linkPath(join(mainRoot, relPath), join(worktreePath!, relPath));
     if (result === "linked") linked.push(relPath);
     if (result === "skipped") skipped.push(relPath);
     if (result === "missing" && verbose) missing.push(relPath);
