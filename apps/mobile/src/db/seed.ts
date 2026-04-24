@@ -1,5 +1,5 @@
 import { Database } from "./client";
-import { categories } from "./schema";
+import { accountTypes, categories } from "./schema";
 
 const DEFAULT_CATEGORIES = [
   { id: "cat-food", name: "Food", icon: "🍔", sortOrder: 0 },
@@ -12,9 +12,17 @@ const DEFAULT_CATEGORIES = [
   { id: "cat-other", name: "Other", icon: "📦", sortOrder: 7 },
 ];
 
-export async function seedDatabase(db: Database): Promise<void> {
-  const existingCategories = await db.select().from(categories);
-  if (existingCategories.length > 0) return;
+const BUILT_IN_ACCOUNT_TYPES = [
+  { id: "type-checking", name: "Checking", icon: "💳", sortOrder: 0 },
+  { id: "type-savings", name: "Savings", icon: "🏦", sortOrder: 1 },
+  { id: "type-credit", name: "Credit", icon: "💰", sortOrder: 2 },
+  { id: "type-cash", name: "Cash", icon: "💵", sortOrder: 3 },
+  { id: "type-investment", name: "Investment", icon: "📈", sortOrder: 4 },
+];
+
+export async function seedCategories(db: Database): Promise<void> {
+  const existing = await db.select().from(categories);
+  if (existing.length > 0) return;
 
   await db.insert(categories).values(
     DEFAULT_CATEGORIES.map((cat) => ({
@@ -23,6 +31,26 @@ export async function seedDatabase(db: Database): Promise<void> {
       icon: cat.icon,
       isDefault: 1,
       sortOrder: cat.sortOrder,
-    }))
+    })),
   );
+}
+
+export async function seedAccountTypes(db: Database): Promise<void> {
+  const existing = await db.select().from(accountTypes);
+  if (existing.length > 0) return;
+
+  await db.insert(accountTypes).values(
+    BUILT_IN_ACCOUNT_TYPES.map((t) => ({
+      id: t.id,
+      name: t.name,
+      icon: t.icon,
+      isDefault: 1,
+      sortOrder: t.sortOrder,
+    })),
+  );
+}
+
+export async function seedDatabase(db: Database): Promise<void> {
+  await seedCategories(db);
+  await seedAccountTypes(db);
 }

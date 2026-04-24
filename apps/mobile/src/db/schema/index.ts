@@ -1,4 +1,5 @@
 import { accounts } from "./accounts";
+import { accountTypes } from "./accountTypes";
 import { transactions } from "./transactions";
 import { categories } from "./categories";
 import { recurringBills } from "./recurringBills";
@@ -14,6 +15,7 @@ import { quickList } from "./quickList";
 import { metadata } from "./metadata";
 
 export { accounts } from "./accounts";
+export { accountTypes } from "./accountTypes";
 export { transactions } from "./transactions";
 export { categories } from "./categories";
 export { recurringBills } from "./recurringBills";
@@ -29,6 +31,7 @@ export { quickList } from "./quickList";
 export { metadata } from "./metadata";
 
 export type { AccountRow, NewAccount } from "./accounts";
+export type { AccountTypeRow, NewAccountType } from "./accountTypes";
 export type { TransactionRow, NewTransaction } from "./transactions";
 export type { CategoryRow, NewCategory } from "./categories";
 export type { RecurringBillRow, NewRecurringBill } from "./recurringBills";
@@ -45,6 +48,7 @@ export type { MetadataRow, NewMetadata } from "./metadata";
 
 export const schema = {
   accounts,
+  accountTypes,
   transactions,
   categories,
   recurringBills,
