@@ -12,6 +12,7 @@ import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet"
 import { PlanTomorrowCard } from "@/components/molecules/PlanTomorrowCard";
 import { PlanTomorrowSheet } from "@/components/organisms/PlanTomorrowSheet";
 import { EveningPromptSheet } from "@/components/organisms/EveningPromptSheet";
+import { FocusSessionSettingsSheet } from "@/components/organisms/FocusSessionSettingsSheet";
 
 export default function DayScreen() {
   return (
@@ -48,6 +49,7 @@ export default function DayScreen() {
       <EditPrioritySheet />
       <PlanTomorrowSheet />
       <EveningPromptSheet />
+      <FocusSessionSettingsSheet />
     </>
   );
 }

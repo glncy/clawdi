@@ -1,10 +1,11 @@
 import { create } from "zustand";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import type { Database } from "../db/client";
 import {
   priorities as prioritiesTable,
   quickList as quickListTable,
   metadata as metadataTable,
+  focusSessions as focusSessionsTable,
 } from "../db/schema";
 import type { Priority, QuickListItem } from "../types";
 import type { PriorityRow, QuickListRow } from "../db/schema";
@@ -113,6 +114,20 @@ interface DayState {
   deleteQuickItem: (db: Database, id: string) => Promise<void>;
 
   incrementPomodoro: (db: Database) => Promise<void>;
+
+  todayFocusMinutes: number;
+  loadTodayFocusMinutes: (db: Database) => Promise<void>;
+  logFocusSession: (
+    db: Database,
+    input: {
+      priorityId: string | null;
+      goal: string | null;
+      plannedSec: number;
+      actualSec: number;
+      completedNaturally: boolean;
+      startedAt: string;
+    },
+  ) => Promise<void>;
 }
 
 export const useDayStore = create<DayState>((set, get) => ({
@@ -124,6 +139,7 @@ export const useDayStore = create<DayState>((set, get) => ({
   isLoading: false,
   tomorrowPriorities: [],
   hasCheckedEveningPrompt: false,
+  todayFocusMinutes: 0,
 
   loadToday: async (db) => {
     const { isLoaded, isLoading } = get();
@@ -163,6 +179,8 @@ export const useDayStore = create<DayState>((set, get) => ({
       set({
         tomorrowPriorities: (tRows as PriorityRow[]).map(rowToPriority),
       });
+
+      await get().loadTodayFocusMinutes(db);
     } finally {
       set({ isLoading: false });
     }
@@ -535,5 +553,37 @@ export const useDayStore = create<DayState>((set, get) => ({
       });
 
     set({ pomodoroCount: newCount });
+  },
+
+  loadTodayFocusMinutes: async (db) => {
+    const today = todayISO();
+    const rows = await db
+      .select()
+      .from(focusSessionsTable)
+      .where(sql`date(${focusSessionsTable.startedAt}) = ${today}`);
+    const total = (rows as { actualSec: number }[]).reduce(
+      (acc, r) => acc + (r.actualSec ?? 0),
+      0,
+    );
+    set({ todayFocusMinutes: Math.floor(total / 60) });
+  },
+
+  logFocusSession: async (db, input) => {
+    const now = new Date().toISOString();
+    await db.insert(focusSessionsTable).values({
+      id: generateId(),
+      priorityId: input.priorityId,
+      goal: input.goal,
+      startedAt: input.startedAt,
+      endedAt: now,
+      plannedSec: input.plannedSec,
+      actualSec: input.actualSec,
+      completedNaturally: input.completedNaturally ? 1 : 0,
+    });
+    const { todayFocusMinutes } = get();
+    set({
+      todayFocusMinutes:
+        todayFocusMinutes + Math.floor(input.actualSec / 60),
+    });
   },
 }));

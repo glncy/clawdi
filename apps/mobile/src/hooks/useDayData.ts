@@ -21,6 +21,7 @@ export function useDayData() {
   const priorities = useDayStore((s) => s.priorities);
   const quickList = useDayStore((s) => s.quickList);
   const pomodoroCount = useDayStore((s) => s.pomodoroCount);
+  const todayFocusMinutes = useDayStore((s) => s.todayFocusMinutes);
   const hasCheckedRollover = useDayStore((s) => s.hasCheckedRollover);
   const isLoaded = useDayStore((s) => s.isLoaded);
   const loadToday = useDayStore((s) => s.loadToday);
@@ -80,6 +81,7 @@ export function useDayData() {
     quickList: sortedQuickList,
     pomodoroCount,
     pomodoroSessionsToday: pomodoroCount,
+    todayFocusMinutes,
     completedToday,
     totalToday,
     activeMustCount,
