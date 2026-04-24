@@ -238,7 +238,7 @@ export default function AddBillScreen() {
                       {i > 0 && <Separator />}
                       <Select.Item value={cat.name} label={cat.name}>
                         <View className="flex-row items-center gap-3 flex-1">
-                          <AppText>{cat.icon}</AppText>
+                          <AppText size="lg">{cat.icon}</AppText>
                           <Select.ItemLabel />
                         </View>
                         <Select.ItemIndicator />
