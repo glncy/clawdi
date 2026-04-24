@@ -4,9 +4,7 @@ import { sql } from "drizzle-orm";
 export const accounts = sqliteTable("accounts", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
-  type: text("type", {
-    enum: ["checking", "savings", "credit", "cash", "investment"],
-  }).notNull(),
+  type: text("type").notNull(),
   balance: real("balance").notNull().default(0),
   currency: text("currency").notNull().default("USD"),
   icon: text("icon").notNull().default(""),

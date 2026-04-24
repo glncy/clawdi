@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { View, Pressable, Keyboard } from "react-native";
+import { View, Pressable, Keyboard, Platform } from "react-native";
 import {
   KeyboardAvoidingView,
   KeyboardAwareScrollView,
@@ -8,6 +8,10 @@ import { Stack, router } from "expo-router";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { format as formatDate } from "date-fns";
+import DateTimePicker, {
+  type DateTimePickerEvent,
+} from "@expo/ui/datetimepicker";
 import { AppText } from "@/components/atoms/Text";
 import {
   Button,
@@ -23,7 +27,7 @@ import { useCSSVariable } from "uniwind";
 import { useAddTransactionSheetStore } from "@/stores/useAddTransactionSheetStore";
 import { useFinanceData } from "@/hooks/useFinanceData";
 import { useCurrency } from "@/hooks/useCurrency";
-import { ArrowUp, ArrowDown, Plus } from "phosphor-react-native";
+import { ArrowUp, ArrowDown, Plus, CalendarBlank } from "phosphor-react-native";
 import { PhosphorIcon } from "@/components/atoms/PhosphorIcon";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -39,8 +43,9 @@ const manualSchema = z.object({
     .string()
     .refine((v) => parseFloat(v) > 0, "Amount must be positive"),
   category: z.string().min(1, "Category required"),
-  date: z.string().min(1, "Date is required"),
+  date: z.string().min(1, "Date is required"), // ISO timestamp
   note: z.string().optional(),
+  accountId: z.string().optional(),
 });
 
 type ManualForm = z.infer<typeof manualSchema>;
@@ -55,6 +60,7 @@ export default function AddTransactionScreen() {
     deleteTransaction,
     categories,
     addCategory,
+    accounts,
   } = useFinanceData();
   const { code: currencyCode } = useCurrency();
 
@@ -62,13 +68,17 @@ export default function AddTransactionScreen() {
   const [newCategoryName, setNewCategoryName] = useState("");
   const [newCategoryIcon, setNewCategoryIcon] = useState("");
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [androidPickerMode, setAndroidPickerMode] = useState<"date" | "time">(
+    "date",
+  );
 
   const [primaryColor, mutedColor] = useCSSVariable([
     "--color-primary",
     "--color-muted",
   ]);
 
-  const today = new Date().toISOString().split("T")[0];
+  const nowIso = new Date().toISOString();
 
   const {
     control,
@@ -84,13 +94,69 @@ export default function AddTransactionScreen() {
       item: "",
       amount: "",
       category: "Other",
-      date: today,
+      date: nowIso,
       note: "",
+      accountId: "",
     },
   });
 
   const selectedType = watch("type");
   const selectedCategory = watch("category");
+  const selectedAccountId = watch("accountId");
+  const selectedDate = watch("date");
+
+  const selectedDateObj = useMemo(() => {
+    const d = selectedDate ? new Date(selectedDate) : new Date();
+    return isNaN(d.getTime()) ? new Date() : d;
+  }, [selectedDate]);
+
+  const formattedDateTime = useMemo(
+    () => formatDate(selectedDateObj, "MMM d, yyyy · h:mm a"),
+    [selectedDateObj],
+  );
+
+  const openDatePicker = () => {
+    Keyboard.dismiss();
+    setAndroidPickerMode("date");
+    setShowDatePicker(true);
+  };
+
+  const handleDateChange = (
+    event: DateTimePickerEvent,
+    nextDate?: Date,
+  ) => {
+    if (Platform.OS === "android") {
+      // Android fires `set` / `dismissed`; hide picker after each step.
+      if (event.type === "dismissed" || !nextDate) {
+        setShowDatePicker(false);
+        return;
+      }
+      if (androidPickerMode === "date") {
+        // Preserve existing time-of-day from selectedDateObj.
+        const merged = new Date(nextDate);
+        merged.setHours(
+          selectedDateObj.getHours(),
+          selectedDateObj.getMinutes(),
+          0,
+          0,
+        );
+        setValue("date", merged.toISOString(), { shouldDirty: true });
+        // Chain into time picker.
+        setAndroidPickerMode("time");
+        setShowDatePicker(true);
+      } else {
+        const merged = new Date(selectedDateObj);
+        merged.setHours(nextDate.getHours(), nextDate.getMinutes(), 0, 0);
+        setValue("date", merged.toISOString(), { shouldDirty: true });
+        setShowDatePicker(false);
+      }
+      return;
+    }
+    // iOS (inline / spinner): update live as user scrolls.
+    if (nextDate) {
+      setValue("date", nextDate.toISOString(), { shouldDirty: true });
+    }
+  };
 
   const categorySelectValue = useMemo(
     () =>
@@ -99,6 +165,14 @@ export default function AddTransactionScreen() {
         : undefined,
     [selectedCategory],
   );
+
+  const accountSelectValue = useMemo(() => {
+    if (!selectedAccountId) return { value: "", label: "None" };
+    const acc = accounts.find((a) => a.id === selectedAccountId);
+    return acc
+      ? { value: acc.id, label: acc.name }
+      : { value: "", label: "None" };
+  }, [selectedAccountId, accounts]);
 
   useEffect(() => {
     if (editingTransaction) {
@@ -109,15 +183,27 @@ export default function AddTransactionScreen() {
         category: editingTransaction.category,
         date: editingTransaction.date,
         note: editingTransaction.note || "",
+        accountId: editingTransaction.accountId ?? "",
       });
     } else if (prefillData) {
       if (prefillData.type) setValue("type", prefillData.type);
       if (prefillData.item) setValue("item", prefillData.item);
       if (prefillData.amount) setValue("amount", String(prefillData.amount));
       if (prefillData.category) setValue("category", prefillData.category);
+      if (prefillData.accountId) setValue("accountId", prefillData.accountId);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Auto-select the only account when exactly one exists and nothing is set.
+  useEffect(() => {
+    if (editingTransaction) return;
+    if (prefillData?.accountId) return;
+    if (accounts.length !== 1) return;
+    if (watch("accountId")) return;
+    setValue("accountId", accounts[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accounts.length, editingTransaction, prefillData]);
 
   const handleClose = () => {
     clearModalData();
@@ -133,6 +219,7 @@ export default function AddTransactionScreen() {
         category: data.category,
         date: data.date,
         note: data.note || undefined,
+        accountId: data.accountId || undefined,
       });
     } else {
       await addTransaction({
@@ -144,6 +231,7 @@ export default function AddTransactionScreen() {
         category: data.category,
         date: data.date,
         note: data.note || undefined,
+        accountId: data.accountId || undefined,
       });
     }
     handleClose();
@@ -277,6 +365,108 @@ export default function AddTransactionScreen() {
           <FieldError>{errors.item?.message}</FieldError>
         </TextField>
 
+        {/* Account Select */}
+        <View className="gap-1">
+          <AppText size="xs" color="muted">
+            Account
+          </AppText>
+          <Select
+            presentation="bottom-sheet"
+            value={accountSelectValue}
+            onOpenChange={(open) => {
+              if (open) Keyboard.dismiss();
+            }}
+            onValueChange={(opt) => {
+              const selected = opt as { value: string; label: string };
+              setValue("accountId", selected.value);
+            }}
+          >
+            <Select.Trigger>
+              <Select.Value placeholder="Select account" />
+              <Select.TriggerIndicator />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Overlay />
+              <Select.Content presentation="bottom-sheet" snapPoints={["50%"]}>
+                <Select.ListLabel>Account</Select.ListLabel>
+                <Select.Item value="" label="None">
+                  <View className="flex-row items-center gap-3 flex-1">
+                    <Select.ItemLabel />
+                  </View>
+                  <Select.ItemIndicator />
+                </Select.Item>
+                {accounts.map((acc) => (
+                  <React.Fragment key={acc.id}>
+                    <Separator />
+                    <Select.Item value={acc.id} label={acc.name}>
+                      <View className="flex-row items-center gap-3 flex-1">
+                        <AppText className="text-xl">{acc.icon}</AppText>
+                        <Select.ItemLabel />
+                      </View>
+                      <Select.ItemIndicator />
+                    </Select.Item>
+                  </React.Fragment>
+                ))}
+              </Select.Content>
+            </Select.Portal>
+          </Select>
+        </View>
+
+        {/* Date + Time */}
+        <View className="gap-1">
+          <AppText size="xs" color="muted">
+            Date & time
+          </AppText>
+          <Pressable
+            onPress={openDatePicker}
+            accessibilityRole="button"
+            accessibilityLabel={`Change date and time, currently ${formattedDateTime}`}
+            className="flex-row items-center gap-3 rounded-xl bg-surface px-4 py-3.5"
+          >
+            <PhosphorIcon
+              icon={CalendarBlank}
+              size={18}
+              color={mutedColor as string}
+            />
+            <AppText size="sm" weight="medium" className="flex-1">
+              {formattedDateTime}
+            </AppText>
+          </Pressable>
+          {errors.date && (
+            <AppText size="xs" color="danger" className="mt-1">
+              {errors.date.message}
+            </AppText>
+          )}
+          {showDatePicker && Platform.OS === "ios" && (
+            <View className="mt-1 rounded-xl bg-surface overflow-hidden">
+              <DateTimePicker
+                value={selectedDateObj}
+                mode="datetime"
+                display="inline"
+                onChange={handleDateChange}
+              />
+              <View className="flex-row justify-end px-3 pb-2">
+                <Button
+                  variant="tertiary"
+                  size="sm"
+                  onPress={() => setShowDatePicker(false)}
+                >
+                  <Button.Label>Done</Button.Label>
+                </Button>
+              </View>
+            </View>
+          )}
+          {showDatePicker && Platform.OS === "android" && (
+            <DateTimePicker
+              value={selectedDateObj}
+              mode={androidPickerMode}
+              is24Hour={false}
+              display="default"
+              onChange={handleDateChange}
+            />
+          )}
+        </View>
+
         {/* Category Select */}
         <View className="gap-1">
           <AppText size="xs" color="muted">
@@ -313,7 +503,7 @@ export default function AddTransactionScreen() {
                       {i > 0 && <Separator />}
                       <Select.Item value={cat.name} label={cat.name}>
                         <View className="flex-row items-center gap-3 flex-1">
-                          <AppText>{cat.icon}</AppText>
+                          <AppText size="lg">{cat.icon}</AppText>
                           <Select.ItemLabel />
                         </View>
                         <Select.ItemIndicator />

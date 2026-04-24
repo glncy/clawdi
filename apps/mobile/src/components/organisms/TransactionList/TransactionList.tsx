@@ -30,17 +30,26 @@ export function getDateLabel(dateStr: string): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+// `tx.date` may be either a legacy `YYYY-MM-DD` string (pre-backfill)
+// or a full ISO 8601 timestamp. Collapse both forms to the UTC calendar
+// day so a single ISO timestamp doesn't spawn its own group.
+function toDayKey(date: string): string {
+  if (date.length === 10 && !date.includes("T")) return date;
+  return new Date(date).toISOString().split("T")[0];
+}
+
 export function groupByDate(
   transactions: Transaction[]
 ): { date: string; label: string; items: Transaction[] }[] {
   const groups = new Map<string, Transaction[]>();
 
   for (const tx of transactions) {
-    const existing = groups.get(tx.date);
+    const key = toDayKey(tx.date);
+    const existing = groups.get(key);
     if (existing) {
       existing.push(tx);
     } else {
-      groups.set(tx.date, [tx]);
+      groups.set(key, [tx]);
     }
   }
 

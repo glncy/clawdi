@@ -94,10 +94,10 @@ export const MOCK_ACCOUNTS: Account[] = [
 ];
 
 export const MOCK_RECURRING_BILLS: RecurringBill[] = [
-  { id: "1", name: "Netflix", amount: 15.99, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-15", category: "Entertainment", isPaid: false },
-  { id: "2", name: "Rent", amount: 1200, currency: "USD", frequency: "monthly", nextDueDate: "2026-05-01", category: "Bills", isPaid: true },
-  { id: "3", name: "Gym", amount: 29.99, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-20", category: "Health", isPaid: false },
-  { id: "4", name: "Phone Plan", amount: 45, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-18", category: "Bills", isPaid: false },
+  { id: "1", name: "Netflix", amount: 15.99, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-15", category: "Entertainment", isPaid: false, isArchived: false },
+  { id: "2", name: "Rent", amount: 1200, currency: "USD", frequency: "monthly", nextDueDate: "2026-05-01", category: "Bills", isPaid: true, isArchived: false },
+  { id: "3", name: "Gym", amount: 29.99, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-20", category: "Health", isPaid: false, isArchived: false },
+  { id: "4", name: "Phone Plan", amount: 45, currency: "USD", frequency: "monthly", nextDueDate: "2026-04-18", category: "Bills", isPaid: false, isArchived: false },
 ];
 
 export const MOCK_DAILY_SPENDING: DailySpending[] = [

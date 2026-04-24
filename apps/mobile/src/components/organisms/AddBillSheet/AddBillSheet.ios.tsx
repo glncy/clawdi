@@ -1,4 +1,4 @@
-import { View, Pressable } from "react-native";
+import { useState } from "react";
 import {
   BottomSheet,
   Group,
@@ -10,22 +10,52 @@ import {
   presentationDragIndicator,
 } from "@expo/ui/swift-ui/modifiers";
 import { router } from "expo-router";
-import { AppText } from "@/components/atoms/Text";
-import { Input } from "heroui-native";
-import { useCSSVariable } from "uniwind";
+import { AIParseSheetBody } from "@/components/molecules/AIParseSheetBody";
 import { useAddBillSheetStore } from "@/stores/useAddBillSheetStore";
-import { Lightning, PencilSimpleLine, Microphone } from "phosphor-react-native";
+import { useLocalAI } from "@/hooks/useLocalAI";
+import { useIsAIAvailable } from "@/hooks/useIsAIAvailable";
+import { parseBillText } from "@/services/billParserService";
 
 export const AddBillSheet = () => {
   const { isOpen, close } = useAddBillSheetStore();
+  const { completeJSON } = useLocalAI();
+  const isAIAvailable = useIsAIAvailable();
 
-  const [primaryColor, mutedColor] = useCSSVariable([
-    "--color-primary",
-    "--color-muted",
-  ]);
+  const [aiText, setAiText] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleClose = () => {
     close();
+    setAiText("");
+    setError(null);
+    setIsLoading(false);
+  };
+
+  const handleAISubmit = async () => {
+    if (!aiText.trim()) return;
+    setIsLoading(true);
+    setError(null);
+
+    const result = await parseBillText(aiText, completeJSON);
+    setIsLoading(false);
+
+    if (!result) {
+      setError("Couldn't understand that. Try again or input manually.");
+      return;
+    }
+
+    // `frequency` is already zod-validated to one of the 4 enum values by
+    // `parseBillText`. The add-bill screen handles the `"once"` case
+    // (Task 6.1 will widen the form's own zod schema to include it).
+    useAddBillSheetStore.getState().setPrefill({
+      name: result.name,
+      amount: result.amount,
+      frequency: result.frequency,
+      category: result.category,
+    });
+    handleClose();
+    router.push("/(main)/add-bill");
   };
 
   const handleManual = () => {
@@ -48,73 +78,17 @@ export const AddBillSheet = () => {
           ]}
         >
           <RNHostView>
-            <View className="px-5 py-6 gap-5">
-              <AppText size="xl" weight="bold" family="headline">
-                Add Bill
-              </AppText>
-
-              <View className="gap-3">
-                <AppText size="sm" color="muted">
-                  Describe your bill
-                </AppText>
-                <View className="flex-row items-center">
-                  <Input
-                    className="flex-1 pl-10 opacity-50"
-                    placeholder="e.g. Netflix 15 monthly"
-                    editable={false}
-                  />
-                  <Lightning
-                    size={16}
-                    color={mutedColor as string}
-                    weight="fill"
-                    style={{ position: "absolute", left: 14 }}
-                  />
-                </View>
-                <AppText size="xs" color="muted" align="center">
-                  AI parsing coming soon
-                </AppText>
-              </View>
-
-              <View className="items-center">
-                <AppText size="xs" color="muted">
-                  or
-                </AppText>
-              </View>
-
-              <View className="gap-3">
-                <Pressable
-                  className="flex-row items-center gap-3 rounded-xl bg-surface p-4"
-                  onPress={handleManual}
-                >
-                  <PencilSimpleLine
-                    size={20}
-                    color={primaryColor as string}
-                    weight="bold"
-                  />
-                  <AppText size="sm" weight="medium">
-                    Input Manually
-                  </AppText>
-                </Pressable>
-                <Pressable
-                  className="flex-row items-center gap-3 rounded-xl bg-surface p-4 opacity-50"
-                  disabled
-                >
-                  <Microphone
-                    size={20}
-                    color={mutedColor as string}
-                    weight="bold"
-                  />
-                  <View>
-                    <AppText size="sm" weight="medium" color="muted">
-                      Tap to Talk
-                    </AppText>
-                    <AppText size="xs" color="muted">
-                      Coming soon
-                    </AppText>
-                  </View>
-                </Pressable>
-              </View>
-            </View>
+            <AIParseSheetBody
+              title="Add Bill"
+              aiPlaceholder="e.g. Netflix 15 monthly or dentist 200 once"
+              aiText={aiText}
+              onChangeAiText={setAiText}
+              onAISubmit={handleAISubmit}
+              onManual={handleManual}
+              isAIAvailable={isAIAvailable}
+              isLoading={isLoading}
+              error={error}
+            />
           </RNHostView>
         </Group>
       </BottomSheet>

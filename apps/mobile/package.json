@@ -36,6 +36,7 @@
     "@repo/tailwind-config": "workspace:*",
     "@tailwindcss/postcss": "^4.2.0",
     "ai": "^6.0.142",
+    "date-fns": "^4.1.0",
     "drizzle-orm": "^0.45.2",
     "expo": "~55.0.5",
     "expo-blur": "~55.0.9",

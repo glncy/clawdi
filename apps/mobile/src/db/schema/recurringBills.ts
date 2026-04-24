@@ -7,11 +7,12 @@ export const recurringBills = sqliteTable("recurring_bills", {
   amount: real("amount").notNull(),
   currency: text("currency").notNull().default("USD"),
   frequency: text("frequency", {
-    enum: ["weekly", "monthly", "yearly"],
+    enum: ["once", "weekly", "monthly", "yearly"],
   }).notNull(),
   nextDueDate: text("next_due_date").notNull(), // YYYY-MM-DD
   category: text("category").notNull(),
   isPaid: int("is_paid").notNull().default(0),
+  isArchived: int("is_archived").notNull().default(0),
   accountId: text("account_id"),
   createdAt: text("created_at")
     .notNull()
