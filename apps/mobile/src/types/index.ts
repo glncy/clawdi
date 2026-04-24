@@ -143,7 +143,7 @@ export interface DailySpending {
 export interface Account {
   id: string;
   name: string;
-  type: "checking" | "savings" | "credit" | "cash" | "investment";
+  type: string; // references AccountType.name (lowercase); see accountTypes table
   balance: number;
   currency: string;
   icon: string;
@@ -183,4 +183,5 @@ export interface RecurringBill {
   category: string;
   isPaid: boolean;
   isArchived: boolean;
+  accountId?: string;
 }
