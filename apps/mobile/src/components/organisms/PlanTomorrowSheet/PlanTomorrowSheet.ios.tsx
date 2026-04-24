@@ -97,7 +97,7 @@ export const PlanTomorrowSheet = () => {
       >
         <Group
           modifiers={[
-            presentationDetents(["medium"]),
+            presentationDetents(["large"]),
             presentationDragIndicator("visible"),
           ]}
         >
