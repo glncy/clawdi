@@ -30,6 +30,7 @@ function generateId(): string {
 }
 
 const FREQUENCIES = [
+  { value: "once", label: "Once" },
   { value: "weekly", label: "Weekly" },
   { value: "monthly", label: "Monthly" },
   { value: "yearly", label: "Yearly" },
@@ -38,15 +39,16 @@ const FREQUENCIES = [
 const billSchema = z.object({
   name: z.string().min(1, "Name is required"),
   amount: z.string().refine((v) => parseFloat(v) > 0, "Amount must be positive"),
-  frequency: z.enum(["weekly", "monthly", "yearly"]),
+  frequency: z.enum(["once", "weekly", "monthly", "yearly"]),
   category: z.string().min(1, "Category is required"),
+  accountId: z.string().optional(),
 });
 
 type BillForm = z.infer<typeof billSchema>;
 
 export default function AddBillScreen() {
   const { prefillData, clearPrefill } = useAddBillSheetStore();
-  const { addRecurringBill, categories } = useFinanceData();
+  const { addRecurringBill, categories, accounts } = useFinanceData();
   const { code: currencyCode } = useCurrency();
   const [foregroundColor] = useCSSVariable(["--color-foreground"]);
 
@@ -63,11 +65,13 @@ export default function AddBillScreen() {
       amount: "",
       frequency: "monthly",
       category: "Bills",
+      accountId: "",
     },
   });
 
   const selectedFrequency = watch("frequency");
   const selectedCategory = watch("category");
+  const selectedAccountId = watch("accountId");
 
   const categorySelectValue = useMemo(
     () =>
@@ -77,19 +81,20 @@ export default function AddBillScreen() {
     [selectedCategory]
   );
 
+  const accountSelectValue = useMemo(() => {
+    if (!selectedAccountId) return { value: "", label: "None" };
+    const acc = accounts.find((a) => a.id === selectedAccountId);
+    return acc
+      ? { value: acc.id, label: acc.name }
+      : { value: "", label: "None" };
+  }, [selectedAccountId, accounts]);
+
   // Consume AI prefill from the sheet once on mount.
-  //
-  // NOTE (Task 3.6 scope): `prefillData.frequency` may be `"once"` after
-  // Task 1.3 widened the underlying `RecurringBill.frequency` type — but this
-  // form's local `billSchema` is still `z.enum(["weekly","monthly","yearly"])`.
-  // Task 6.1 will widen the form's own zod enum (and the UI) to include
-  // `"once"`. Until then, skip setting frequency when it's `"once"` so the
-  // form default (`"monthly"`) stands — don't break zod validation.
   useEffect(() => {
     if (prefillData) {
       if (prefillData.name) setValue("name", prefillData.name);
       if (prefillData.amount) setValue("amount", String(prefillData.amount));
-      if (prefillData.frequency && prefillData.frequency !== "once") {
+      if (prefillData.frequency) {
         setValue("frequency", prefillData.frequency);
       }
       if (prefillData.category) setValue("category", prefillData.category);
@@ -105,6 +110,10 @@ export default function AddBillScreen() {
 
   const getNextDueDate = (frequency: string): string => {
     const d = new Date();
+    if (frequency === "once") {
+      // One-time bill — due immediately as a reminder.
+      return d.toISOString().split("T")[0];
+    }
     if (frequency === "weekly") d.setDate(d.getDate() + 7);
     else if (frequency === "monthly") d.setMonth(d.getMonth() + 1);
     else d.setFullYear(d.getFullYear() + 1);
@@ -123,6 +132,7 @@ export default function AddBillScreen() {
       frequency: data.frequency,
       nextDueDate: getNextDueDate(data.frequency),
       category: data.category,
+      accountId: data.accountId || undefined,
       isPaid: false,
       isArchived: false,
     });
@@ -204,6 +214,53 @@ export default function AddBillScreen() {
               </Pressable>
             ))}
           </View>
+        </View>
+
+        {/* Account Select */}
+        <View className="gap-1">
+          <AppText size="xs" color="muted">
+            Account
+          </AppText>
+          <Select
+            presentation="bottom-sheet"
+            value={accountSelectValue}
+            onOpenChange={(open) => {
+              if (open) Keyboard.dismiss();
+            }}
+            onValueChange={(opt) => {
+              const selected = opt as { value: string; label: string };
+              setValue("accountId", selected.value);
+            }}
+          >
+            <Select.Trigger>
+              <Select.Value placeholder="Select account" />
+              <Select.TriggerIndicator />
+            </Select.Trigger>
+            <Select.Portal>
+              <Select.Overlay />
+              <Select.Content presentation="bottom-sheet" snapPoints={["50%"]}>
+                <Select.ListLabel>Account</Select.ListLabel>
+                <Select.Item value="" label="None">
+                  <View className="flex-row items-center gap-3 flex-1">
+                    <Select.ItemLabel />
+                  </View>
+                  <Select.ItemIndicator />
+                </Select.Item>
+                {accounts.map((acc) => (
+                  <React.Fragment key={acc.id}>
+                    <Separator />
+                    <Select.Item value={acc.id} label={acc.name}>
+                      <View className="flex-row items-center gap-3 flex-1">
+                        <AppText className="text-xl">{acc.icon}</AppText>
+                        <Select.ItemLabel />
+                      </View>
+                      <Select.ItemIndicator />
+                    </Select.Item>
+                  </React.Fragment>
+                ))}
+              </Select.Content>
+            </Select.Portal>
+          </Select>
         </View>
 
         {/* Category Select */}
