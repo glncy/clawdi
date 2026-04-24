@@ -1,11 +1,4 @@
-import { useState, useRef } from "react";
-import {
-  View,
-  TextInput,
-  Pressable,
-  Text,
-  type TextInput as TextInputType,
-} from "react-native";
+import { View, Pressable, Text } from "react-native";
 import { Checkbox } from "heroui-native";
 import { AppText } from "@/components/atoms/Text";
 import { useDayStore } from "@/stores/useDayStore";
@@ -42,22 +35,9 @@ const QuickItemRow = ({ item, onToggle, onDelete }: QuickItemRowProps) => {
 
 export const QuickList = () => {
   const { quickList } = useDayData();
-  const addQuickItem = useDayStore((s) => s.addQuickItem);
   const toggleQuickItem = useDayStore((s) => s.toggleQuickItem);
   const deleteQuickItem = useDayStore((s) => s.deleteQuickItem);
   const { db } = useDatabase();
-
-  const [newText, setNewText] = useState("");
-  const inputRef = useRef<TextInputType>(null);
-
-  const [mutedColor] = useCSSVariable(["--color-muted"]);
-
-  const handleAdd = async () => {
-    if (!newText.trim() || !db) return;
-    await addQuickItem(db, newText.trim());
-    setNewText("");
-    inputRef.current?.focus();
-  };
 
   const handleToggle = async (id: string) => {
     if (!db) return;
@@ -68,6 +48,19 @@ export const QuickList = () => {
     if (!db) return;
     await deleteQuickItem(db, id);
   };
+
+  if (quickList.length === 0) {
+    return (
+      <View className="gap-2">
+        <AppText size="sm" weight="semibold" color="muted">
+          Quick List
+        </AppText>
+        <AppText size="sm" color="muted">
+          Nothing here yet. Tap + to jot something.
+        </AppText>
+      </View>
+    );
+  }
 
   return (
     <View className="gap-2">
@@ -83,21 +76,6 @@ export const QuickList = () => {
           onDelete={() => handleDelete(item.id)}
         />
       ))}
-
-      <View className="flex-row items-center gap-3 py-1">
-        <View className="size-5 rounded-sm border border-default" />
-        <TextInput
-          ref={inputRef}
-          value={newText}
-          onChangeText={setNewText}
-          placeholder="Add item…"
-          placeholderTextColor={mutedColor as string}
-          className="flex-1 text-sm text-foreground"
-          returnKeyType="done"
-          onSubmitEditing={handleAdd}
-          blurOnSubmit={false}
-        />
-      </View>
     </View>
   );
 };
