@@ -14,7 +14,7 @@ import { RolloverPromptSheet } from "@/components/organisms/RolloverPromptSheet"
 export default function DayScreen() {
   return (
     <>
-      <Stack.Screen options={{ title: "" }} />
+      <Stack.Screen options={{ title: "Day" }} />
 
       <ScrollView
         className="flex-1 bg-background"
