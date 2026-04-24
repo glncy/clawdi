@@ -21,12 +21,14 @@ export const RolloverPromptSheet = () => {
   const hasCheckedRollover = useDayStore((s) => s.hasCheckedRollover);
   const checkRollover = useDayStore((s) => s.checkRollover);
   const rollover = useDayStore((s) => s.rollover);
+  const dismissRollover = useDayStore((s) => s.dismissRollover);
   const markRolloverChecked = useDayStore((s) => s.markRolloverChecked);
   const { db } = useDatabase();
 
   const [isOpen, setIsOpen] = useState(false);
   const [count, setCount] = useState(0);
   const [isRolling, setIsRolling] = useState(false);
+  const [rolloverError, setRolloverError] = useState<string | null>(null);
 
   const [primaryColor] = useCSSVariable(["--color-primary"]);
 
@@ -46,17 +48,21 @@ export const RolloverPromptSheet = () => {
   const handleRollover = async () => {
     if (!db) return;
     setIsRolling(true);
+    setRolloverError(null);
     try {
       await rollover(db);
+      markRolloverChecked();
+      setIsOpen(false);
+    } catch {
+      setRolloverError("Couldn't roll over. Please try again.");
     } finally {
       setIsRolling(false);
     }
-    markRolloverChecked();
-    setIsOpen(false);
   };
 
-  const handleDismiss = () => {
-    markRolloverChecked();
+  const handleDismiss = async () => {
+    if (db) await dismissRollover(db);
+    else markRolloverChecked();
     setIsOpen(false);
   };
 
@@ -90,6 +96,11 @@ export const RolloverPromptSheet = () => {
                   {count === 1 ? "priority" : "priorities"} yesterday. Roll them
                   over to today?
                 </AppText>
+                {rolloverError && (
+                  <AppText size="sm" color="danger" className="text-center">
+                    {rolloverError}
+                  </AppText>
+                )}
               </View>
 
               <View className="flex-row gap-3">
@@ -97,6 +108,7 @@ export const RolloverPromptSheet = () => {
                   variant="tertiary"
                   className="flex-1"
                   onPress={handleDismiss}
+                  isDisabled={isRolling}
                 >
                   <Button.Label>Start Fresh</Button.Label>
                 </Button>

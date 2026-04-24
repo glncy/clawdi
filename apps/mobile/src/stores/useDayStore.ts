@@ -88,6 +88,7 @@ interface DayState {
 
   checkRollover: (db: Database) => Promise<number>;
   rollover: (db: Database) => Promise<void>;
+  dismissRollover: (db: Database) => Promise<void>;
   markRolloverChecked: () => void;
 
   addQuickItem: (db: Database, text: string) => Promise<void>;
@@ -252,13 +253,14 @@ export const useDayStore = create<DayState>((set, get) => ({
     const today = todayISO();
     const rolloverKey = `rollover_done_${today}`;
 
-    // Check metadata to prevent re-prompting on same-day app restart.
-    // hasCheckedRollover is in-memory and resets on every restart, so we persist
-    // the done state in the metadata table instead.
-    const allMeta = await db.select().from(metadataTable);
-    if ((allMeta as { key?: string }[]).some((r) => r.key === rolloverKey)) {
-      return 0;
-    }
+    // Direct keyed lookup — avoids full table scan as metadata accumulates daily keys.
+    // hasCheckedRollover is in-memory and resets on restart, so we persist the done
+    // state in metadata to prevent re-prompting on same-day app restart.
+    const doneRow = await db
+      .select()
+      .from(metadataTable)
+      .where(eq(metadataTable.key, rolloverKey));
+    if ((doneRow as { key?: string }[]).length > 0) return 0;
 
     const rows = await db
       .select()
@@ -329,6 +331,20 @@ export const useDayStore = create<DayState>((set, get) => ({
   },
 
   markRolloverChecked: () => set({ hasCheckedRollover: true }),
+
+  dismissRollover: async (db) => {
+    const today = todayISO();
+    const rolloverKey = `rollover_done_${today}`;
+    const now = new Date().toISOString();
+    await db
+      .insert(metadataTable)
+      .values({ key: rolloverKey, value: "dismissed", updatedAt: now })
+      .onConflictDoUpdate({
+        target: metadataTable.key,
+        set: { value: "dismissed", updatedAt: now },
+      });
+    set({ hasCheckedRollover: true });
+  },
 
   addQuickItem: async (db, text) => {
     const { quickList } = get();
